@@ -172,6 +172,13 @@ local function installDrivers(W)
     end
   end
 
+  -- Like the client: fires `event` on every frame registered for it.
+  function W.broadcast(event, ...)
+    for _, widget in ipairs(W.frames) do
+      W.fireEvent(widget, event, ...)
+    end
+  end
+
   function W.fireCallback(widget, event, ...)
     local callback = widget._stub.callbacks[event]
     if callback then

@@ -8,8 +8,10 @@
 
 Core/Constants.lua
 Core/Localization.lua
+Core/Events.lua
 Settings/Defaults.lua
 Settings/SavedState.lua
 Data/TrainerCache.lua
+Data/TrainerScan.lua
 
 Bootstrap.lua

@@ -30,6 +30,21 @@ globals = {
 read_globals = {
   "CreateFrame",
   "UIParent",
+  -- Trainer scan
+  "C_Trainer",
+  "C_TooltipInfo",
+  "Enum",
+  "GetNumTrainerServices",
+  "GetTrainerServiceCost",
+  "GetTrainerServiceInfo",
+  "GetTrainerServiceLevelReq",
+  "GetTrainerServiceTypeFilter",
+  "IsTradeskillTrainer",
+  "SetTrainerServiceTypeFilter",
+  "UnitClass",
+  "UnitRace",
+  "debugstack",
+  "geterrorhandler",
 }
 
 -- Test files stub WoW globals freely
