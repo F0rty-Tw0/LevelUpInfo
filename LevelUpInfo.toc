@@ -1,0 +1,12 @@
+## Interface: 16001
+## Title: LevelUpInfo
+## Notes: When you level up, a small trainer-style window shows what you gained and which class skills you can now buy, with their price.
+## Author: F0rty_tw0
+## IconTexture: Interface\Icons\INV_Misc_Book_09
+## Version: v0.1.0
+## SavedVariables: LevelUpInfoDB
+
+Core/Constants.lua
+Core/Localization.lua
+
+Bootstrap.lua
