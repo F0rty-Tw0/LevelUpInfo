@@ -113,6 +113,41 @@ local function test_sorted_by_level_then_name()
   Assert.equal(ids(SkillList.Build(trainers, "PRIEST", "Scourge", 9, 12)), "8092,139,2944,588")
 end
 
+local function newRanks(ranks)
+  setup()
+  local level = {}
+  for spellID, rank in pairs(ranks) do
+    level[spellID] = spell({ Scourge = true }, 100, rank)
+  end
+  local result = {}
+  for _, entry in ipairs(SkillList.Build(priest({ Scourge = 12 }, { [10] = level }), "PRIEST", "Scourge", 9, 10)) do
+    result[entry.spellID] = entry.newRank
+  end
+  return result
+end
+
+local function test_rank_two_or_more_is_a_new_rank()
+  local result = newRanks({ [8092] = "Rank 2", [139] = "Rank 12" })
+  Assert.equal(result[8092], true)
+  Assert.equal(result[139], true)
+end
+
+local function test_rank_one_empty_or_no_number_is_a_new_skill()
+  local result = newRanks({ [8092] = "Rank 1", [139] = "", [588] = "Apprentice" })
+  Assert.equal(result[8092], false)
+  Assert.equal(result[139], false)
+  Assert.equal(result[588], false)
+end
+
+local function test_new_skills_sort_before_new_ranks()
+  setup()
+  local trainers = priest({ Scourge = 12 }, {
+    [9] = { [139] = spell({ Scourge = true }, 100, "Rank 2") },
+    [10] = { [8092] = spell({ Scourge = true }, 100, "Rank 1") },
+  })
+  Assert.equal(ids(SkillList.Build(trainers, "PRIEST", "Scourge", 8, 10)), "8092,139")
+end
+
 local function test_missing_class_gives_empty_list_and_hint()
   setup()
   local entries, showHint = SkillList.Build({}, "PRIEST", "Scourge", 9, 10)
@@ -132,4 +167,7 @@ return function()
   test_missing_spell_info_skips_entry()
   test_sorted_by_level_then_name()
   test_missing_class_gives_empty_list_and_hint()
+  test_rank_two_or_more_is_a_new_rank()
+  test_rank_one_empty_or_no_number_is_a_new_skill()
+  test_new_skills_sort_before_new_ranks()
 end

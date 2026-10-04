@@ -5,8 +5,10 @@ end
 
 local TrainerCache = ns.TrainerCache or require("LevelUpInfo.Data.TrainerCache")
 
+local match = string.match
 local pairs = pairs
 local sort = table.sort
+local tonumber = tonumber
 
 local SkillList = {}
 
@@ -24,7 +26,15 @@ local function isVisible(covered, race, level, entry)
   return true
 end
 
-local function byLevelThenName(a, b)
+-- A new rank when the first number in the rank text is 2 or more.
+local function isNewRank(rank)
+  return (tonumber(match(rank, "%d+")) or 0) >= 2
+end
+
+local function byGroupThenLevelThenName(a, b)
+  if a.newRank ~= b.newRank then
+    return not a.newRank
+  end
   if a.level ~= b.level then
     return a.level < b.level
   end
@@ -43,6 +53,7 @@ local function addLevel(entries, data, race, level)
           icon = info.iconID,
           rank = entry.rank,
           cost = entry.cost,
+          newRank = isNewRank(entry.rank),
         }
       end
     end
@@ -58,7 +69,7 @@ function SkillList.Build(trainers, class, race, fromLevel, toLevel)
       addLevel(entries, data, race, level)
     end
   end
-  sort(entries, byLevelThenName)
+  sort(entries, byGroupThenLevelThenName)
   return entries, TrainerCache.Covered(trainers, class, race) < toLevel
 end
 

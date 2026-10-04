@@ -35,6 +35,9 @@ In game on build 16001 (marked **game**) or in Blizzard's `forever` UI source (m
 
 - **Taint from forced filters:** the scan's `SetTrainerServiceTypeFilter` calls fire `TRAINER_UPDATE` synchronously, so Blizzard's trainer handler runs inside our call and may run tainted. The last Blizzard update of every scan comes from our restore, so what it writes stays tainted until the next Blizzard-driven update. **src** Concrete paths: `ClassTrainerFrame_SetTrainButtonEnabled(false)` gives `ClassTrainerTrainButton` new `OnEnter`/`OnLeave` closures (its `OnLeave` calls `GameTooltip_Hide()`), and a hovered row runs `GameTooltip:SetTrainerService`. Check on the real addon: `/console taintLog 11` (logs table fields too); at a trainer with a filter off, run a scan; hover a row, hover the disabled Train button, buy a spell, close the trainer; then enter combat, use the action bars and open the spellbook; exit the game fully (the log is buffered until exit and restarted on `/reload` or launch), then read `Logs\taint.log`. Proxy run passed (2026-10-04, `/run` toggle, `taintLog 2`, row and Train-button hover, combat, spellbook, then exit): no blocked actions and no entries touching the trainer or `GameTooltip`. A `/run` is not attributed like an addon, so the real-addon run is still required. **Fail** = any blocked action, or any LevelUpInfo-attributed taint on a global or field outside `ClassTrainerFrame` and its children (`GameTooltip` counts as outside). On fail, fall back to per-level coverage; that needs a spec revision (new SavedVariables shape, Skill list rule and hint rule), not a tweak of the single `covered` number.
 
+- **Stat timing:** whether `UnitHealthMax` / `UnitPowerMax` / `UnitStat` still return the old values inside `PLAYER_LEVEL_UP` (the `before` snapshot assumes they do), and that `UnitStat` exists on Forever. Check: ding, compare the window's new values with the character sheet. If the window shows new + gain, take `before` = live − gain instead (one-line change).
+- **Arrow glyph:** `→` renders in `GameFontHighlight`; if it shows as a box, swap the format string to `>`.
+
 - At a weapon master (if Forever has them): `C_Trainer.GetTrainerType()` / `IsTradeskillTrainer()`. If weapon masters report `General`, the scan also requires the trainer's services to include at least one spell whose `serviceType` is not `header` **and** that is not a weapon skill (rule decided after the check; until then weapon masters are a known gap).
 
 ## The window
@@ -42,13 +45,16 @@ In game on build 16001 (marked **game**) or in Blizzard's `forever` UI source (m
 Built the first time it is shown, never at login. Global name `LevelUpInfoFrame`, parented to `UIParent`.
 
 - Frame: `ButtonFrameTemplate` with `ButtonFrameTemplate_HideButtonBar(frame)`. Portrait `frame:SetPortraitToUnit("player")`, title `frame:SetTitle("Level N")` (localized format).
-- **Gains section**, one line per non-zero gain, in this order: Health, Mana, Talent points, Strength, Agility, Stamina, Intellect, Spirit. Format `+15 Health`. Names come from Blizzard globals (`HEALTH`, `MANA`, `TALENT_POINTS`, `SPELL_STAT1_NAME`…`SPELL_STAT5_NAME`) with an English fallback. Zero deltas are not shown. Font `GameFontHighlight`.
+- **Gains section**, one line per non-zero gain, in this order: Health, Mana, Talent points, Strength, Agility, Stamina, Intellect, Spirit. Names come from Blizzard globals (`HEALTH`, `MANA`, `TALENT_POINTS`, `SPELL_STAT1_NAME`…`SPELL_STAT5_NAME`) with an English fallback. Zero deltas are not shown. Font `GameFontHighlight`.
+  - Format **old → new**: `Stamina 25 → 26`, where old = the record's `before` value and new = old + summed gain (one localized format string `"%s %d → %d"`, so the arrow can be swapped in one place).
+  - Talent points, and any gain whose `before` value is missing, keep the plain format `+1 Talent points`.
 - **Skills section**, one row per skill, looking like a Forever trainer row:
   - Row background and highlight: `Interface\ClassTrainerFrame\TrainerTextures` with Blizzard's trainer-row tex coords (normal `0.00195313, 0.57421875, 0.65820313, 0.75`; highlight `0.00195313, 0.57421875, 0.75390625, 0.84570313`, `ADD` blend).
   - 36×36 spell icon, name in `GameFontNormal`, rank in `GameFontNormalSmall` right after the name.
   - Price: one `FontString` (`GameFontHighlightSmall`) set to `GetMoneyString(cost)`, right-aligned. Text white when `GetMoney() >= cost`, red (`RED_FONT_COLOR`) otherwise. Read once when the window is filled; not live-updated.
   - Hover: `GameTooltip:SetOwner(row, "ANCHOR_RIGHT")` + `GameTooltip:SetSpellByID(spellID)` + `Show()`. Leave hides it.
   - Rows are pooled and reused.
+  - **Two groups**, each under a heading line (`GameFontNormal`, pooled like the gains lines) shown only when its group has rows: **New skills** first, then **New ranks**. An entry is a new rank when the first number in its stored `rank` text is 2 or more (`"Rank 2"` → rank; `"Rank 1"`, `""`, no number → skill). Accepted edge: if you skipped Rank 1 at an earlier level, Rank 2 shows under New ranks.
 - **Hint row**, after the skill rows, same row style, icon `Interface\Icons\INV_Misc_Book_09`, no price: `Visit your class trainer to see all new skills.` When it shows: see Skill list.
 - No skills and no hint → the skills section is hidden.
 - Frame height fits its content.
@@ -68,7 +74,7 @@ Built the first time it is shown, never at login. Global name `LevelUpInfoFrame`
 
 ### Level-up
 
-1. `PLAYER_LEVEL_UP(level, …)`: if there is no pending record and the window is not showing a live (non-test) record, start one with `fromLevel = level - 1` (from the payload, never `UnitLevel`). Set `toLevel = level`, add the deltas.
+1. `PLAYER_LEVEL_UP(level, …)`: if there is no pending record and the window is not showing a live (non-test) record, start one with `fromLevel = level - 1` (from the payload, never `UnitLevel`) and a `before` snapshot read live at that moment: `health = UnitHealthMax("player")`, `power = UnitPowerMax("player", Enum.PowerType.Mana)` (a zero mana gain hides the line anyway), and the five stats from `UnitStat("player", 1..5)` (effective value, second return). Later dings of the same record keep the first `before`. Set `toLevel = level`, add the deltas.
 2. If the window is showing a live record (visible or fading), the ding merges into that record and the window refills **now**, even in combat (it is already on screen); `PLAYER_REGEN_ENABLED` is not registered.
 3. Otherwise, if **Wait for combat** is on and `InCombatLockdown()` is true, register `PLAYER_REGEN_ENABLED`; on it, unregister and show. Otherwise show now.
 4. Several dings before the show → one window: summed gains, title = `toLevel`, skills for every level in `(fromLevel, toLevel]`. Hiding the window ends the live record.
@@ -107,7 +113,7 @@ Known trade-off (accepted): before your race's first trainer visit, a racial of 
 
 **Hint row** shows when `covered[C][R] < toLevel` — your own race's trainer has not covered the new level, so the list may be incomplete or include another race's racial.
 
-Rows sort by level, then name. Name and icon come from `C_Spell.GetSpellInfo(spellID)` at display time (an entry whose info is nil is skipped); rank is the stored `rank`.
+Each entry carries `newRank` (see The window → Two groups). Rows sort by group (skills before ranks), then level, then name. Name and icon come from `C_Spell.GetSpellInfo(spellID)` at display time (an entry whose info is nil is skipped); rank is the stored `rank`.
 
 ## Settings
 
@@ -126,7 +132,7 @@ Canvas panel under Options → AddOns → LevelUpInfo, same pattern as MouseOver
 Slash command `/lui`:
 
 - `/lui` opens the settings.
-- `/lui test` shows a preview now, ignoring **Enabled** and **Wait for combat**: title = current level, sample gains (`+15 Health`, `+20 Mana`, `+1 Stamina`), skills for `(currentLevel - 1, currentLevel]` from the cache (plus the hint row by its normal rule). A test is not a live record: a real ding replaces it.
+- `/lui test` shows a preview now, ignoring **Enabled** and **Wait for combat**: title = current level, sample gains (+15 Health, +20 Mana, +1 Stamina) with `before` = live value − sample gain (so new = your current value), skills for `(currentLevel - 1, currentLevel]` from the cache (plus the hint row by its normal rule). A test is not a live record: a real ding replaces it.
 
 ## SavedVariables
 
@@ -176,7 +182,7 @@ Normalized on load (same shape as RaidGroupWrap `SavedState.Initialize`, but wit
 
 1. `/lui test` at a fresh install shows the window with the hint row; Enabled and Wait for combat are on in settings.
 2. Visit a class trainer, `/lui test` → this level's unlearned trainer spells appear with icon, rank and price; hover shows the spell tooltip; unaffordable prices are red.
-3. Ding out of combat → window shows right away with the payload gains.
+3. Ding out of combat → window shows right away with the payload gains; each `old → new` value's new number matches the character sheet.
 4. Ding twice in one fight → one window after combat, gains summed, skills for both levels.
 5. Hover a row past the duration → no fade; leave → fades after the full duration.
 6. Forced filters: press **Clear skill data**, untick all three trainer filters, close and reopen the trainer → Blizzard's list is still empty and the dropdown still shows all three unticked; `/dump LevelUpInfoDB.trainers.<CLASS>.covered` shows your race at the highest level the trainer lists with all filters on; `/dump LevelUpInfoDB.trainers.<CLASS>.levels[L]` for one `L` at or below your level holds a spell you already know (`/dump IsPlayerSpell(<id>)` → true), and for one `L` above your level holds a spell you cannot learn yet.
@@ -191,3 +197,4 @@ Normalized on load (same shape as RaidGroupWrap `SavedState.Initialize`, but wit
 - Hiding or replacing Blizzard's level-up banner.
 - Showing skills you skipped at earlier levels (only skills new at the gained levels are listed).
 - Live price colour updates while the window is open.
+- Playtime per level (needs `RequestTimePlayed`, which prints to chat and adds an event), gains printed to chat.
