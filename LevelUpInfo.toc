@@ -10,5 +10,6 @@ Core/Constants.lua
 Core/Localization.lua
 Settings/Defaults.lua
 Settings/SavedState.lua
+Data/TrainerCache.lua
 
 Bootstrap.lua
