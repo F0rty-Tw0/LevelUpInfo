@@ -45,6 +45,9 @@ read_globals = {
   "UnitRace",
   "debugstack",
   "geterrorhandler",
+  -- Skill list
+  "C_Spell",
+  "IsPlayerSpell",
 }
 
 -- Test files stub WoW globals freely

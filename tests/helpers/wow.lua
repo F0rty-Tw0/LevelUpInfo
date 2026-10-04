@@ -221,7 +221,7 @@ local function installDrivers(W)
 end
 
 function Wow.Install()
-  local W = { calls = {}, frames = {}, secureHooks = {} }
+  local W = { calls = {}, frames = {}, secureHooks = {}, known = {}, spells = {} }
 
   local function def(name, fn)
     rawset(_G, name, function(...)
@@ -257,6 +257,15 @@ function Wow.Install()
   def("InCombatLockdown", function()
     return W.inCombat == true
   end)
+  -- Spellbook: W.known[spellID] = true, W.spells[spellID] = { name, iconID }.
+  def("IsPlayerSpell", function(spellID)
+    return W.known[spellID] == true
+  end)
+  rawset(_G, "C_Spell", {
+    GetSpellInfo = function(spellID)
+      return W.spells[spellID]
+    end,
+  })
   def("wipe", function(t)
     for key in pairs(t) do
       t[key] = nil
