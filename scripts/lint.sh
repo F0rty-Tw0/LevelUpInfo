@@ -13,7 +13,7 @@ if [[ "${1:-}" == "--fix" ]]; then
 fi
 
 EXIT_CODE=0
-TARGETS=(Bootstrap.lua Core tests)
+TARGETS=(Bootstrap.lua Core Settings tests)
 
 find_command() {
   local name="$1"
