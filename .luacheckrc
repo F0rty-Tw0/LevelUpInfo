@@ -48,6 +48,8 @@ read_globals = {
   -- Skill list
   "C_Spell",
   "IsPlayerSpell",
+  -- Auto-hide
+  "C_Timer",
 }
 
 -- Test files stub WoW globals freely

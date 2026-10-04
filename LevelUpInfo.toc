@@ -14,5 +14,6 @@ Settings/SavedState.lua
 Data/TrainerCache.lua
 Data/TrainerScan.lua
 Data/SkillList.lua
+UI/AutoHide.lua
 
 Bootstrap.lua

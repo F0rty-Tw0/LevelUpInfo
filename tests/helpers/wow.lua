@@ -10,6 +10,47 @@ local Wow = {}
 
 local unpack = table.unpack or unpack
 
+-- AnimationGroup: Play jumps the parent's alpha to the end value at once;
+-- W.finishAnimation(group) runs OnFinished.
+local function newAnimationGroup(parent)
+  local stub = { parent = parent, animations = {}, scripts = {}, playing = false }
+  local group = { _stub = stub }
+
+  function group:CreateAnimation(animationType)
+    local animStub = { animationType = animationType }
+    local animation = { _stub = animStub }
+    function animation:SetFromAlpha(alpha)
+      animStub.fromAlpha = alpha
+    end
+    function animation:SetToAlpha(alpha)
+      animStub.toAlpha = alpha
+    end
+    function animation:SetDuration(seconds)
+      animStub.duration = seconds
+    end
+    table.insert(stub.animations, animation)
+    return animation
+  end
+  function group:Play()
+    stub.playing = true
+    for _, animation in ipairs(stub.animations) do
+      if animation._stub.toAlpha then
+        parent:SetAlpha(animation._stub.toAlpha)
+      end
+    end
+  end
+  function group:Stop()
+    stub.playing = false
+  end
+  function group:IsPlaying()
+    return stub.playing
+  end
+  function group:SetScript(script, fn)
+    stub.scripts[script] = fn
+  end
+  return group
+end
+
 local function newWidget(W, frameType, name, parent, template)
   local stub = {
     frameType = frameType,
@@ -130,6 +171,21 @@ local function newWidget(W, frameType, name, parent, template)
   function widget:GetChecked()
     return stub.checked == true
   end
+  function widget:SetAlpha(alpha)
+    stub.alpha = alpha
+  end
+  function widget:GetAlpha()
+    return stub.alpha or 1
+  end
+  function widget:IsMouseOver()
+    return W.mouseOver[widget] == true
+  end
+  function widget:CreateAnimationGroup()
+    local group = newAnimationGroup(widget)
+    stub.animationGroups = stub.animationGroups or {}
+    table.insert(stub.animationGroups, group)
+    return group
+  end
   function widget:CreateFontString(fontName, layer, fontTemplate)
     return newWidget(W, "FontString", fontName, widget, fontTemplate)
   end
@@ -194,6 +250,31 @@ local function installDrivers(W)
     end
   end
 
+  -- Fires every timer live right now (not ones started by those callbacks).
+  function W.runTimers()
+    local due = {}
+    for _, timer in ipairs(W.timers) do
+      if timer._live then
+        due[#due + 1] = timer
+      end
+    end
+    for _, timer in ipairs(due) do
+      if timer._live then
+        timer._live = false
+        W.liveTimers = W.liveTimers - 1
+        timer._callback(timer)
+      end
+    end
+  end
+
+  function W.finishAnimation(group)
+    local stub = group._stub
+    stub.playing = false
+    if stub.scripts.OnFinished then
+      stub.scripts.OnFinished(group, false)
+    end
+  end
+
   function W.snapshot(t)
     local copy = {}
     for key, value in pairs(t) do
@@ -221,7 +302,16 @@ local function installDrivers(W)
 end
 
 function Wow.Install()
-  local W = { calls = {}, frames = {}, secureHooks = {}, known = {}, spells = {} }
+  local W = {
+    calls = {},
+    frames = {},
+    secureHooks = {},
+    known = {},
+    spells = {},
+    mouseOver = {},
+    timers = {},
+    liveTimers = 0,
+  }
 
   local function def(name, fn)
     rawset(_G, name, function(...)
@@ -264,6 +354,22 @@ function Wow.Install()
   rawset(_G, "C_Spell", {
     GetSpellInfo = function(spellID)
       return W.spells[spellID]
+    end,
+  })
+  -- W.liveTimers counts timers neither cancelled nor fired; W.runTimers fires them.
+  rawset(_G, "C_Timer", {
+    NewTimer = function(seconds, callback)
+      local timer = { _live = true, _callback = callback }
+      function timer:Cancel()
+        if timer._live then
+          timer._live = false
+          W.liveTimers = W.liveTimers - 1
+        end
+      end
+      W.lastTimerSeconds = seconds
+      W.liveTimers = W.liveTimers + 1
+      table.insert(W.timers, timer)
+      return timer
     end,
   })
   def("wipe", function(t)
