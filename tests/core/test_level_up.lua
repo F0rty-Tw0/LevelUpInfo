@@ -19,7 +19,7 @@ local function setup()
     scale = 1.0,
     trainers = {},
   }
-  local ns = {}
+  local ns = { OtherSources = {} }
   for _, file in ipairs({
     "Core/Localization.lua",
     "Core/Events.lua",

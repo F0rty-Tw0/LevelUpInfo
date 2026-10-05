@@ -28,7 +28,7 @@ local function setup()
       },
     },
   }
-  local ns = {}
+  local ns = { OtherSources = {} }
   for _, file in ipairs({
     "Core/Localization.lua",
     "Data/TrainerCache.lua",
