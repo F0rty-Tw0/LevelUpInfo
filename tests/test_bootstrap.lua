@@ -177,7 +177,11 @@ local function test_reset_position_button_moves_the_visible_window()
 end
 
 local function test_escape_list_and_tooltip_are_never_written()
-  local saved = { trainers = { PRIEST = { covered = { Scourge = 10 }, levels = { [10] = { [139] = { cost = 100, rank = "Rank 1", races = { Scourge = true } } } } } } }
+  local saved = {
+    trainers = {
+      PRIEST = { covered = { Scourge = 10 }, levels = { [10] = { [139] = { cost = 100, rank = "Rank 1", races = { Scourge = true } } } } },
+    },
+  }
   setup(saved)
   _G.UISpecialFrames = { "GameMenuFrame" }
   local specialFrames = W.snapshot(_G.UISpecialFrames)

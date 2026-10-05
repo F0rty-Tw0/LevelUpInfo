@@ -75,7 +75,7 @@ local function build()
   frame:RegisterForDrag("LeftButton")
   frame:SetScript("OnDragStart", frame.StartMoving)
   frame:SetScript("OnDragStop", savePosition)
-  frame:SetScript("OnHide", function()
+  frame:HookScript("OnHide", function()
     current = nil
   end)
   AutoHide.Attach(frame, db)

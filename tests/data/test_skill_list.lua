@@ -68,6 +68,13 @@ local function test_other_race_racial_hidden_when_another_covering_race_lacks_it
   Assert.equal(ids(SkillList.Build(trainers, "PRIEST", "Dwarf", 9, 10)), "")
 end
 
+-- SPEC row 3 at the boundary: Human covered exactly level 10, Dwarf only 9.
+local function test_racial_hidden_when_covering_race_covered_exactly_its_level()
+  setup()
+  local trainers = priest({ Dwarf = 9, Human = 10 }, { [10] = { [2944] = spell({ Scourge = true }) } })
+  Assert.equal(ids(SkillList.Build(trainers, "PRIEST", "Dwarf", 9, 10)), "")
+end
+
 local function test_unknown_origin_shows_before_any_coverage()
   setup()
   local trainers = priest({ Scourge = 12 }, { [10] = { [2652] = spell({ Scourge = true }) } })
@@ -161,6 +168,7 @@ return function()
   test_own_race_saw_it_shows()
   test_other_race_racial_hidden_when_own_race_covered()
   test_other_race_racial_hidden_when_another_covering_race_lacks_it()
+  test_racial_hidden_when_covering_race_covered_exactly_its_level()
   test_unknown_origin_shows_before_any_coverage()
   test_hint_when_own_coverage_below_to_level()
   test_entry_carries_spell_info_and_cache_fields()

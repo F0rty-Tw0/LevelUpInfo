@@ -137,6 +137,27 @@ local function test_frame_onhide_set_before_attach_still_runs()
   Assert.equal(W.liveTimers, 0)
 end
 
+-- Alt+Z: hiding UIParent fires the window's OnHide, showing it fires OnShow.
+local function test_reshown_frame_restarts_the_countdown()
+  setup()
+  attach()
+  AutoHide.Resume()
+  frame:Hide()
+  Assert.equal(W.liveTimers, 0)
+  frame:Show()
+  Assert.equal(W.liveTimers, 1)
+  Assert.equal(W.lastTimerSeconds, 10)
+end
+
+local function test_reshown_frame_under_the_mouse_starts_no_countdown()
+  setup()
+  attach()
+  frame:Hide()
+  W.mouseOver[frame] = true
+  frame:Show()
+  Assert.equal(W.liveTimers, 0)
+end
+
 local function test_duration_change_applies_to_next_countdown()
   setup()
   attach()
@@ -166,6 +187,8 @@ return function()
   test_pause_then_resume_while_hovered_starts_no_countdown()
   test_close_hides_cancels_and_stops_fade()
   test_frame_onhide_set_before_attach_still_runs()
+  test_reshown_frame_restarts_the_countdown()
+  test_reshown_frame_under_the_mouse_starts_no_countdown()
   test_duration_change_applies_to_next_countdown()
   test_never_more_than_one_live_timer()
 end

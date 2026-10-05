@@ -254,6 +254,10 @@ local function newWidget(W, frameType, name, parent, template)
       stub.title = title
     end
     widget.CloseButton = newWidget(W, "Button", nil, widget)
+    -- The template's own OnHide; addon code must hook it, never replace it.
+    stub.scripts.OnHide = function()
+      stub.templateHides = (stub.templateHides or 0) + 1
+    end
   end
 
   if name then

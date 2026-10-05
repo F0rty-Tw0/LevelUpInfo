@@ -90,14 +90,18 @@ function LevelUp.Install(savedDB)
 end
 
 -- Preview of the current level with sample gains; ignores Enabled and Wait for combat.
+-- A gain whose live value is 0 (no mana on a Warrior) stays 0, so its line hides.
 function LevelUp.ShowTest()
   local level = _G.UnitLevel("player")
   local record = newRecord(level - 1, level)
   record.isTest = true
   for key, amount in pairs(SAMPLE_GAINS) do
-    record.gains[key] = amount
-    if record.before[key] then
-      record.before[key] = record.before[key] - amount
+    local live = record.before[key]
+    if live ~= 0 then
+      record.gains[key] = amount
+      if live then
+        record.before[key] = live - amount
+      end
     end
   end
   Window.Show(record)

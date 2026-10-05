@@ -168,6 +168,15 @@ local function test_heading_hidden_for_an_empty_group()
   Assert.equal(table.concat(lines("GameFontNormal"), "|"), "New ranks")
 end
 
+local function test_reshow_without_ranks_hides_new_ranks_heading()
+  setup()
+  db.trainers.PRIEST.levels[10][139] = nil
+  Window.Show(record())
+  db.trainers.PRIEST.levels[10][589] = nil
+  Window.Show(record())
+  Assert.equal(table.concat(lines("GameFontNormal"), "|"), "New skills")
+end
+
 local function test_no_skills_and_no_hint_hides_skills_section()
   setup()
   db.trainers.PRIEST.covered.Scourge = 11
@@ -208,6 +217,17 @@ local function test_show_starts_the_countdown()
   Window.Show(record())
   Assert.equal(W.liveTimers, 1)
   Assert.equal(W.lastTimerSeconds, 10)
+end
+
+local function test_show_and_reshow_keep_exactly_one_live_timer()
+  setup()
+  Window.Show(record())
+  Assert.equal(W.liveTimers, 1)
+  Window.Show(record())
+  Assert.equal(W.liveTimers, 1)
+  frame():Hide()
+  Window.Show(record())
+  Assert.equal(W.liveTimers, 1)
 end
 
 local function test_close_x_hides_and_cancels_countdown()
@@ -293,6 +313,15 @@ local function test_current_is_the_shown_record_and_nil_after_hide()
   Assert.equal(Window.Current(), nil)
 end
 
+local function test_template_onhide_still_runs()
+  setup()
+  Window.Show(record())
+  local before = W.state(frame()).templateHides or 0
+  frame():Hide()
+  Assert.equal(W.state(frame()).templateHides, before + 1)
+  Assert.equal(Window.Current(), nil)
+end
+
 return function()
   test_no_frame_exists_before_first_show()
   test_apply_and_reset_before_first_show_do_not_build_or_error()
@@ -302,10 +331,12 @@ return function()
   test_skill_rows_and_hint_follow_skill_list()
   test_new_skills_and_new_ranks_get_headings()
   test_heading_hidden_for_an_empty_group()
+  test_reshow_without_ranks_hides_new_ranks_heading()
   test_no_skills_and_no_hint_hides_skills_section()
   test_height_fits_content()
   test_repeat_show_with_fewer_rows_creates_no_frames()
   test_show_starts_the_countdown()
+  test_show_and_reshow_keep_exactly_one_live_timer()
   test_close_x_hides_and_cancels_countdown()
   test_hovering_a_row_pauses_the_countdown()
   test_reshow_while_hovered_keeps_window_and_starts_no_countdown()
@@ -314,4 +345,5 @@ return function()
   test_reset_position_moves_now_and_clears_saved()
   test_scale_applies_on_show_and_on_apply()
   test_current_is_the_shown_record_and_nil_after_hide()
+  test_template_onhide_still_runs()
 end

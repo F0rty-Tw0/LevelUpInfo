@@ -68,6 +68,8 @@ function AutoHide.Attach(targetFrame, savedDB)
   end)
   frame:HookScript("OnEnter", AutoHide.Pause)
   frame:HookScript("OnLeave", AutoHide.Resume)
+  -- Hiding UIParent (Alt+Z) fires OnHide, which ends the countdown; OnShow restarts it.
+  frame:HookScript("OnShow", AutoHide.Resume)
   frame:HookScript("OnHide", function()
     cancelTimer()
     fade:Stop()

@@ -201,6 +201,20 @@ local function test_test_preview_before_is_live_minus_sample()
   Assert.equal(table.concat({ before.health, before.power, before.stamina }, ","), "100,50,25")
 end
 
+local function test_test_preview_shows_no_mana_line_for_a_class_without_mana()
+  setup()
+  W.manaMax = 0
+  LevelUp.ShowTest()
+  local texts = {}
+  for _, widget in ipairs(W.frames) do
+    local stub = W.state(widget)
+    if stub.frameType == "FontString" and stub.template == "GameFontHighlight" and stub.shown then
+      texts[#texts + 1] = widget:GetText()
+    end
+  end
+  Assert.equal(table.concat(texts, "|"), "Health 85 → 100|Stamina 9 → 10")
+end
+
 return function()
   test_install_registers_only_the_level_up_event()
   test_ding_out_of_combat_shows_payload_gains()
@@ -215,4 +229,5 @@ return function()
   test_ding_snapshots_before_values()
   test_merged_ding_keeps_first_before()
   test_test_preview_before_is_live_minus_sample()
+  test_test_preview_shows_no_mana_line_for_a_class_without_mana()
 end
