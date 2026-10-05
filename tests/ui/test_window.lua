@@ -180,6 +180,9 @@ end
 local function test_no_skills_and_no_hint_hides_skills_section()
   setup()
   db.trainers.PRIEST.covered.Scourge = 11
+  W.known[8092] = true
+  W.known[139] = true
+  W.known[589] = true
   Window.Show(record({ fromLevel = 10, toLevel = 11 }))
   Assert.equal(#lines("GameFontNormal"), 0)
   Assert.equal(#shownRows(), 0)

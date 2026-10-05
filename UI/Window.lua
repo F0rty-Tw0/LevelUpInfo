@@ -24,6 +24,16 @@ local HEADING_HEIGHT = 20
 local SECTION_GAP = 6
 local ROW_HEIGHT = 47
 local TEXT_LEFT = 4
+local GROUP_CAP = 5
+
+-- Skill groups in display order; a capped group shows its first `cap` rows,
+-- then a `+N more` line for the rest.
+local GROUPS = {
+  { group = "skill", title = "New skills" },
+  { group = "rank", title = "New ranks" },
+  { group = "missed", title = "Not yet learned", cap = GROUP_CAP, more = "+%d more not yet learned" },
+  { group = "weapon", title = "Weapon skills", cap = GROUP_CAP, more = "+%d more weapon skills" },
+}
 
 -- Gains in SPEC order; each name is a Blizzard global with an English fallback.
 local GAINS = {
@@ -45,8 +55,8 @@ local content
 local current
 local gainLines = {}
 local rows = {}
-local skillsHeading
-local ranksHeading
+local headings = {}
+local moreLines = {}
 local rowsUsed
 
 local function applyAnchor()
@@ -83,8 +93,12 @@ local function build()
   content = _G.CreateFrame("Frame", nil, frame)
   content:SetSize(CONTENT_WIDTH, 1)
   content:SetPoint("TOPLEFT", frame, "TOPLEFT", CONTENT_LEFT, -HEADER_HEIGHT)
-  skillsHeading = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-  ranksHeading = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+  for _, spec in ipairs(GROUPS) do
+    headings[spec.group] = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    if spec.cap then
+      moreLines[spec.group] = content:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    end
+  end
 end
 
 -- Puts a region at the cursor and returns the cursor below it.
@@ -131,24 +145,42 @@ local function nextRow()
   return rows[rowsUsed]
 end
 
-local function fillGroup(heading, title, entries, group, money, y)
-  local titled = false
+-- The `+N more` line of a capped group, shown only when rows were left out.
+local function fillMore(spec, count, y)
+  local line = moreLines[spec.group]
+  if not line then
+    return y
+  end
+  local hidden = count - spec.cap
+  if hidden <= 0 then
+    line:Hide()
+    return y
+  end
+  line:SetText(format(Text(spec.more), hidden))
+  return place(line, TEXT_LEFT, y, LINE_HEIGHT)
+end
+
+local function fillGroup(spec, entries, money, y)
+  local heading = headings[spec.group]
+  local count = 0
   for _, entry in ipairs(entries) do
-    if entry.group == group then
-      if not titled then
-        titled = true
-        heading:SetText(Text(title))
+    if entry.group == spec.group then
+      count = count + 1
+      if count == 1 then
+        heading:SetText(Text(spec.title))
         y = place(heading, TEXT_LEFT, y, HEADING_HEIGHT)
       end
-      local row = nextRow()
-      SkillRow.SetSkill(row, entry, money)
-      y = place(row, 0, y, ROW_HEIGHT)
+      if not spec.cap or count <= spec.cap then
+        local row = nextRow()
+        SkillRow.SetSkill(row, entry, money)
+        y = place(row, 0, y, ROW_HEIGHT)
+      end
     end
   end
-  if not titled then
+  if count == 0 then
     heading:Hide()
   end
-  return y
+  return fillMore(spec, count, y)
 end
 
 local function fillSkills(record, y)
@@ -161,8 +193,9 @@ local function fillSkills(record, y)
   if y > 0 and (#entries > 0 or showHint) then
     y = y + SECTION_GAP
   end
-  y = fillGroup(skillsHeading, "New skills", entries, "skill", money, y)
-  y = fillGroup(ranksHeading, "New ranks", entries, "rank", money, y)
+  for _, spec in ipairs(GROUPS) do
+    y = fillGroup(spec, entries, money, y)
+  end
   if showHint then
     local row = nextRow()
     SkillRow.SetHint(row)
