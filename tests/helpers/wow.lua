@@ -104,6 +104,9 @@ local function newWidget(W, frameType, name, parent, template)
   function widget:IsMouseEnabled()
     return stub.mouse == true
   end
+  function widget:SetHitRectInsets(...)
+    stub.hitRectInsets = { ... }
+  end
   function widget:SetJustifyH(justify)
     stub.justifyH = justify
   end
@@ -430,6 +433,29 @@ function Wow.Install()
       return timer
     end,
   })
+  -- Options: the canvas category is recorded in W.settings.category;
+  -- W.settings.openedID is the id last passed to OpenToCategory.
+  W.settings = {}
+  rawset(_G, "Settings", {
+    RegisterCanvasLayoutCategory = function(frame, name)
+      local category = {
+        frame = frame,
+        name = name,
+        GetID = function()
+          return 77
+        end,
+      }
+      W.settings.category = category
+      return category
+    end,
+    RegisterAddOnCategory = function(category)
+      category.registered = true
+    end,
+    OpenToCategory = function(id)
+      W.settings.openedID = id
+    end,
+  })
+  rawset(_G, "SlashCmdList", {})
   def("wipe", function(t)
     for key in pairs(t) do
       t[key] = nil

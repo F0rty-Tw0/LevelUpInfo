@@ -18,5 +18,7 @@ UI/AutoHide.lua
 UI/SkillRow.lua
 UI/Window.lua
 Core/LevelUp.lua
+Settings/Panel.lua
+Core/SlashCommand.lua
 
 Bootstrap.lua

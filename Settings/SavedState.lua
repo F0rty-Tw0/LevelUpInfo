@@ -56,6 +56,9 @@ local function normalizeSetting(value, setting)
   return setting.default
 end
 
+-- Same rule the saved value gets on load; the options panel reuses it for slider values.
+SavedState.NormalizeSetting = normalizeSetting
+
 local function normalizePosition(position)
   if type(position) ~= "table" or not ANCHOR_POINTS[position.point] then
     return nil

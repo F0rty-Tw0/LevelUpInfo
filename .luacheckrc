@@ -24,6 +24,7 @@ globals = {
   "LevelUpInfoDB",
   -- Slash command
   "SLASH_LEVELUPINFO1",
+  "SlashCmdList",
 }
 
 -- Globals the addon READS (WoW API surface used by this addon)
@@ -65,6 +66,11 @@ read_globals = {
   "SPELL_STAT4_NAME",
   "SPELL_STAT5_NAME",
   "TALENT_POINTS",
+  -- Options panel
+  "CreateMinimalSliderFormatter",
+  "MinimalSliderWithSteppersMixin",
+  "Settings",
+  "wipe",
   -- Level-up records
   "InCombatLockdown",
   "UnitHealthMax",
