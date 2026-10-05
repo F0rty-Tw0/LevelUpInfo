@@ -131,10 +131,10 @@ local function nextRow()
   return rows[rowsUsed]
 end
 
-local function fillGroup(heading, title, entries, newRank, money, y)
+local function fillGroup(heading, title, entries, group, money, y)
   local titled = false
   for _, entry in ipairs(entries) do
-    if entry.newRank == newRank then
+    if entry.group == group then
       if not titled then
         titled = true
         heading:SetText(Text(title))
@@ -154,14 +154,15 @@ end
 local function fillSkills(record, y)
   local class = select(2, _G.UnitClass("player"))
   local race = select(2, _G.UnitRace("player"))
-  local entries, showHint = SkillList.Build(db.trainers, class, race, record.fromLevel, record.toLevel)
+  local faction = _G.UnitFactionGroup("player")
+  local entries, showHint = SkillList.Build(db.trainers, class, race, faction, record.fromLevel, record.toLevel)
   local money = _G.GetMoney()
   rowsUsed = 0
   if y > 0 and (#entries > 0 or showHint) then
     y = y + SECTION_GAP
   end
-  y = fillGroup(skillsHeading, "New skills", entries, false, money, y)
-  y = fillGroup(ranksHeading, "New ranks", entries, true, money, y)
+  y = fillGroup(skillsHeading, "New skills", entries, "skill", money, y)
+  y = fillGroup(ranksHeading, "New ranks", entries, "rank", money, y)
   if showHint then
     local row = nextRow()
     SkillRow.SetHint(row)

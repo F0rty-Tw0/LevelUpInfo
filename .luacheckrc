@@ -44,6 +44,7 @@ read_globals = {
   "SetTrainerServiceTypeFilter",
   "UnitClass",
   "UnitRace",
+  "UnitFactionGroup",
   "debugstack",
   "geterrorhandler",
   -- Skill list

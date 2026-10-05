@@ -31,9 +31,11 @@ local function isNewRank(rank)
   return (tonumber(match(rank, "%d+")) or 0) >= 2
 end
 
+local GROUP_ORDER = { skill = 1, rank = 2, missed = 3, weapon = 4 }
+
 local function byGroupThenLevelThenName(a, b)
-  if a.newRank ~= b.newRank then
-    return not a.newRank
+  if a.group ~= b.group then
+    return GROUP_ORDER[a.group] < GROUP_ORDER[b.group]
   end
   if a.level ~= b.level then
     return a.level < b.level
@@ -41,11 +43,20 @@ local function byGroupThenLevelThenName(a, b)
   return a.name < b.name
 end
 
-local function addLevel(entries, data, race, level)
+-- Missed: at or below the old level, so it could have been bought already.
+local function groupOf(level, fromLevel, newRank)
+  if level <= fromLevel then
+    return "missed"
+  end
+  return newRank and "rank" or "skill"
+end
+
+local function addLevel(entries, data, race, level, fromLevel)
   for spellID, entry in pairs(data.levels[level] or {}) do
     if isVisible(data.covered, race, level, entry) and not _G.IsPlayerSpell(spellID) then
       local info = _G.C_Spell.GetSpellInfo(spellID)
       if info then
+        local newRank = isNewRank(entry.rank)
         entries[#entries + 1] = {
           spellID = spellID,
           level = level,
@@ -53,20 +64,23 @@ local function addLevel(entries, data, race, level)
           icon = info.iconID,
           rank = entry.rank,
           cost = entry.cost,
-          newRank = isNewRank(entry.rank),
+          newRank = newRank,
+          group = groupOf(level, fromLevel, newRank),
         }
       end
     end
   end
 end
 
--- Skills new in levels (fromLevel, toLevel], and whether to show the hint row.
-function SkillList.Build(trainers, class, race, fromLevel, toLevel)
+-- Unlearned trainer skills up to toLevel: new skills and new ranks from
+-- (fromLevel, toLevel], then the ones skipped at or below fromLevel;
+-- plus whether to show the hint row.
+function SkillList.Build(trainers, class, race, _faction, fromLevel, toLevel)
   local entries = {}
   local data = trainers[class]
   if data then
-    for level = fromLevel + 1, toLevel do
-      addLevel(entries, data, race, level)
+    for level = 1, toLevel do
+      addLevel(entries, data, race, level, fromLevel)
     end
   end
   sort(entries, byGroupThenLevelThenName)

@@ -376,6 +376,7 @@ function Wow.Install()
     healthMax = 100,
     manaMax = 50,
     stats = { 10, 10, 10, 10, 10 },
+    faction = "Horde",
   }
 
   local function def(name, fn)
@@ -482,6 +483,9 @@ function Wow.Install()
   end)
   def("UnitRace", function()
     return "Undead", "Scourge"
+  end)
+  def("UnitFactionGroup", function()
+    return W.faction, W.faction
   end)
   def("UnitHealthMax", function()
     return W.healthMax
