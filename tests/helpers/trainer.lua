@@ -59,12 +59,6 @@ function Trainer.Install(W, opts)
   def("IsTradeskillTrainer", function()
     return opts.tradeskill == true
   end)
-  def("UnitClass", function()
-    return "Priest", "PRIEST"
-  end)
-  def("UnitRace", function()
-    return "Undead", "Scourge"
-  end)
   def("geterrorhandler", function()
     return function(message)
       W.errors[#W.errors + 1] = message

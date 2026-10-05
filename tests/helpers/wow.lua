@@ -189,6 +189,50 @@ local function newWidget(W, frameType, name, parent, template)
   function widget:CreateFontString(fontName, layer, fontTemplate)
     return newWidget(W, "FontString", fontName, widget, fontTemplate)
   end
+  function widget:CreateTexture(textureName, layer)
+    return newWidget(W, "Texture", textureName, widget)
+  end
+  function widget:SetTexture(texture)
+    stub.texture = texture
+  end
+  function widget:SetTexCoord(...)
+    stub.texCoord = { ... }
+  end
+  function widget:SetBlendMode(mode)
+    stub.blendMode = mode
+  end
+  function widget:SetAllPoints()
+    stub.allPoints = true
+  end
+  function widget:SetWidth(width)
+    stub.width = width
+  end
+  function widget:SetScale(scale)
+    stub.scale = scale
+  end
+  function widget:GetScale()
+    return stub.scale or 1
+  end
+  function widget:SetMovable(movable)
+    stub.movable = movable and true or false
+  end
+  function widget:RegisterForDrag(...)
+    stub.dragButtons = { ... }
+  end
+  function widget:StartMoving()
+    stub.moving = true
+  end
+  -- Drops the frame at W.dropAt = { point, x, y } (anchored to UIParent).
+  function widget:StopMovingOrSizing()
+    stub.moving = false
+    local drop = W.dropAt
+    if drop then
+      stub.points = { { drop.point, _G.UIParent, drop.point, drop.x, drop.y } }
+    end
+  end
+  function widget:SetTextColor(r, g, b)
+    stub.textColor = { r, g, b }
+  end
   -- CallbackRegistry (MinimalSliderWithSteppersTemplate): fn(owner, ...).
   function widget:RegisterCallback(event, fn, owner)
     stub.callbacks[event] = { fn = fn, owner = owner }
@@ -196,6 +240,17 @@ local function newWidget(W, frameType, name, parent, template)
   -- MinimalSliderWithSteppersMixin:Init(value, min, max, steps, formatters).
   function widget:Init(value, minValue, maxValue, steps, formatters)
     stub.init = { value = value, min = minValue, max = maxValue, steps = steps, formatters = formatters }
+  end
+
+  -- PortraitFrameMixin / TitledPanelMixin and the template's close button.
+  if template == "ButtonFrameTemplate" then
+    function widget:SetPortraitToUnit(unit)
+      stub.portraitUnit = unit
+    end
+    function widget:SetTitle(title)
+      stub.title = title
+    end
+    widget.CloseButton = newWidget(W, "Button", nil, widget)
   end
 
   if name then
@@ -378,6 +433,48 @@ function Wow.Install()
     end
     return t
   end)
+
+  def("ButtonFrameTemplate_HideButtonBar", function() end)
+  def("GetMoney", function()
+    return W.money
+  end)
+  def("GetMoneyString", function(copper)
+    return copper .. "c"
+  end)
+  def("UnitLevel", function()
+    return W.level
+  end)
+  def("UnitClass", function()
+    return "Priest", "PRIEST"
+  end)
+  def("UnitRace", function()
+    return "Undead", "Scourge"
+  end)
+  local function color(r, g, b)
+    return {
+      GetRGB = function()
+        return r, g, b
+      end,
+    }
+  end
+  rawset(_G, "RED_FONT_COLOR", color(1, 0.1, 0.1))
+  rawset(_G, "HIGHLIGHT_FONT_COLOR", color(1, 1, 1))
+  rawset(_G, "HEALTH", "Health")
+  rawset(_G, "MANA", "Mana")
+  rawset(_G, "TALENT_POINTS", "Talent points")
+  for i, stat in ipairs({ "Strength", "Agility", "Stamina", "Intellect", "Spirit" }) do
+    rawset(_G, "SPELL_STAT" .. i .. "_NAME", stat)
+  end
+  -- GameTooltip: the four methods the addon may call, logged in W.tooltip
+  -- as { methodName, args... }.
+  W.tooltip = {}
+  local gameTooltip = {}
+  for _, method in ipairs({ "SetOwner", "SetSpellByID", "Show", "Hide" }) do
+    gameTooltip[method] = function(_, ...)
+      W.tooltip[#W.tooltip + 1] = { method, ... }
+    end
+  end
+  rawset(_G, "GameTooltip", gameTooltip)
 
   newWidget(W, "Frame", "UIParent")
   installDrivers(W)

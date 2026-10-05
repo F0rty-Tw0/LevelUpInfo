@@ -15,5 +15,7 @@ Data/TrainerCache.lua
 Data/TrainerScan.lua
 Data/SkillList.lua
 UI/AutoHide.lua
+UI/SkillRow.lua
+UI/Window.lua
 
 Bootstrap.lua

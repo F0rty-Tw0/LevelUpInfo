@@ -50,6 +50,21 @@ read_globals = {
   "IsPlayerSpell",
   -- Auto-hide
   "C_Timer",
+  -- Window and skill rows
+  "ButtonFrameTemplate_HideButtonBar",
+  "GameTooltip",
+  "GetMoney",
+  "GetMoneyString",
+  "HEALTH",
+  "HIGHLIGHT_FONT_COLOR",
+  "MANA",
+  "RED_FONT_COLOR",
+  "SPELL_STAT1_NAME",
+  "SPELL_STAT2_NAME",
+  "SPELL_STAT3_NAME",
+  "SPELL_STAT4_NAME",
+  "SPELL_STAT5_NAME",
+  "TALENT_POINTS",
 }
 
 -- Test files stub WoW globals freely
