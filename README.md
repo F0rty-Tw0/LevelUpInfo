@@ -8,6 +8,35 @@
 - **Know what to train.** New class skills for your level, with icon, rank and price.
 - **Blizzard look, no libraries.** Zero cost when idle, tiny cost when it works.
 
+## What you see
+
+A small window in Blizzard's own trainer style opens when you level up:
+
+- **Gains.** One line per stat that changed, shown as old value to new value (for example `Stamina 25 → 26`). Talent points show as `+1 Talent points`.
+- **Skills.** New class skills for your level under **New skills**, new ranks of skills you already have under **New ranks**. Each row shows the icon, name, rank and price. The price turns red when you cannot afford it. Hover a row for the spell tooltip.
+- **Learning from trainers.** The addon learns skills and prices from class trainers you visit. Until your race has visited its trainer for the new level, the window adds a line telling you to visit your class trainer.
+
+The window closes by itself after a few seconds. Hover it to keep it open, drag it to move it, or press the X to close it. If you level up in combat, it waits until combat ends.
+
+## Settings
+
+Open them with `/lui` or under Options, AddOns, LevelUpInfo.
+
+| Setting | What it does | Default |
+| --- | --- | --- |
+| Enabled | Show the window on level-up | On |
+| Duration | Seconds before the window closes (3 to 30) | 10 |
+| Wait for combat to end | Hold the window until you leave combat | On |
+| Scale | Window size (0.5 to 1.5) | 1.0 |
+| Reduced motion | Close the window at once instead of fading | Off |
+| Reset position | Put the window back at its default spot | |
+| Clear skill data | Forget the skills learned from trainers | |
+
+## Commands
+
+- `/lui` opens the settings.
+- `/lui test` shows a preview of the window right now.
+
 ## Game versions
 
 WoW: Forever.
