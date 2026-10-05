@@ -6,6 +6,7 @@ end
 local Localization = ns.Localization or require("LevelUpInfo.Core.Localization")
 
 local Text = Localization.Text
+local format = string.format
 
 local TRAINER_TEXTURES = "Interface\\ClassTrainerFrame\\TrainerTextures"
 local HINT_ICON = "Interface\\Icons\\INV_Misc_Book_09"
@@ -14,6 +15,8 @@ local ROW_HEIGHT = 47
 local ICON_SIZE = 36
 local PAD = 6
 local HINT_WIDTH = 230
+local SOURCE_WIDTH = 190
+local SOURCE_GAP = 2
 
 -- One trainer-style row. Its fields (icon, name, rank, price) belong to our
 -- own frame; Blizzard frames are never touched.
@@ -43,6 +46,15 @@ local function newTexture(row, layer, firstCoord, lastCoord)
   return texture
 end
 
+-- Second line for quest and weapon-master spells. NPC names and quest titles
+-- are proper names and stay unlocalized; the place is a localized key.
+local function sourceText(source)
+  if source.kind == "quest" then
+    return format(Text("Quest: %s · %s · %s"), source.quest, source.npc, Text(source.place))
+  end
+  return format(Text("Weapon master: %s · %s"), source.npc, Text(source.place))
+end
+
 function SkillRow.Create(parent, enterFn, leaveFn)
   local row = _G.CreateFrame("Button", nil, parent)
   row:SetSize(ROW_WIDTH, ROW_HEIGHT)
@@ -61,6 +73,11 @@ function SkillRow.Create(parent, enterFn, leaveFn)
   row.price = row:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
   row.price:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -PAD, PAD)
   row.price:SetJustifyH("RIGHT")
+  row.sourceLine = row:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+  row.sourceLine:SetPoint("TOPLEFT", row.name, "BOTTOMLEFT", 0, -SOURCE_GAP)
+  row.sourceLine:SetWidth(SOURCE_WIDTH)
+  row.sourceLine:SetJustifyH("LEFT")
+  row.sourceLine:SetWordWrap(false)
   row:SetScript("OnEnter", onEnter)
   row:SetScript("OnLeave", onLeave)
   return row
@@ -72,9 +89,19 @@ function SkillRow.SetSkill(row, entry, money)
   row.name:SetWidth(0)
   row.name:SetText(entry.name)
   row.rank:SetText(entry.rank)
-  row.price:SetText(_G.GetMoneyString(entry.cost))
-  local color = money >= entry.cost and _G.HIGHLIGHT_FONT_COLOR or _G.RED_FONT_COLOR
-  row.price:SetTextColor(color:GetRGB())
+  if entry.cost then
+    row.price:SetText(_G.GetMoneyString(entry.cost))
+    local color = money >= entry.cost and _G.HIGHLIGHT_FONT_COLOR or _G.RED_FONT_COLOR
+    row.price:SetTextColor(color:GetRGB())
+  else
+    row.price:SetText("")
+  end
+  if entry.source then
+    row.sourceLine:SetText(sourceText(entry.source))
+    row.sourceLine:Show()
+  else
+    row.sourceLine:Hide()
+  end
 end
 
 function SkillRow.SetHint(row)
@@ -84,6 +111,7 @@ function SkillRow.SetHint(row)
   row.name:SetText(Text("Visit your class trainer to see all new skills."))
   row.rank:SetText("")
   row.price:SetText("")
+  row.sourceLine:Hide()
 end
 
 ns.SkillRow = SkillRow

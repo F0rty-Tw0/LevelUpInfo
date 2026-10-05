@@ -7,6 +7,21 @@ local parent
 local log
 
 local ENTRY = { spellID = 8092, name = "Mind Blast", icon = 136224, rank = "Rank 1", cost = 300 }
+local QUEST_ENTRY = {
+  spellID = 2652,
+  name = "Touch of Weakness",
+  icon = 136143,
+  rank = "",
+  source = { kind = "quest", quest = "Q", npc = "N", place = "P" },
+}
+local WEAPON_ENTRY = {
+  spellID = 202,
+  name = "Two-Handed Swords",
+  icon = 135327,
+  rank = "",
+  cost = 1000,
+  source = { kind = "weapon", npc = "N", place = "P", cost = 1000 },
+}
 
 -- Fresh fake client, module and parent frame per test; onEnter/onLeave log into `log`.
 local function setup()
@@ -167,6 +182,59 @@ local function test_game_tooltip_fields_stay_unchanged()
   Assert.equal(W.changedKeys(_G.GameTooltip, snapshot), "")
 end
 
+local function test_source_line_layout()
+  setup()
+  local row = newRow()
+  local state = W.state(row.sourceLine)
+  Assert.equal(state.template, "GameFontHighlightSmall")
+  local point, relativeTo, relativePoint, x, y = row.sourceLine:GetPoint()
+  Assert.equal(point, "TOPLEFT")
+  Assert.equal(relativeTo, row.name)
+  Assert.equal(relativePoint, "BOTTOMLEFT")
+  Assert.equal(x, 0)
+  Assert.equal(y, -2)
+  Assert.equal(state.width, 190)
+  Assert.equal(state.wordWrap, false)
+end
+
+local function test_quest_entry_shows_quest_line_and_no_price()
+  setup()
+  local row = newRow()
+  SkillRow.SetSkill(row, QUEST_ENTRY, W.money)
+  Assert.equal(row.sourceLine:GetText(), "Quest: Q · N · P")
+  Assert.equal(row.sourceLine:IsShown(), true)
+  Assert.equal(row.price:GetText(), "")
+end
+
+local function test_weapon_entry_shows_master_line_and_price()
+  setup()
+  local row = newRow()
+  SkillRow.SetSkill(row, WEAPON_ENTRY, 999)
+  Assert.equal(row.sourceLine:GetText(), "Weapon master: N · P")
+  Assert.equal(row.sourceLine:IsShown(), true)
+  Assert.equal(row.price:GetText(), "1000c")
+  Assert.equal(table.concat(W.state(row.price).textColor, ","), "1,0.1,0.1")
+  SkillRow.SetSkill(row, WEAPON_ENTRY, 1000)
+  Assert.equal(table.concat(W.state(row.price).textColor, ","), "1,1,1")
+end
+
+local function test_trainer_entry_hides_source_line_after_reuse()
+  setup()
+  local row = newRow()
+  SkillRow.SetSkill(row, QUEST_ENTRY, W.money)
+  SkillRow.SetSkill(row, ENTRY, W.money)
+  Assert.equal(row.sourceLine:IsShown(), false)
+  Assert.equal(row.price:GetText(), "300c")
+end
+
+local function test_hint_hides_source_line_after_reuse()
+  setup()
+  local row = newRow()
+  SkillRow.SetSkill(row, WEAPON_ENTRY, W.money)
+  SkillRow.SetHint(row)
+  Assert.equal(row.sourceLine:IsShown(), false)
+end
+
 return function()
   test_row_uses_trainer_texture_with_exact_tex_coords()
   test_row_is_298_by_47()
@@ -182,4 +250,9 @@ return function()
   test_hint_row_shows_hint_icon_and_text_with_empty_price()
   test_hovering_the_hint_row_shows_no_tooltip_but_still_pauses()
   test_game_tooltip_fields_stay_unchanged()
+  test_source_line_layout()
+  test_quest_entry_shows_quest_line_and_no_price()
+  test_weapon_entry_shows_master_line_and_price()
+  test_trainer_entry_hides_source_line_after_reuse()
+  test_hint_hides_source_line_after_reuse()
 end

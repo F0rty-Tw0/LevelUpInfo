@@ -110,6 +110,9 @@ local function newWidget(W, frameType, name, parent, template)
   function widget:SetJustifyH(justify)
     stub.justifyH = justify
   end
+  function widget:SetWordWrap(wrap)
+    stub.wordWrap = wrap
+  end
   function widget:GetParent()
     return stub.parent
   end
