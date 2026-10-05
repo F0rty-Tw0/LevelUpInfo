@@ -10,12 +10,169 @@ end
 -- Several weapon masters for one skill: one row each, preferred master (capital) first.
 -- Sources: Wowhead WoW: Forever pages (spell "Reward from" tab, quest and NPC pages).
 -- npc/place is where every quest version for the spell is handed in.
--- Weapon rows are left out until a Forever source states the training price.
+-- Weapon rows: skills and class rules from each master's Forever "Teaches" data, both factions, capital first.
 local OtherSources = {
-  WARRIOR = {},
-  PALADIN = {},
-  HUNTER = {},
-  ROGUE = {},
+  WARRIOR = {
+    -- Price: same as Classic per user (2026-10-06); https://blizzardwatch.com/2024/11/27/weapon-trainers-wow-classic-forever/
+    -- https://www.wowhead.com/forever/npc=11867/woo-ping
+    { spellID = 200, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 10000 },
+    { spellID = 201, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 202, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 227, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 5011, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=13084/bixi-wobblebonk
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Bixi Wobblebonk", place = "Ironforge", cost = 1000 },
+    { spellID = 2567, level = 1, kind = "weapon", faction = "Alliance", npc = "Bixi Wobblebonk", place = "Ironforge", cost = 1000 },
+    { spellID = 5011, level = 1, kind = "weapon", faction = "Alliance", npc = "Bixi Wobblebonk", place = "Ironforge", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11865/buliwyf-stonehand
+    { spellID = 196, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 197, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 198, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 199, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 266, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 15590, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11866/ilyenia-moonfire
+    { spellID = 227, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 264, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 2567, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 15590, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=2704/hanashi
+    { spellID = 264, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    { spellID = 196, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    { spellID = 227, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    { spellID = 2567, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    { spellID = 197, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11868/sayoc
+    { spellID = 196, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 197, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 264, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 2567, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 15590, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11869/ansekhwa
+    { spellID = 198, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    { spellID = 199, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    { spellID = 227, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    { spellID = 266, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11870/archibald
+    { spellID = 200, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 10000 },
+    { spellID = 201, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+    { spellID = 202, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+    { spellID = 5011, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+  },
+  PALADIN = {
+    -- Price: same as Classic per user (2026-10-06); https://blizzardwatch.com/2024/11/27/weapon-trainers-wow-classic-forever/
+    -- https://www.wowhead.com/forever/npc=11867/woo-ping
+    { spellID = 200, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 10000 },
+    { spellID = 201, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 202, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11865/buliwyf-stonehand
+    { spellID = 196, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 197, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 198, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 199, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=2704/hanashi
+    { spellID = 196, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    { spellID = 197, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11868/sayoc
+    { spellID = 196, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 197, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11869/ansekhwa
+    { spellID = 198, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    { spellID = 199, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11870/archibald
+    { spellID = 200, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 10000 },
+    { spellID = 201, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+    { spellID = 202, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+  },
+  HUNTER = {
+    -- Price: same as Classic per user (2026-10-06); https://blizzardwatch.com/2024/11/27/weapon-trainers-wow-classic-forever/
+    -- https://www.wowhead.com/forever/npc=11867/woo-ping
+    { spellID = 200, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 10000 },
+    { spellID = 201, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 202, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 227, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 5011, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=13084/bixi-wobblebonk
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Bixi Wobblebonk", place = "Ironforge", cost = 1000 },
+    { spellID = 2567, level = 1, kind = "weapon", faction = "Alliance", npc = "Bixi Wobblebonk", place = "Ironforge", cost = 1000 },
+    { spellID = 5011, level = 1, kind = "weapon", faction = "Alliance", npc = "Bixi Wobblebonk", place = "Ironforge", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11865/buliwyf-stonehand
+    { spellID = 196, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 197, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 266, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 15590, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11866/ilyenia-moonfire
+    { spellID = 227, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 264, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 2567, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 15590, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=2704/hanashi
+    { spellID = 264, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    { spellID = 196, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    { spellID = 227, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    { spellID = 2567, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    { spellID = 197, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11868/sayoc
+    { spellID = 196, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 197, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 264, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 2567, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 15590, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11869/ansekhwa
+    { spellID = 227, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    { spellID = 266, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11870/archibald
+    { spellID = 200, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 10000 },
+    { spellID = 201, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+    { spellID = 202, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+    { spellID = 5011, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+  },
+  ROGUE = {
+    -- Price: same as Classic per user (2026-10-06); https://blizzardwatch.com/2024/11/27/weapon-trainers-wow-classic-forever/
+    -- https://www.wowhead.com/forever/npc=11867/woo-ping
+    { spellID = 201, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 5011, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=13084/bixi-wobblebonk
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Bixi Wobblebonk", place = "Ironforge", cost = 1000 },
+    { spellID = 2567, level = 1, kind = "weapon", faction = "Alliance", npc = "Bixi Wobblebonk", place = "Ironforge", cost = 1000 },
+    { spellID = 5011, level = 1, kind = "weapon", faction = "Alliance", npc = "Bixi Wobblebonk", place = "Ironforge", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11865/buliwyf-stonehand
+    { spellID = 196, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 198, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 266, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 15590, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11866/ilyenia-moonfire
+    { spellID = 264, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 2567, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 15590, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=2704/hanashi
+    { spellID = 264, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    { spellID = 196, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    { spellID = 2567, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11868/sayoc
+    { spellID = 196, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 264, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 2567, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 15590, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11869/ansekhwa
+    { spellID = 198, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    { spellID = 266, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11870/archibald
+    { spellID = 201, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+    { spellID = 5011, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+  },
   PRIEST = {
     -- https://www.wowhead.com/forever/spell=1277370/divine-grace
     -- https://www.wowhead.com/forever/quest=94773/divine-grace
@@ -138,11 +295,131 @@ local OtherSources = {
       place = "Orgrimmar",
       quest = "Shadowguard",
     },
+    -- Price: same as Classic per user (2026-10-06); https://blizzardwatch.com/2024/11/27/weapon-trainers-wow-classic-forever/
+    -- https://www.wowhead.com/forever/npc=11867/woo-ping
+    { spellID = 227, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=13084/bixi-wobblebonk
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Bixi Wobblebonk", place = "Ironforge", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11865/buliwyf-stonehand
+    { spellID = 198, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11866/ilyenia-moonfire
+    { spellID = 227, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=2704/hanashi
+    { spellID = 227, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11868/sayoc
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11869/ansekhwa
+    { spellID = 198, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    { spellID = 227, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11870/archibald
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
   },
-  SHAMAN = {},
-  MAGE = {},
-  WARLOCK = {},
-  DRUID = {},
+  SHAMAN = {
+    -- Price: same as Classic per user (2026-10-06); https://blizzardwatch.com/2024/11/27/weapon-trainers-wow-classic-forever/
+    -- https://www.wowhead.com/forever/npc=11867/woo-ping
+    { spellID = 227, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=13084/bixi-wobblebonk
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Bixi Wobblebonk", place = "Ironforge", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11865/buliwyf-stonehand
+    { spellID = 196, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 197, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 198, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 199, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 15590, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11866/ilyenia-moonfire
+    { spellID = 227, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 15590, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=2704/hanashi
+    { spellID = 196, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    { spellID = 227, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    { spellID = 197, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11868/sayoc
+    { spellID = 196, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 197, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 15590, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11869/ansekhwa
+    { spellID = 198, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    { spellID = 199, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    { spellID = 227, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11870/archibald
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+  },
+  MAGE = {
+    -- Price: same as Classic per user (2026-10-06); https://blizzardwatch.com/2024/11/27/weapon-trainers-wow-classic-forever/
+    -- https://www.wowhead.com/forever/npc=11867/woo-ping
+    { spellID = 201, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 227, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=13084/bixi-wobblebonk
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Bixi Wobblebonk", place = "Ironforge", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11866/ilyenia-moonfire
+    { spellID = 227, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=2704/hanashi
+    { spellID = 227, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11868/sayoc
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11869/ansekhwa
+    { spellID = 227, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11870/archibald
+    { spellID = 201, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+  },
+  WARLOCK = {
+    -- Price: same as Classic per user (2026-10-06); https://blizzardwatch.com/2024/11/27/weapon-trainers-wow-classic-forever/
+    -- https://www.wowhead.com/forever/npc=11867/woo-ping
+    { spellID = 201, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 227, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=13084/bixi-wobblebonk
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Bixi Wobblebonk", place = "Ironforge", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11866/ilyenia-moonfire
+    { spellID = 227, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=2704/hanashi
+    { spellID = 227, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11868/sayoc
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11869/ansekhwa
+    { spellID = 227, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11870/archibald
+    { spellID = 201, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+  },
+  DRUID = {
+    -- Price: same as Classic per user (2026-10-06); https://blizzardwatch.com/2024/11/27/weapon-trainers-wow-classic-forever/
+    -- https://www.wowhead.com/forever/npc=11867/woo-ping
+    { spellID = 200, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 10000 },
+    { spellID = 227, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Woo Ping", place = "Stormwind", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=13084/bixi-wobblebonk
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Bixi Wobblebonk", place = "Ironforge", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11865/buliwyf-stonehand
+    { spellID = 198, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 199, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    { spellID = 15590, level = 1, kind = "weapon", faction = "Alliance", npc = "Buliwyf Stonehand", place = "Ironforge", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11866/ilyenia-moonfire
+    { spellID = 227, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    { spellID = 15590, level = 1, kind = "weapon", faction = "Alliance", npc = "Ilyenia Moonfire", place = "Darnassus", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=2704/hanashi
+    { spellID = 227, level = 1, kind = "weapon", faction = "Horde", npc = "Hanashi", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11868/sayoc
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    { spellID = 15590, level = 1, kind = "weapon", faction = "Horde", npc = "Sayoc", place = "Orgrimmar", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11869/ansekhwa
+    { spellID = 198, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    { spellID = 199, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    { spellID = 227, level = 1, kind = "weapon", faction = "Horde", npc = "Ansekhwa", place = "Thunder Bluff", cost = 1000 },
+    -- https://www.wowhead.com/forever/npc=11870/archibald
+    { spellID = 200, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 10000 },
+    { spellID = 1180, level = 1, kind = "weapon", faction = "Horde", npc = "Archibald", place = "Undercity", cost = 1000 },
+  },
 }
 
 ns.OtherSources = OtherSources
