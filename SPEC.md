@@ -8,7 +8,7 @@ Idea credit: the level-up screen concept of GnomeLevelUp. No code or assets are 
 ## Scope
 
 - Flavor: **WoW: Forever only** (`## Interface: 16001`). Classic Era comes later as its own change (different trainer API order, unverified at runtime).
-- Class trainers only. Profession, pet and weapon trainers are ignored.
+- The scan reads class trainers only; profession, pet and weapon trainers are ignored. Weapon skills and quest-reward spells come from a hardcoded table instead (see Other sources).
 - English only. Every player-visible string goes through `Localization.Text("...")` (a `Core/Localization.lua` copied from RaidGroupWrap); Blizzard global strings (`HEALTH`, `MANA`, `SPELL_STAT1_NAME`…) are used where they exist, so those parts are already localized.
 - Repo scaffolding copies RaidGroupWrap: `AGENTS.md`/`CLAUDE.md`, `.luacheckrc`, `stylua.toml`, `.editorconfig`, `.pkgmeta`, `scripts/` (lint, test runner, release, package), `tests/helpers/` and the GitHub CI + release workflows (lint, minify, re-run tests on the minified code).
 
@@ -24,6 +24,8 @@ In game on build 16001 (marked **game**) or in Blizzard's `forever` UI source (m
 - **game** `SetTrainerServiceTypeFilter(type, bool)` changes the list synchronously (`GetNumTrainerServices` 0 → 5 inside one `/run`) and fires `TRAINER_UPDATE` synchronously once per call, even when the value does not change. Blizzard's selected service index stayed the same. **src** Blizzard's `TRAINER_UPDATE` handler keeps its scroll position unless its own dropdown made the change (`Blizzard_TrainerUI.lua` `ClassTrainerFrame_OnEvent`).
 - **game** `GetTrainerServiceTypeFilter(type)`, `C_Trainer.GetTrainerType()` (`Enum.TrainerType`: `General`=0, `Tradeskills`=2, `Pet`=3) and `IsTradeskillTrainer` exist.
 - **game** `IsPlayerSpell`, `C_Spell.GetSpellInfo`, `C_Spell.GetSpellSubtext`, `C_SpellBook.IsSpellKnown` exist. Global `GetSpellInfo` / `GetSpellSubtext` are **nil**.
+- **game** (2026-10-05) `IsPlayerSpell(lowerRankID)` stays true after a higher rank is learned: `IsPlayerSpell(585)` (Smite Rank 1) is true on a priest who knows Smite Rank 2. So superseded ranks never show as Not yet learned.
+- **game** (2026-10-05) `IsPlayerSpell` is true for a known weapon skill: `IsPlayerSpell(198)` (One-Handed Maces) is true on a priest.
 - **game** The spellbook lists **no** future spells; `C_EventToastManager.GetLevelUpDisplayToastsFromLevel` returns only the "Level N / You've Reached" banner. The trainer window is the only source of skill data.
 - **game** The trainer window does not list every future level; it shows a window of levels.
 - **game** `ButtonFrameTemplate` and `Interface\ClassTrainerFrame\TrainerTextures` exist. **src** `PortraitFrameMixin:SetPortraitToUnit`, `TitledPanelMixin:SetTitle`, `ButtonFrameTemplate_HideButtonBar`.
@@ -37,8 +39,14 @@ In game on build 16001 (marked **game**) or in Blizzard's `forever` UI source (m
 
 - **Stat timing:** whether `UnitHealthMax` / `UnitPowerMax` / `UnitStat` still return the old values inside `PLAYER_LEVEL_UP` (the `before` snapshot assumes they do), and that `UnitStat` exists on Forever. Check: ding, compare the window's new values with the character sheet. If the window shows new + gain, take `before` = live − gain instead (one-line change).
 - **Arrow glyph:** `→` renders in `GameFontHighlight`; if it shows as a box, swap the format string to `>`.
+- **Dot glyph:** `·` renders in `GameFontHighlightSmall` (the source lines `Quest: %s · %s · %s` and `Weapon master: %s · %s`); if it shows as a box, swap it to `-` in those two format strings.
 
-- At a weapon master (if Forever has them): `C_Trainer.GetTrainerType()` / `IsTradeskillTrainer()`. If weapon masters report `General`, the scan also requires the trainer's services to include at least one spell whose `serviceType` is not `header` **and** that is not a weapon skill (rule decided after the check; until then weapon masters are a known gap).
+- At a weapon master: `C_Trainer.GetTrainerType()` / `IsTradeskillTrainer()`. If weapon masters report `General`, the unchanged scan records their skills into the cache; the Skill list drops any cache entry whose spell has a weapon row, so weapon skills still show under Weapon skills with their source line, never under Not yet learned. Coverage is still the concern: a weapon master's levels could raise `covered` without a class trainer visit. If they report `General`, the scan also requires the trainer's services to include at least one spell whose `serviceType` is not `header` **and** that is not a weapon skill (rule decided after the check).
+- **Hardcoded rows:** spot-check one quest racial per priest race (quest, NPC and city match; the spell is learned from that quest) and one weapon master per faction (NPC, city and skill list).
+- **Weapon training prices:** no WoW: Forever source lists them; the table uses Classic's prices (10 silver per skill, Polearms 1 gold). Check at Woo Ping (Stormwind) and Hanashi (Orgrimmar).
+- **Desperate Prayer (Dwarf priest quest racial)** is left out of the table: sources disagree on where the quest is handed in (High Priest Rohan, Ironforge vs High Priestess Laurena, Stormwind). Check in game, then add the row.
+- **Previous rank required:** a trainer sells a rank only after the previous one is known (inferred from Classic). If not, a known Rank 3 does not imply Rank 2 and Not yet learned needs a superseded-rank filter.
+- **Talent-gated ranks:** the trainer cache holds no ranks of talent spells that a character without the talent can never buy; if it does, they sit in Not yet learned on every level-up.
 
 ## The window
 
@@ -53,8 +61,10 @@ Built the first time it is shown, never at login. Global name `LevelUpInfoFrame`
   - 36×36 spell icon, name in `GameFontNormal`, rank in `GameFontNormalSmall` right after the name.
   - Price: one `FontString` (`GameFontHighlightSmall`) set to `GetMoneyString(cost)`, right-aligned. Text white when `GetMoney() >= cost`, red (`RED_FONT_COLOR`) otherwise. Read once when the window is filled; not live-updated.
   - Hover: `GameTooltip:SetOwner(row, "ANCHOR_RIGHT")` + `GameTooltip:SetSpellByID(spellID)` + `Show()`. Leave hides it.
+  - **Source line** (quest and weapon entries only): one small font string per row (`GameFontHighlightSmall`) under the name, anchored `TOPLEFT` to the name's `BOTTOMLEFT` with a 2 px gap, fixed width 190 px, no word wrap (long text truncates with an ellipsis). Quest entry: `Quest: <quest> · <npc> · <place>`, no price. Weapon entry: `Weapon master: <npc> · <place>`, price from the row's `cost` with the same red/white rule. Rank text is empty for both. Hidden for trainer entries and the hint row. NPC and place never go into `GameTooltip`. The row stays 298×47.
   - Rows are pooled and reused.
-  - **Two groups**, each under a heading line (`GameFontNormal`, pooled like the gains lines) shown only when its group has rows: **New skills** first, then **New ranks**. An entry is a new rank when the first number in its stored `rank` text is 2 or more (`"Rank 2"` → rank; `"Rank 1"`, `""`, no number → skill). Accepted edge: if you skipped Rank 1 at an earlier level, Rank 2 shows under New ranks.
+  - **Four groups**, each under a heading line (`GameFontNormal`, pooled like the gains lines) shown only when its group has rows, in this order: **New skills**, **New ranks**, **Not yet learned**, **Weapon skills** (see Skill list for which entries go where). An entry is a new rank when the first number in its stored `rank` text is 2 or more (`"Rank 2"` → rank; `"Rank 1"`, `""`, no number → skill). Accepted edge: if you skipped Rank 1 at an earlier level, Rank 2 shows under New ranks.
+  - **Cap:** Not yet learned and Weapon skills each show their first 5 entries; when more exist, one pooled `GameFontHighlightSmall` line follows them: `+N more not yet learned` / `+N more weapon skills`. New skills and New ranks are not capped.
 - **Hint row**, after the skill rows, same row style, icon `Interface\Icons\INV_Misc_Book_09`, no price: `Visit your class trainer to see all new skills.` When it shows: see Skill list.
 - No skills and no hint → the skills section is hidden.
 - Frame height fits its content.
@@ -77,7 +87,7 @@ Built the first time it is shown, never at login. Global name `LevelUpInfoFrame`
 1. `PLAYER_LEVEL_UP(level, …)`: if there is no pending record and the window is not showing a live (non-test) record, start one with `fromLevel = level - 1` (from the payload, never `UnitLevel`) and a `before` snapshot read live at that moment: `health = UnitHealthMax("player")`, `power = UnitPowerMax("player", Enum.PowerType.Mana)` (a zero mana gain hides the line anyway), and the five stats from `UnitStat("player", 1..5)` (effective value, second return). Later dings of the same record keep the first `before`. Set `toLevel = level`, add the deltas.
 2. If the window is showing a live record (visible or fading), the ding merges into that record and the window refills **now**, even in combat (it is already on screen); `PLAYER_REGEN_ENABLED` is not registered.
 3. Otherwise, if **Wait for combat** is on and `InCombatLockdown()` is true, register `PLAYER_REGEN_ENABLED`; on it, unregister and show. Otherwise show now.
-4. Several dings before the show → one window: summed gains, title = `toLevel`, skills for every level in `(fromLevel, toLevel]`. Hiding the window ends the live record.
+4. Several dings before the show → one window: summed gains, title = `toLevel`, new skills for every level in `(fromLevel, toLevel]` (plus Not yet learned and Weapon skills, see Skill list). Hiding the window ends the live record.
 5. **Enabled off:** `PLAYER_LEVEL_UP` returns before any work. Trainer scans still run, so the cache is ready when the addon is turned back on.
 
 ### Trainer scan
@@ -96,11 +106,43 @@ Built the first time it is shown, never at login. Global name `LevelUpInfoFrame`
 
 Prices are the last price seen at a trainer (reputation discounts can make it differ slightly).
 
-### Skill list (levels `(fromLevel, toLevel]`, class `C`, race `R`)
+### Other sources
+
+`Data/OtherSources.lua`: a static table keyed by class token, for spells no class trainer sells. Loaded with the addon; no events, frames or timers. Each row:
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `spellID` | positive integer | The spell taught |
+| `level` | positive integer | Lowest character level that can learn it (1 when none) |
+| `kind` | `"quest"` or `"weapon"` | How it is learned |
+| `race` | race file token, optional | Only this race sees the row (racials); same token as the race rule (`Scourge`, `NightElf`, …) |
+| `faction` | `"Horde"` or `"Alliance"`, optional | Only this faction sees the row (weapon masters) |
+| `npc` | string | Quest giver or weapon master name (English, like the game data) |
+| `place` | string | City or zone, shown through `Localization.Text` |
+| `quest` | string, `kind = "quest"` only | Quest title |
+| `cost` | copper number, `kind = "weapon"` only | Training price |
+
+A row with neither `race` nor `faction` applies to every member of the class. A weapon skill taught by several masters of one faction is one row per master; the window shows only the first matching row, so row order is data (the faction capital first).
+
+Current data, from Wowhead WoW: Forever pages: 11 priest racial quest rows (Human, Dwarf, Night Elf, Gnome, Undead, Troll; in Forever Rank 1 of each priest racial is a class-quest reward, so the trainer scan never sees it) and 192 weapon-master rows for all 9 classes, both factions. Other classes' quest spells come later, each after an in-game check. Malformed rows are a developer error caught by the data-shape test, not at runtime.
+
+### Skill list (levels `1..toLevel`, gained levels `(fromLevel, toLevel]`, class `C`, race `R`, faction `F`)
 
 A missing `trainers[C]`, `covered` table or `covered[C][x]` counts as **0**.
 
-An entry at level `L` is shown when `IsPlayerSpell(spellID)` is false **and**:
+Candidates come from two places:
+
+- **Trainer cache:** every cached entry at levels `1..toLevel`, filtered by the race rule below.
+- **Other sources:** rows of `OtherSources[C]` with `level <= toLevel`, matching `race` and `faction` when set (`UnitFactionGroup("player")` nil → faction rows are skipped).
+
+Every candidate needs `IsPlayerSpell(spellID)` false. **Dedupe** by `spellID`, one line per spell:
+
+- A quest row yields to any visible candidate with the same spell: a trainer entry (the trainer sells it, so its price is the useful fact) or an earlier quest or weapon row.
+- A weapon row wins over a trainer-cache entry with the same spell (which is dropped) but yields to an earlier weapon row.
+
+A trainer rank whose Rank 1 is a quest reward (priest racial Rank 2 listed while Rank 1 is unknown) shows as usual; the quest row for Rank 1 appears in the same window and says where to start.
+
+A trainer-cache entry at level `L` passes the race rule when:
 
 | Your race saw it (`races[R]`) | Your race covered `L` (`covered[C][R] >= L`) | Another covering race (`covered[C][S] >= L`) lacks it | Shown |
 | --- | --- | --- | --- |
@@ -113,7 +155,16 @@ Known trade-off (accepted): before your race's first trainer visit, a racial of 
 
 **Hint row** shows when `covered[C][R] < toLevel` — your own race's trainer has not covered the new level, so the list may be incomplete or include another race's racial.
 
-Each entry carries `newRank` (see The window → Two groups). Rows sort by group (skills before ranks), then level, then name. Name and icon come from `C_Spell.GetSpellInfo(spellID)` at display time (an entry whose info is nil is skipped); rank is the stored `rank`.
+Each entry carries `newRank` (see The window → Four groups) and a `group`:
+
+| Group | Which entries | Order inside |
+| --- | --- | --- |
+| `skill` (New skills) | not weapon, level in `(fromLevel, toLevel]`, not a new rank | level, then name |
+| `rank` (New ranks) | not weapon, level in `(fromLevel, toLevel]`, new rank | level, then name |
+| `missed` (Not yet learned) | not weapon, level `<= fromLevel` | level, then name (lowest first: the buying order) |
+| `weapon` (Weapon skills) | weapon rows, any level `<= toLevel` | name |
+
+Rows sort by group (skill, rank, missed, weapon), then the order above. Quest rows have no rank text, so they are never a new rank. Name and icon come from `C_Spell.GetSpellInfo(spellID)` at display time (an entry whose info is nil is skipped); rank is the stored `rank` (empty for quest and weapon entries); `cost` is the cached price, the weapon row's `cost`, or nil for quests.
 
 ## Settings
 
@@ -132,7 +183,7 @@ Canvas panel under Options → AddOns → LevelUpInfo, same pattern as MouseOver
 Slash command `/lui`:
 
 - `/lui` opens the settings.
-- `/lui test` shows a preview now, ignoring **Enabled** and **Wait for combat**: title = current level, sample gains (+15 Health, +20 Mana, +1 Stamina) with `before` = live value − sample gain (so new = your current value), skills for `(currentLevel - 1, currentLevel]` from the cache (plus the hint row by its normal rule). A test is not a live record: a real ding replaces it.
+- `/lui test` shows a preview now, ignoring **Enabled** and **Wait for combat**: title = current level, sample gains (+15 Health, +20 Mana, +1 Stamina) with `before` = live value − sample gain (so new = your current value), skills for `(currentLevel - 1, currentLevel]` from the cache (plus the hint row by its normal rule), and Not yet learned and Weapon skills by the same Skill list rules. A test is not a live record: a real ding replaces it.
 
 ## SavedVariables
 
@@ -188,13 +239,15 @@ Normalized on load (same shape as RaidGroupWrap `SavedState.Initialize`, but wit
 6. Forced filters: press **Clear skill data**, untick all three trainer filters, close and reopen the trainer → Blizzard's list is still empty and the dropdown still shows all three unticked; `/dump LevelUpInfoDB.trainers.<CLASS>.covered` shows your race at the highest level the trainer lists with all filters on; `/dump LevelUpInfoDB.trainers.<CLASS>.levels[L]` for one `L` at or below your level holds a spell you already know (`/dump IsPlayerSpell(<id>)` → true), and for one `L` above your level holds a spell you cannot learn yet.
 7. Second race of the same class at a trainer → the first race's racial is not shown to it.
 8. Idle check: `/etrace` shows the addon's frame receiving only `PLAYER_LEVEL_UP` / `TRAINER_SHOW`; addon memory stays flat across 10 minutes of play.
+9. An Undead priest dings to 10 → Touch of Weakness shows with `Quest: … · <npc> · <place>`; a Dwarf priest never sees it.
+10. A Horde warrior sees up to 5 weapon skills it does not know under Weapon skills (then `+N more weapon skills`), each with one Horde weapon master and price; never an Alliance master.
+11. A level-60 character with 57 skipped spells sees 5 rows under Not yet learned and `+52 more not yet learned`.
 
 ## Out of scope (decided)
 
 - Classic Era (later), Retail, other Classic flavors.
-- Static skill data tables, weapon-skill lists, profession/pet/weapon trainers.
+- Harvested trainer data shipped with the addon (its own later piece); scanning profession/pet/weapon trainers.
 - Custom colors, fonts, background opacity, sound choice (the game already plays its level-up sound), strata, minimap button, portrait modes, Escape-to-close.
 - Hiding or replacing Blizzard's level-up banner.
-- Showing skills you skipped at earlier levels (only skills new at the gained levels are listed).
 - Live price colour updates while the window is open.
 - Playtime per level (needs `RequestTimePlayed`, which prints to chat and adds an event), gains printed to chat.
