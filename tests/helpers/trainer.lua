@@ -81,10 +81,10 @@ function Trainer.Install(W, opts)
       return opts.trainerType or 0
     end,
   })
-  rawset(_G, "Enum", {
-    TrainerType = { General = 0, Tradeskills = 2, Pet = 3 },
-    TooltipDataType = { Spell = 1 },
-  })
+  local enum = _G.Enum or {}
+  enum.TrainerType = { General = 0, Tradeskills = 2, Pet = 3 }
+  enum.TooltipDataType = { Spell = 1 }
+  rawset(_G, "Enum", enum)
 end
 
 -- Makes GetTrainerServiceInfo(i) error; nil clears it.

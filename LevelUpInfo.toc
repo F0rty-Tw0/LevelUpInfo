@@ -17,5 +17,6 @@ Data/SkillList.lua
 UI/AutoHide.lua
 UI/SkillRow.lua
 UI/Window.lua
+Core/LevelUp.lua
 
 Bootstrap.lua

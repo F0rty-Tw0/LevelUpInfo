@@ -366,6 +366,9 @@ function Wow.Install()
     mouseOver = {},
     timers = {},
     liveTimers = 0,
+    healthMax = 100,
+    manaMax = 50,
+    stats = { 10, 10, 10, 10, 10 },
   }
 
   local function def(name, fn)
@@ -449,6 +452,20 @@ function Wow.Install()
   end)
   def("UnitRace", function()
     return "Undead", "Scourge"
+  end)
+  def("UnitHealthMax", function()
+    return W.healthMax
+  end)
+  rawset(_G, "Enum", { PowerType = { Mana = 0 } })
+  def("UnitPowerMax", function(_unit, powerType)
+    if powerType == _G.Enum.PowerType.Mana then
+      return W.manaMax
+    end
+    return 0
+  end)
+  -- Base and effective value are the same here.
+  def("UnitStat", function(_unit, index)
+    return W.stats[index], W.stats[index]
   end)
   local function color(r, g, b)
     return {

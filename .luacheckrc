@@ -65,6 +65,12 @@ read_globals = {
   "SPELL_STAT4_NAME",
   "SPELL_STAT5_NAME",
   "TALENT_POINTS",
+  -- Level-up records
+  "InCombatLockdown",
+  "UnitHealthMax",
+  "UnitLevel",
+  "UnitPowerMax",
+  "UnitStat",
 }
 
 -- Test files stub WoW globals freely
