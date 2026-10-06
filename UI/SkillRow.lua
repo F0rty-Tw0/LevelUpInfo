@@ -7,6 +7,8 @@ local Localization = ns.Localization or require("LevelUpInfo.Core.Localization")
 
 local Text = Localization.Text
 local format = string.format
+local ipairs = ipairs
+local max = math.max
 
 local TRAINER_TEXTURES = "Interface\\ClassTrainerFrame\\TrainerTextures"
 local HINT_ICON = "Interface\\Icons\\INV_Misc_Book_09"
@@ -17,6 +19,9 @@ local PAD = 6
 local HINT_WIDTH = 230
 local SOURCE_WIDTH = 190
 local SOURCE_GAP = 2
+local ICON_TOP = (ROW_HEIGHT - ICON_SIZE) / 2
+local CHANGE_LINE_HEIGHT = 12
+local NO_LINES = {}
 
 -- One trainer-style row. Its fields (icon, name, rank, price) belong to our
 -- own frame; Blizzard frames are never touched.
@@ -55,6 +60,18 @@ local function sourceText(source)
   return format(Text("Weapon master: %s · %s"), source.npc, Text(source.place))
 end
 
+-- Change line i sits under the name; lines are spaced by exactly the row's
+-- growth per line, so the price (anchored BOTTOMRIGHT) lines up with the last.
+local function newChangeLine(row, i)
+  local line = row:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+  line:SetPoint("TOPLEFT", row.name, "BOTTOMLEFT", 0, -(SOURCE_GAP + (i - 1) * CHANGE_LINE_HEIGHT))
+  line:SetSize(SOURCE_WIDTH, CHANGE_LINE_HEIGHT)
+  line:SetJustifyH("LEFT")
+  line:SetWordWrap(false)
+  row.changeLines[i] = line
+  return line
+end
+
 function SkillRow.Create(parent, enterFn, leaveFn)
   local row = _G.CreateFrame("Button", nil, parent)
   row:SetSize(ROW_WIDTH, ROW_HEIGHT)
@@ -64,7 +81,7 @@ function SkillRow.Create(parent, enterFn, leaveFn)
   row.highlight:SetBlendMode("ADD")
   row.icon = row:CreateTexture(nil, "ARTWORK")
   row.icon:SetSize(ICON_SIZE, ICON_SIZE)
-  row.icon:SetPoint("LEFT", row, "LEFT", PAD, 0)
+  row.icon:SetPoint("TOPLEFT", row, "TOPLEFT", PAD, -ICON_TOP)
   row.name = row:CreateFontString(nil, "ARTWORK", "GameFontNormal")
   row.name:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", PAD, -1)
   row.name:SetJustifyH("LEFT")
@@ -78,12 +95,30 @@ function SkillRow.Create(parent, enterFn, leaveFn)
   row.sourceLine:SetWidth(SOURCE_WIDTH)
   row.sourceLine:SetJustifyH("LEFT")
   row.sourceLine:SetWordWrap(false)
+  row.changeLines = {}
   row:SetScript("OnEnter", onEnter)
   row:SetScript("OnLeave", onLeave)
   return row
 end
 
+-- Shows one line per text (font strings created only past the row's highest
+-- count so far), hides the rest and grows the row downward. Returns its height.
+function SkillRow.SetChanges(row, lines)
+  for i, text in ipairs(lines) do
+    local line = row.changeLines[i] or newChangeLine(row, i)
+    line:SetText(text)
+    line:Show()
+  end
+  for i = #lines + 1, #row.changeLines do
+    row.changeLines[i]:Hide()
+  end
+  local height = ROW_HEIGHT + max(0, #lines - 1) * CHANGE_LINE_HEIGHT
+  row:SetHeight(height)
+  return height
+end
+
 function SkillRow.SetSkill(row, entry, money)
+  SkillRow.SetChanges(row, NO_LINES)
   row.spellID = entry.spellID
   row.icon:SetTexture(entry.icon)
   row.name:SetWidth(0)
@@ -105,6 +140,7 @@ function SkillRow.SetSkill(row, entry, money)
 end
 
 function SkillRow.SetHint(row)
+  SkillRow.SetChanges(row, NO_LINES)
   row.spellID = nil
   row.icon:SetTexture(HINT_ICON)
   row.name:SetWidth(HINT_WIDTH)
