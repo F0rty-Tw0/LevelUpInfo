@@ -14,6 +14,7 @@ A small window in Blizzard's own trainer style opens when you level up:
 
 - **Gains.** One line per stat that changed, each stat name in its own color, shown as old value, a green up arrow, then the new value (for example `Stamina 25 ▲ 26`). Talent points show as `▲ +1 Talent points`.
 - **Skills.** New class skills for your level under **New skills**, new ranks of skills you already have under **New ranks**. Each row shows the icon, name, rank and price. The price turns red when you cannot afford it. Hover a row for the spell tooltip.
+- **What changed.** A new rank lists what changed from the rank before it, like patch notes: for example `Healing: 47-58 → 76-91` or `Mana cost: 30 → 45`. Missed ranks under **Not yet learned** show it too.
 - **Learning from trainers.** The addon learns skills and prices from class trainers you visit. Until your race has visited its trainer for the new level, the window adds a line telling you to visit your class trainer.
 
 The window closes by itself after a few seconds. Hover it to keep it open, drag it to move it, or press the X to close it. If you level up in combat, it waits until combat ends.
