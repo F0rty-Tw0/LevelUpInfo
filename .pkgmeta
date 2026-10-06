@@ -7,6 +7,7 @@ ignore:
   - tests
   - scripts
   - archive
+  - docs
   - dist
   - .editorconfig
   - .gitattributes
