@@ -5,6 +5,7 @@ end
 
 local TrainerCache = ns.TrainerCache or require("LevelUpInfo.Data.TrainerCache")
 local OtherSources = ns.OtherSources or require("LevelUpInfo.Data.OtherSources")
+local WeaponIcons = ns.WeaponIcons or require("LevelUpInfo.Data.WeaponIcons")
 
 local ipairs = ipairs
 local match = string.match
@@ -105,7 +106,7 @@ local function addOtherSource(bySpell, row, fromLevel)
       spellID = row.spellID,
       level = row.level,
       name = info.name,
-      icon = info.iconID,
+      icon = (row.kind == "weapon" and WeaponIcons[row.spellID]) or info.iconID,
       rank = "",
       cost = row.cost,
       newRank = false,

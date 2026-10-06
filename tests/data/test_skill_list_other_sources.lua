@@ -4,6 +4,8 @@ local Wow = require("tests.helpers.wow")
 local W
 local SkillList
 
+local UNMAPPED_WEAPON = 99999
+
 -- Fresh fake client and module per test, with the given other-sources table.
 local function setup(otherSources)
   W = Wow.Install()
@@ -14,6 +16,8 @@ local function setup(otherSources)
   W.spells[227] = { name = "Staves", iconID = 135138 }
   W.spells[1180] = { name = "Daggers", iconID = 135641 }
   W.spells[198] = { name = "Maces", iconID = 133476 }
+  W.spells[196] = { name = "One-Handed Axes", iconID = 132392 }
+  W.spells[UNMAPPED_WEAPON] = { name = "Made-up Weapon", iconID = 134400 }
   local ns = { OtherSources = otherSources }
   assert(loadfile("Data/TrainerCache.lua"))("LevelUpInfo", ns)
   SkillList = assert(loadfile("Data/SkillList.lua"))("LevelUpInfo", ns)
@@ -128,6 +132,24 @@ local function test_other_sources_show_without_trainer_cache()
   Assert.equal(showHint, true)
 end
 
+local function test_weapon_entry_uses_weapon_icon()
+  setup({ PRIEST = { weapon(196, 1) } })
+  local entries = SkillList.Build({}, "PRIEST", "Scourge", "Horde", 9, 10)
+  Assert.equal(entries[1].icon, "Interface\\Icons\\INV_Axe_01")
+end
+
+local function test_unmapped_weapon_falls_back_to_spell_icon()
+  setup({ PRIEST = { weapon(UNMAPPED_WEAPON, 1) } })
+  local entries = SkillList.Build({}, "PRIEST", "Scourge", "Horde", 9, 10)
+  Assert.equal(entries[1].icon, W.spells[UNMAPPED_WEAPON].iconID)
+end
+
+local function test_quest_entry_keeps_spell_icon()
+  setup({ PRIEST = { quest(2652, 10) } })
+  local entries = SkillList.Build({}, "PRIEST", "Scourge", "Horde", 9, 10)
+  Assert.equal(entries[1].icon, W.spells[2652].iconID)
+end
+
 return function()
   test_quest_racial_shows_for_its_race_only()
   test_quest_row_at_or_below_from_level_is_not_yet_learned()
@@ -140,4 +162,7 @@ return function()
   test_nil_faction_skips_faction_rows_only()
   test_full_group_order()
   test_other_sources_show_without_trainer_cache()
+  test_weapon_entry_uses_weapon_icon()
+  test_unmapped_weapon_falls_back_to_spell_icon()
+  test_quest_entry_keeps_spell_icon()
 end

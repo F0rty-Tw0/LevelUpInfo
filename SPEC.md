@@ -46,6 +46,7 @@ In game on build 16001 (marked **game**) or in Blizzard's `forever` UI source (m
 - **Weapon training prices:** no WoW: Forever source lists them; the table uses Classic's prices (10 silver per skill, Polearms 1 gold). Check at Woo Ping (Stormwind) and Hanashi (Orgrimmar).
 - **Desperate Prayer (Dwarf priest quest racial)** is left out of the table: sources disagree on where the quest is handed in (High Priest Rohan, Ironforge vs High Priestess Laurena, Stormwind). Check in game, then add the row.
 - **Previous rank required:** a trainer sells a rank only after the previous one is known (inferred from Classic). If not, a known Rank 3 does not imply Rank 2 and Not yet learned needs a superseded-rank filter.
+- **Weapon icons:** each `WeaponIcons` path renders (a missing file shows a green square). Also `/dump C_Spell.GetSpellInfo(196).iconID, C_Spell.GetSpellInfo(201).iconID, C_Spell.GetSpellInfo(1180).iconID`: Classic Era data gives only 201, 202 and 1180 a generic icon; if Forever matches, the table may shrink to those three.
 - **Talent-gated ranks:** the trainer cache holds no ranks of talent spells that a character without the talent can never buy; if it does, they sit in Not yet learned on every level-up.
 
 ## The window
@@ -108,7 +109,7 @@ Prices are the last price seen at a trainer (reputation discounts can make it di
 
 ### Other sources
 
-`Data/OtherSources.lua`: a static table keyed by class token, for spells no class trainer sells. Loaded with the addon; no events, frames or timers. Each row:
+`Data/OtherSources.lua`: a static table keyed by class token, for spells no class trainer sells. Loaded with the addon; no events, frames or timers. Weapon icons live in `Data/WeaponIcons.lua` (weapon skill `spellID` → icon path), a separate static table, so every key of `OtherSources` stays a class token. Each row:
 
 | Field | Type | Meaning |
 | --- | --- | --- |
@@ -164,7 +165,7 @@ Each entry carries `newRank` (see The window → Four groups) and a `group`:
 | `missed` (Not yet learned) | not weapon, level `<= fromLevel` | level, then name (lowest first: the buying order) |
 | `weapon` (Weapon skills) | weapon rows, any level `<= toLevel` | name |
 
-Rows sort by group (skill, rank, missed, weapon), then the order above. Quest rows have no rank text, so they are never a new rank. Name and icon come from `C_Spell.GetSpellInfo(spellID)` at display time (an entry whose info is nil is skipped); rank is the stored `rank` (empty for quest and weapon entries); `cost` is the cached price, the weapon row's `cost`, or nil for quests.
+Rows sort by group (skill, rank, missed, weapon), then the order above. Quest rows have no rank text, so they are never a new rank. Name and icon come from `C_Spell.GetSpellInfo(spellID)` at display time (an entry whose info is nil is skipped), except a weapon row's icon, which comes from `WeaponIcons` when mapped; rank is the stored `rank` (empty for quest and weapon entries); `cost` is the cached price, the weapon row's `cost`, or nil for quests.
 
 ## Settings
 

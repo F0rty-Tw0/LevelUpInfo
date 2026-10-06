@@ -14,6 +14,7 @@ Settings/SavedState.lua
 Data/TrainerCache.lua
 Data/TrainerScan.lua
 Data/OtherSources.lua
+Data/WeaponIcons.lua
 Data/SkillList.lua
 UI/AutoHide.lua
 UI/SkillRow.lua
