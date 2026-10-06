@@ -14,3 +14,4 @@ All releases: **0.1.x (current)**
 - Test button in the options page shows a preview of the window.
 - Clearer colors: each stat has its own color, gains show a green up arrow, and secondary text is gray.
 - New ranks list what changed from the previous rank — damage, healing, cost, cast time — like patch notes.
+- Click `+N more` to scroll through the rest of the list in place; `Show less` folds it back.
