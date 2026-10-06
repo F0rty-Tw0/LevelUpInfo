@@ -49,6 +49,9 @@ read_globals = {
   "geterrorhandler",
   -- Skill list
   "C_Spell",
+  "ENERGY",
+  "GetSpellBaseCooldown",
+  "RAGE",
   "IsPlayerSpell",
   -- Auto-hide
   "C_Timer",

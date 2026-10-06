@@ -423,11 +423,34 @@ function Wow.Install()
   def("IsPlayerSpell", function(spellID)
     return W.known[spellID] == true
   end)
+  -- Spell facts: W.spells[id].description ("" = not loaded yet; default
+  -- "Spell text."), .castTime, .cooldown, .costs. RequestLoadSpellData
+  -- counts in W.calls and calls W.onRequestLoad(id) when a test sets it.
+  local function spell(spellID)
+    return W.spells[spellID] or {}
+  end
   rawset(_G, "C_Spell", {
     GetSpellInfo = function(spellID)
       return W.spells[spellID]
     end,
+    GetSpellDescription = function(spellID)
+      return spell(spellID).description or "Spell text."
+    end,
+    RequestLoadSpellData = function(spellID)
+      W.calls.RequestLoadSpellData = (W.calls.RequestLoadSpellData or 0) + 1
+      if W.onRequestLoad then
+        W.onRequestLoad(spellID)
+      end
+    end,
+    GetSpellPowerCost = function(spellID)
+      return spell(spellID).costs
+    end,
   })
+  def("GetSpellBaseCooldown", function(spellID)
+    return spell(spellID).cooldown
+  end)
+  rawset(_G, "RAGE", "Rage")
+  rawset(_G, "ENERGY", "Energy")
   -- W.liveTimers counts timers neither cancelled nor fired; W.runTimers fires them.
   rawset(_G, "C_Timer", {
     NewTimer = function(seconds, callback)
