@@ -7,6 +7,7 @@ local Localization = ns.Localization or require("LevelUpInfo.Core.Localization")
 local SkillList = ns.SkillList or require("LevelUpInfo.Data.SkillList")
 local AutoHide = ns.AutoHide or require("LevelUpInfo.UI.AutoHide")
 local SkillRow = ns.SkillRow or require("LevelUpInfo.UI.SkillRow")
+local SkillGroup = ns.SkillGroup or require("LevelUpInfo.UI.SkillGroup")
 local SpellFacts = ns.SpellFacts or require("LevelUpInfo.Data.SpellFacts")
 local Layout = ns.Layout or require("LevelUpInfo.UI.Layout")
 local GainLines = ns.GainLines or require("LevelUpInfo.UI.GainLines")
@@ -35,8 +36,8 @@ local DIVIDER_ALPHA = 0.25
 local DIVIDER_GAP = 2
 local NO_LINES = {}
 
--- Skill groups in display order; a capped group shows its first `cap` rows,
--- then a `+N more` line for the rest.
+-- Skill groups in display order; a capped group shows its first `cap` rows
+-- and a `+N more` toggle, or, expanded, all rows in a scroll box.
 local GROUPS = {
   { group = "skill", title = "New skills" },
   { group = "rank", title = "New ranks" },
@@ -53,12 +54,19 @@ local current
 local rows = {}
 local headings = {}
 local dividers = {}
-local moreLines = {}
-local POOLS = { rows, headings, dividers, moreLines } -- all hidden when a fill fails
+local POOLS = { rows, headings, dividers } -- all hidden when a fill fails
 local rowsUsed
 local skillEntries, skillHint -- skill list of `current`: built on Show, reused by Refresh
 -- Set while a fill runs, so a load result fired inside it starts no second fill.
 local filling = false
+local fill
+
+-- A toggle click refills the shown record with the group's new state.
+local function onToggle()
+  if current and not filling then
+    fill(current)
+  end
+end
 
 local function applyAnchor()
   frame:ClearAllPoints()
@@ -108,35 +116,56 @@ local function build()
     divider:SetSize(CONTENT_WIDTH, 1)
     divider:SetPoint("TOPLEFT", heading, "BOTTOMLEFT", -TEXT_LEFT, -DIVIDER_GAP)
     dividers[spec.group] = divider
-    if spec.cap then
-      moreLines[spec.group] = content:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+  end
+  SkillGroup.Build(content, GROUPS, onToggle)
+end
+
+-- A reused row that sat in another container (content or a box) moves over.
+local function nextRow(parent)
+  rowsUsed = rowsUsed + 1
+  local row = rows[rowsUsed]
+  if not row then
+    row = SkillRow.Create(parent, AutoHide.Pause, AutoHide.Resume)
+    rows[rowsUsed] = row
+  elseif row:GetParent() ~= parent then
+    row:SetParent(parent)
+  end
+  return row
+end
+
+local function addRow(entry, money, parent)
+  local row = nextRow(parent)
+  SkillRow.SetSkill(row, entry, money)
+  if entry.previousSpellID then
+    SkillRow.SetChanges(row, SpellFacts.Changes(entry.previousSpellID, entry.spellID) or NO_LINES)
+  end
+  Layout.Add(row, parent, 0, nil)
+end
+
+-- A capped group's toggle: `Show less` under its box, `+N more` when
+-- collapsed rows were left out, else hidden.
+local function fillToggle(spec, count)
+  local group = spec.group
+  local text
+  if SkillGroup.IsExpanded(group) and count > 0 then
+    text = Text("Show less")
+  else
+    SkillGroup.HideBox(group)
+    if count > spec.cap then
+      text = format(Text(spec.more), count - spec.cap)
     end
   end
-end
-
-local function nextRow()
-  rowsUsed = rowsUsed + 1
-  rows[rowsUsed] = rows[rowsUsed] or SkillRow.Create(content, AutoHide.Pause, AutoHide.Resume)
-  return rows[rowsUsed]
-end
-
--- The `+N more` line of a capped group, shown only when rows were left out.
-local function fillMore(spec, count)
-  local line = moreLines[spec.group]
-  if not line then
-    return
+  if text then
+    Layout.Add(SkillGroup.Toggle(group, text), content, 0, LINE_HEIGHT)
+  else
+    SkillGroup.HideToggle(group)
   end
-  local hidden = count - spec.cap
-  if hidden <= 0 then
-    line:Hide()
-    return
-  end
-  line:SetText(format(Text(spec.more), hidden))
-  Layout.Add(line, content, TEXT_LEFT, LINE_HEIGHT)
 end
 
 local function fillGroup(spec, entries, money)
   local heading = headings[spec.group]
+  local expanded = SkillGroup.IsExpanded(spec.group)
+  local parent = content
   local count = 0
   for _, entry in ipairs(entries) do
     if entry.group == spec.group then
@@ -145,14 +174,14 @@ local function fillGroup(spec, entries, money)
         heading:SetText(Text(spec.title))
         Layout.Add(heading, content, TEXT_LEFT, HEADING_HEIGHT)
         dividers[spec.group]:Show()
-      end
-      if not spec.cap or count <= spec.cap then
-        local row = nextRow()
-        SkillRow.SetSkill(row, entry, money)
-        if entry.previousSpellID then
-          SkillRow.SetChanges(row, SpellFacts.Changes(entry.previousSpellID, entry.spellID) or NO_LINES)
+        if expanded then
+          local box
+          box, parent = SkillGroup.Box(spec.group)
+          Layout.Add(box, content, 0, nil)
         end
-        Layout.Add(row, content, 0, nil)
+      end
+      if expanded or not spec.cap or count <= spec.cap then
+        addRow(entry, money, parent)
       end
     end
   end
@@ -160,7 +189,9 @@ local function fillGroup(spec, entries, money)
     heading:Hide()
     dividers[spec.group]:Hide()
   end
-  fillMore(spec, count)
+  if spec.cap then
+    fillToggle(spec, count)
+  end
 end
 
 local function fillSkills(record, gainCount)
@@ -179,7 +210,7 @@ local function fillSkills(record, gainCount)
     fillGroup(spec, skillEntries, money)
   end
   if skillHint then
-    local row = nextRow()
+    local row = nextRow(content)
     SkillRow.SetHint(row)
     Layout.Add(row, content, 0, ROW_HEIGHT)
   end
@@ -188,13 +219,24 @@ local function fillSkills(record, gainCount)
   end
 end
 
-local function fill(record)
+-- Each expanded group's scroll child is as tall as the rows placed in it.
+local function sizeBoxes(cursors)
+  for _, spec in ipairs(GROUPS) do
+    if spec.cap and SkillGroup.IsExpanded(spec.group) then
+      local _, child = SkillGroup.Box(spec.group)
+      SkillGroup.SetContentHeight(spec.group, cursors[child] or 0)
+    end
+  end
+end
+
+function fill(record)
   filling = true
   local ok, err = xpcall(function()
     frame:SetTitle(format(Text("Level %d"), record.toLevel))
     Layout.Reset()
     fillSkills(record, GainLines.Fill(content, record))
-    local height = Layout.Run(content)
+    local height, cursors = Layout.Run(content)
+    sizeBoxes(cursors)
     content:SetHeight(height)
     frame:SetSize(FRAME_WIDTH, HEADER_HEIGHT + height + FOOTER_HEIGHT)
   end, errorHandler)
@@ -202,6 +244,7 @@ local function fill(record)
   if not ok then
     Layout.Reset()
     GainLines.HideAll()
+    SkillGroup.HideAll()
     for _, pool in ipairs(POOLS) do
       for _, region in pairs(pool) do
         region:Hide()
@@ -245,6 +288,7 @@ function Window.Show(record)
   AutoHide.Pause()
   current = record
   skillEntries = nil
+  SkillGroup.Collapse()
   fill(record)
   Window.ApplyScale()
   applyAnchor()
@@ -252,7 +296,8 @@ function Window.Show(record)
   AutoHide.Resume()
 end
 
--- Refills the shown record when spell text arrives; keeps countdown, anchor and scale.
+-- Refills the shown record when spell text arrives; keeps countdown, anchor,
+-- scale and each group's expanded state and scroll position.
 function Window.Refresh()
   if filling or not current or not frame or not frame:IsShown() then
     return

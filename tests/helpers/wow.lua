@@ -190,6 +190,9 @@ local function newWidget(W, frameType, name, parent, template)
   function widget:GetParent()
     return stub.parent
   end
+  function widget:SetParent(newParent)
+    stub.parent = newParent
+  end
   function widget:SetScript(script, fn)
     stub.scripts[script] = fn
   end

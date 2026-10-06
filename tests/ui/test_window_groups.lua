@@ -89,12 +89,19 @@ local function content()
   end
 end
 
--- Shown texts of the content's own font strings with this font, in pool order.
+-- A shown toggle: a Button on content without a row's `.name`.
+local function isToggle(widget)
+  return W.state(widget).frameType == "Button" and not widget.name and widget:GetParent() == content() and widget:IsShown()
+end
+
+-- Shown texts of the content's own font strings (and toggle labels) with
+-- this font, in pool order.
 local function lines(template)
   local texts = {}
   for _, widget in ipairs(W.frames) do
     local stub = W.state(widget)
-    if stub.frameType == "FontString" and widget:GetParent() == content() and stub.template == template and stub.shown then
+    local parent = widget:GetParent()
+    if stub.frameType == "FontString" and (parent == content() or isToggle(parent)) and stub.template == template and stub.shown then
       texts[#texts + 1] = widget:GetText()
     end
   end
@@ -104,7 +111,8 @@ end
 local function shownRows()
   local rows = {}
   for _, widget in ipairs(W.frames) do
-    if W.state(widget).frameType == "Button" and widget:GetParent() == content() and widget:IsShown() then
+    local stub = W.state(widget)
+    if stub.frameType == "Button" and widget.name and widget:GetParent() == content() and widget:IsShown() then
       rows[#rows + 1] = widget
     end
   end
