@@ -163,7 +163,16 @@ local function test_old_record_result_leaves_new_record_alone()
   cacheSpell(12, 6074, "Rank 2")
   db.trainers.PRIEST.covered.Scourge = 12
   Window.Show(record(11, 12))
+  local moneyCalls = W.calls.GetMoney
+  local setSizeCalls = 0
+  local setSize = frame().SetSize
+  frame().SetSize = function(...)
+    setSizeCalls = setSizeCalls + 1
+    return setSize(...)
+  end
   loadText(RANK_2, NEW_TEXT)
+  Assert.equal(W.calls.GetMoney, moneyCalls)
+  Assert.equal(setSizeCalls, 0)
   Assert.equal(W.state(frame()).title, "Level 12")
   Assert.equal(#shownRows(), 1)
   Assert.equal(shownLines(rowNamed("Renew")), 1)
