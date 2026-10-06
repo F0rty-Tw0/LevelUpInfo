@@ -212,6 +212,36 @@ local function test_escape_list_and_tooltip_are_never_written()
   Assert.equal(W.changedKeys(_G.GameTooltip, tooltipFields), "")
 end
 
+-- Shown change lines of the shown skill row with this name.
+local function changeLines(name)
+  for _, frame in ipairs(W.frames) do
+    if frame.changeLines and frame:IsShown() and frame.name:GetText() == name then
+      local count = 0
+      for _, line in ipairs(frame.changeLines) do
+        count = count + (line:IsShown() and 1 or 0)
+      end
+      return count
+    end
+  end
+end
+
+local function test_load_result_refreshes_window()
+  local rank = function(text)
+    return { cost = 50, rank = text, races = { Scourge = true } }
+  end
+  setup({
+    trainers = { PRIEST = { covered = { Scourge = 10 }, levels = { [4] = { [589] = rank("Rank 1") }, [10] = { [594] = rank("Rank 2") } } } },
+  })
+  W.spells[589] = { name = "Shadow Word: Pain", iconID = 3, description = "Deals 30 damage." }
+  W.spells[594] = { name = "Shadow Word: Pain", iconID = 3, description = "" }
+  W.known[589] = true
+  ding()
+  Assert.equal(changeLines("Shadow Word: Pain"), 0)
+  W.spells[594].description = "Deals 66 damage."
+  W.broadcast("SPELL_DATA_LOAD_RESULT", 594, true)
+  Assert.equal(changeLines("Shadow Word: Pain"), 1)
+end
+
 return function()
   test_only_the_event_frame_exists_before_addon_loaded()
   test_other_addons_loading_are_ignored()
@@ -225,4 +255,5 @@ return function()
   test_reset_position_button_moves_the_visible_window()
   test_options_test_button_shows_preview()
   test_escape_list_and_tooltip_are_never_written()
+  test_load_result_refreshes_window()
 end

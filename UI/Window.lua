@@ -7,12 +7,14 @@ local Localization = ns.Localization or require("LevelUpInfo.Core.Localization")
 local SkillList = ns.SkillList or require("LevelUpInfo.Data.SkillList")
 local AutoHide = ns.AutoHide or require("LevelUpInfo.UI.AutoHide")
 local SkillRow = ns.SkillRow or require("LevelUpInfo.UI.SkillRow")
+local SpellFacts = ns.SpellFacts or require("LevelUpInfo.Data.SpellFacts")
 
 local floor = math.floor
 local format = string.format
 local ipairs = ipairs
 local select = select
 local tostring = tostring
+local xpcall = xpcall
 
 local Text = Localization.Text
 
@@ -30,6 +32,7 @@ local GROUP_CAP = 5
 local DIVIDER_ALPHA = 0.25
 local DIVIDER_GAP = 2
 local COLOR_SCALE = 255
+local NO_LINES = {}
 local ARROW_FORMAT = "|TInterface\\Buttons\\Arrow-Up-Up:14:14:0:0:32:32:0:32:0:32:%d:%d:%d|t"
 
 -- Skill groups in display order; a capped group shows its first `cap` rows,
@@ -67,6 +70,8 @@ local dividers = {}
 local moreLines = {}
 local rowsUsed
 local arrow
+-- Set while a fill runs, so a load result fired inside it starts no second fill.
+local filling = false
 
 local function applyAnchor()
   frame:ClearAllPoints()
@@ -82,6 +87,10 @@ local function savePosition()
   frame:StopMovingOrSizing()
   local point, _, _, x, y = frame:GetPoint()
   db.position = { point = point, x = x, y = y }
+end
+
+local function errorHandler(err)
+  return tostring(err) .. "\n" .. _G.debugstack()
 end
 
 local function to255(c)
@@ -100,6 +109,7 @@ local function build()
   frame:SetScript("OnDragStop", savePosition)
   frame:HookScript("OnHide", function()
     current = nil
+    SpellFacts.Stop()
   end)
   AutoHide.Attach(frame, db)
   frame.CloseButton:SetScript("OnClick", AutoHide.Close)
@@ -196,7 +206,10 @@ local function fillGroup(spec, entries, money, y)
       if not spec.cap or count <= spec.cap then
         local row = nextRow()
         SkillRow.SetSkill(row, entry, money)
-        y = place(row, 0, y, ROW_HEIGHT)
+        if entry.previousSpellID then
+          SkillRow.SetChanges(row, SpellFacts.Changes(entry.previousSpellID, entry.spellID) or NO_LINES)
+        end
+        y = place(row, 0, y, row:GetHeight())
       end
     end
   end
@@ -232,10 +245,17 @@ local function fillSkills(record, y)
 end
 
 local function fill(record)
-  frame:SetTitle(format(Text("Level %d"), record.toLevel))
-  local height = fillSkills(record, fillGains(record, 0))
-  content:SetHeight(height)
-  frame:SetSize(FRAME_WIDTH, HEADER_HEIGHT + height + FOOTER_HEIGHT)
+  filling = true
+  local ok, err = xpcall(function()
+    frame:SetTitle(format(Text("Level %d"), record.toLevel))
+    local height = fillSkills(record, fillGains(record, 0))
+    content:SetHeight(height)
+    frame:SetSize(FRAME_WIDTH, HEADER_HEIGHT + height + FOOTER_HEIGHT)
+  end, errorHandler)
+  filling = false
+  if not ok then
+    _G.geterrorhandler()(err)
+  end
 end
 
 function Window.Install(savedDB)
@@ -276,6 +296,14 @@ function Window.Show(record)
   applyAnchor()
   frame:Show()
   AutoHide.Resume()
+end
+
+-- Refills the shown record when spell text arrives; keeps countdown, anchor and scale.
+function Window.Refresh()
+  if filling or not current or not frame or not frame:IsShown() then
+    return
+  end
+  fill(current)
 end
 
 ns.Window = Window

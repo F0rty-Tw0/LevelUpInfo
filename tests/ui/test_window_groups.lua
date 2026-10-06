@@ -24,8 +24,11 @@ local function setup(otherSources)
   local ns = { OtherSources = { PRIEST = otherSources or {} } }
   for _, file in ipairs({
     "Core/Localization.lua",
+    "Core/Events.lua",
     "Data/TrainerCache.lua",
     "Data/SkillList.lua",
+    "Data/RankChanges.lua",
+    "Data/SpellFacts.lua",
     "UI/AutoHide.lua",
     "UI/SkillRow.lua",
   }) do

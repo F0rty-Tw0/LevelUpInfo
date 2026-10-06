@@ -31,8 +31,11 @@ local function setup()
   local ns = { OtherSources = {} }
   for _, file in ipairs({
     "Core/Localization.lua",
+    "Core/Events.lua",
     "Data/TrainerCache.lua",
     "Data/SkillList.lua",
+    "Data/RankChanges.lua",
+    "Data/SpellFacts.lua",
     "UI/AutoHide.lua",
     "UI/SkillRow.lua",
   }) do

@@ -13,3 +13,4 @@ All releases: **0.1.x (current)**
 - Weapon skills show their weapon's icon.
 - Test button in the options page shows a preview of the window.
 - Clearer colors: each stat has its own color, gains show a green up arrow, and secondary text is gray.
+- New ranks list what changed from the previous rank — damage, healing, cost, cast time — like patch notes.

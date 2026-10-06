@@ -6,6 +6,7 @@ end
 local Events = ns.Events or require("LevelUpInfo.Core.Events")
 local SavedState = ns.SavedState or require("LevelUpInfo.Settings.SavedState")
 local TrainerScan = ns.TrainerScan or require("LevelUpInfo.Data.TrainerScan")
+local SpellFacts = ns.SpellFacts or require("LevelUpInfo.Data.SpellFacts")
 local Window = ns.Window or require("LevelUpInfo.UI.Window")
 local LevelUp = ns.LevelUp or require("LevelUpInfo.Core.LevelUp")
 local Panel = ns.SettingsPanel or require("LevelUpInfo.Settings.Panel")
@@ -19,6 +20,7 @@ function Bootstrap.Initialize(saved)
   _G.LevelUpInfoDB = db
   TrainerScan.Install(db)
   Window.Install(db)
+  SpellFacts.Install(Window.Refresh)
   LevelUp.Install(db)
   Panel.Register(db, {
     onScale = Window.ApplyScale,

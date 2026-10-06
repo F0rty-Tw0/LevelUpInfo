@@ -25,6 +25,8 @@ local function setup()
     "Core/Events.lua",
     "Data/TrainerCache.lua",
     "Data/SkillList.lua",
+    "Data/RankChanges.lua",
+    "Data/SpellFacts.lua",
     "UI/AutoHide.lua",
     "UI/SkillRow.lua",
     "UI/Window.lua",
