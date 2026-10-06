@@ -16,6 +16,7 @@ Data/TrainerScan.lua
 Data/OtherSources.lua
 Data/WeaponIcons.lua
 Data/SkillList.lua
+Data/RankChanges.lua
 UI/AutoHide.lua
 UI/SkillRow.lua
 UI/Window.lua
