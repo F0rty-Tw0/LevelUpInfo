@@ -429,9 +429,34 @@ function Wow.Install()
   local function spell(spellID)
     return W.spells[spellID] or {}
   end
+  -- By name: a copy of the lowest known spellID with that name, plus spellID.
+  local function knownByName(name)
+    local found
+    for id, info in pairs(W.spells) do
+      if W.known[id] and info.name == name and (found == nil or id < found) then
+        found = id
+      end
+    end
+    if found == nil then
+      return nil
+    end
+    local copy = { spellID = found }
+    for key, value in pairs(W.spells[found]) do
+      copy[key] = value
+    end
+    return copy
+  end
+  -- GetSpellInfo counts in W.calls; W.spells[id].subtext feeds GetSpellSubtext.
   rawset(_G, "C_Spell", {
-    GetSpellInfo = function(spellID)
-      return W.spells[spellID]
+    GetSpellInfo = function(arg)
+      W.calls.GetSpellInfo = (W.calls.GetSpellInfo or 0) + 1
+      if type(arg) == "string" then
+        return knownByName(arg)
+      end
+      return W.spells[arg]
+    end,
+    GetSpellSubtext = function(spellID)
+      return W.spells[spellID] and W.spells[spellID].subtext
     end,
     GetSpellDescription = function(spellID)
       return spell(spellID).description or "Spell text."

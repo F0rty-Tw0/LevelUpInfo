@@ -29,9 +29,62 @@ local function isVisible(covered, race, level, entry)
   return true
 end
 
--- A new rank when the first number in the rank text is 2 or more.
+local FIRST_NEW_RANK = 2
+
+-- The first number in the rank text; nil for "" or "Apprentice".
+local function rankNumber(rank)
+  return tonumber(match(rank, "%d+"))
+end
+
 local function isNewRank(rank)
-  return (tonumber(match(rank, "%d+")) or 0) >= 2
+  return (rankNumber(rank) or 0) >= FIRST_NEW_RANK
+end
+
+local function rankKey(name, number)
+  return name .. ":" .. number
+end
+
+-- Class cache over levels 1..toLevel: spell name + rank number to the lowest spellID.
+local function rankIndex(data, toLevel)
+  local index = {}
+  for level = 1, toLevel do
+    for spellID, entry in pairs(data.levels[level] or {}) do
+      local number = rankNumber(entry.rank)
+      local info = number and _G.C_Spell.GetSpellInfo(spellID)
+      if info then
+        local key = rankKey(info.name, number)
+        if index[key] == nil or spellID < index[key] then
+          index[key] = spellID
+        end
+      end
+    end
+  end
+  return index
+end
+
+-- Starting spells' Rank 1 is never sold by a trainer: take the known spell
+-- of that name when its rank text has the wanted number.
+local function knownPrevious(name, previous)
+  if _G.C_Spell.GetSpellSubtext == nil then
+    return nil
+  end
+  local known = _G.C_Spell.GetSpellInfo(name)
+  if known and rankNumber(_G.C_Spell.GetSpellSubtext(known.spellID) or "") == previous then
+    return known.spellID
+  end
+  return nil
+end
+
+-- The index is built only when a new rank is listed.
+local function addPreviousRanks(entries, data, toLevel)
+  local index
+  for _, entry in ipairs(entries) do
+    if entry.newRank then
+      index = index or rankIndex(data, toLevel)
+      local previous = rankNumber(entry.rank) - 1
+      entry.previousSpellID = index[rankKey(entry.name, previous)] or knownPrevious(entry.name, previous)
+    end
+  end
 end
 
 local GROUP_ORDER = { skill = 1, rank = 2, missed = 3, weapon = 4 }
@@ -136,6 +189,7 @@ function SkillList.Build(trainers, class, race, faction, fromLevel, toLevel)
   for _, entry in pairs(bySpell) do
     entries[#entries + 1] = entry
   end
+  addPreviousRanks(entries, data, toLevel)
   sort(entries, byGroupThenLevelThenName)
   return entries, TrainerCache.Covered(trainers, class, race) < toLevel
 end
