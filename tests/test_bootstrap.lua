@@ -176,6 +176,21 @@ local function test_reset_position_button_moves_the_visible_window()
   Assert.equal(table.concat({ point, x, y }, ","), "CENTER,0,120")
 end
 
+local function test_options_test_button_shows_preview()
+  setup(nil)
+  openPanel()
+  Assert.equal(ns.Window.Frame(), nil)
+  for _, button in ipairs(withTemplate("UIPanelButtonTemplate")) do
+    if button:GetText() == "Test" then
+      W.fireScript(button, "OnClick")
+    end
+  end
+  local frame = ns.Window.Frame()
+  Assert.equal(frame ~= nil and frame:IsShown(), true)
+  Assert.equal(frame, _G.LevelUpInfoFrame)
+  Assert.equal(W.state(frame).title, "Level 10")
+end
+
 local function test_escape_list_and_tooltip_are_never_written()
   local saved = {
     trainers = {
@@ -208,5 +223,6 @@ return function()
   test_slash_test_shows_the_window()
   test_scale_slider_rescales_the_visible_window()
   test_reset_position_button_moves_the_visible_window()
+  test_options_test_button_shows_preview()
   test_escape_list_and_tooltip_are_never_written()
 end

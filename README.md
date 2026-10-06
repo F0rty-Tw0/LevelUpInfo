@@ -31,6 +31,7 @@ Open them with `/lui` or under Options, AddOns, LevelUpInfo.
 | Reduced motion | Close the window at once instead of fading | Off |
 | Reset position | Put the window back at its default spot | |
 | Clear skill data | Forget the skills learned from trainers | |
+| Test | Close the options and show a preview of the window | |
 
 ## Commands
 

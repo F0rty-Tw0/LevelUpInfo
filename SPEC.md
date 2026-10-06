@@ -46,6 +46,7 @@ In game on build 16001 (marked **game**) or in Blizzard's `forever` UI source (m
 - **Weapon training prices:** no WoW: Forever source lists them; the table uses Classic's prices (10 silver per skill, Polearms 1 gold). Check at Woo Ping (Stormwind) and Hanashi (Orgrimmar).
 - **Desperate Prayer (Dwarf priest quest racial)** is left out of the table: sources disagree on where the quest is handed in (High Priest Rohan, Ironforge vs High Priestess Laurena, Stormwind). Check in game, then add the row.
 - **Previous rank required:** a trainer sells a rank only after the previous one is known (inferred from Classic). If not, a known Rank 3 does not imply Rank 2 and Not yet learned needs a superseded-rank filter.
+- **Test button taint:** click Test with options open, reopen options, change a Blizzard setting, close it, repeat in combat; no blocked action and no LevelUpInfo-attributed entry in `taint.log` (same procedure as the trainer taint check). Also change a Blizzard setting that needs Apply, click Test without applying, reopen options: the change is either kept or cleanly discarded, and nothing else breaks.
 - **Weapon icons:** each `WeaponIcons` path renders (a missing file shows a green square). Also `/dump C_Spell.GetSpellInfo(196).iconID, C_Spell.GetSpellInfo(201).iconID, C_Spell.GetSpellInfo(1180).iconID`: Classic Era data gives only 201, 202 and 1180 a generic icon; if Forever matches, the table may shrink to those three.
 - **Talent-gated ranks:** the trainer cache holds no ranks of talent spells that a character without the talent can never buy; if it does, they sit in Not yet learned on every level-up.
 
@@ -180,6 +181,7 @@ Canvas panel under Options → AddOns → LevelUpInfo, same pattern as MouseOver
 | Reduced motion | on / off | off |
 | Reset position | button | — |
 | Clear skill data | button (empties `trainers`) | — |
+| Test | button (closes options, shows the /lui test preview) | — |
 
 Slash command `/lui`:
 
@@ -226,7 +228,7 @@ Normalized on load (same shape as RaidGroupWrap `SavedState.Initialize`, but wit
 
 ## Taint rules
 
-- Never hook, hide, move or write fields on Blizzard frames or tables (including `EventToastManagerFrame`, `GameTooltip`, the trainer frame and `UISpecialFrames`).
+- Never hook, hide, move or write fields on Blizzard frames or tables (including `EventToastManagerFrame`, `GameTooltip`, the trainer frame and `UISpecialFrames`). One exception (user decision, 2026-10-06): the options Test button calls `HideUIPanel(SettingsPanel)`. Accepted risk: the options window is closed from addon code.
 - `GameTooltip:SetOwner` / `SetSpellByID` / `Show` / `Hide` for our own rows is the only `GameTooltip` use (`SetSpellByID` is a secure delegate in Forever; the others are plain C methods).
 - `SetTrainerServiceTypeFilter` is called only inside a scan, only to turn on filters that are off, and every change is reverted before the scan returns (see Trainer scan step 3). Our code writes no other trainer state; Blizzard's own handler does update `ClassTrainerFrame` while running inside our call — covered by the taint check under "Still to confirm".
 

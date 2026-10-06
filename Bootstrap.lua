@@ -20,7 +20,11 @@ function Bootstrap.Initialize(saved)
   TrainerScan.Install(db)
   Window.Install(db)
   LevelUp.Install(db)
-  Panel.Register(db, { onScale = Window.ApplyScale, onResetPosition = Window.ResetPosition })
+  Panel.Register(db, {
+    onScale = Window.ApplyScale,
+    onResetPosition = Window.ResetPosition,
+    onTest = LevelUp.ShowTest,
+  })
   SlashCommand.Register(Panel.Open, LevelUp.ShowTest)
   return db
 end

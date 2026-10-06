@@ -110,6 +110,13 @@ local function build(frame, db, actions)
   addButton(frame, Text("Clear skill data"), LEFT + BUTTON_WIDTH + BUTTON_GAP, y - BUTTON_GAP, function()
     _G.wipe(db.trainers)
   end)
+  -- The options window draws above ours, so it closes before the preview shows.
+  addButton(frame, Text("Test"), LEFT + 2 * (BUTTON_WIDTH + BUTTON_GAP), y - BUTTON_GAP, function()
+    if _G.SettingsPanel then
+      _G.HideUIPanel(_G.SettingsPanel)
+    end
+    actions.onTest()
+  end)
 end
 
 local function refresh()
@@ -126,7 +133,7 @@ local function restoreDefaults(db, actions)
   actions.onScale()
 end
 
--- actions = { onScale = fn, onResetPosition = fn }; returns the settings category.
+-- actions = { onScale = fn, onResetPosition = fn, onTest = fn }; returns the settings category.
 function Panel.Register(db, actions)
   controls = {}
   local frame = _G.CreateFrame("Frame")

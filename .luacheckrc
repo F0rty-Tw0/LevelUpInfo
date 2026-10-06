@@ -69,8 +69,10 @@ read_globals = {
   "TALENT_POINTS",
   -- Options panel
   "CreateMinimalSliderFormatter",
+  "HideUIPanel",
   "MinimalSliderWithSteppersMixin",
   "Settings",
+  "SettingsPanel",
   "wipe",
   -- Level-up records
   "InCombatLockdown",

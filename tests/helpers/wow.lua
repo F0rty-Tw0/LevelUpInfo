@@ -531,6 +531,9 @@ function Wow.Install()
   rawset(_G, "GameTooltip", gameTooltip)
 
   newWidget(W, "Frame", "UIParent")
+  -- The options window; W.calls.HideUIPanel counts closes.
+  newWidget(W, "Frame", "SettingsPanel")
+  def("HideUIPanel", function() end)
   installDrivers(W)
   return W
 end

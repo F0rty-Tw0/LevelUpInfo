@@ -8,6 +8,8 @@ local db
 local calls
 local canvas
 local framesBefore
+local log
+local hiddenFrame
 
 local CHECKBOX_KEYS = { "enabled", "waitForCombat", "reducedMotion" }
 
@@ -18,6 +20,12 @@ local function setup()
   db = SavedState.Initialize(nil)
   db.trainers = { PRIEST = { covered = { Scourge = 5 }, levels = {} } }
   calls = { scale = 0, resetPosition = 0 }
+  log = {}
+  hiddenFrame = nil
+  W.def("HideUIPanel", function(frame)
+    log[#log + 1] = "hide"
+    hiddenFrame = frame
+  end)
   framesBefore = #W.frames
   Panel.Register(db, {
     onScale = function()
@@ -25,6 +33,9 @@ local function setup()
     end,
     onResetPosition = function()
       calls.resetPosition = calls.resetPosition + 1
+    end,
+    onTest = function()
+      log[#log + 1] = "test"
     end,
   })
   canvas = W.settings.category.frame
@@ -162,6 +173,28 @@ local function test_clear_skill_data_empties_trainers_in_place()
   Assert.equal(next(trainers), nil)
 end
 
+local function test_test_button_shown_after_first_open()
+  setup()
+  open()
+  Assert.equal(button("Test") ~= nil, true)
+end
+
+local function test_test_button_closes_options_then_previews()
+  setup()
+  open()
+  W.fireScript(button("Test"), "OnClick")
+  Assert.equal(table.concat(log, ","), "hide,test")
+  Assert.equal(hiddenFrame, _G.SettingsPanel)
+end
+
+local function test_test_button_without_settings_panel_still_previews()
+  setup()
+  _G.SettingsPanel = nil
+  open()
+  W.fireScript(button("Test"), "OnClick")
+  Assert.equal(table.concat(log, ","), "test")
+end
+
 local function test_default_button_restores_every_default_and_applies_scale()
   setup()
   db.enabled, db.duration, db.scale, db.reducedMotion = false, 20, 1.25, true
@@ -221,6 +254,9 @@ return function()
   test_scale_change_writes_stepped_value_and_applies_at_once()
   test_reset_position_button_calls_the_action()
   test_clear_skill_data_empties_trainers_in_place()
+  test_test_button_shown_after_first_open()
+  test_test_button_closes_options_then_previews()
+  test_test_button_without_settings_panel_still_previews()
   test_default_button_restores_every_default_and_applies_scale()
   test_default_button_before_first_show_builds_nothing()
   test_default_button_refreshes_built_controls()

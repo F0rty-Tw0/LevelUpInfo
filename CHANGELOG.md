@@ -11,3 +11,4 @@ All releases: **0.1.x (current)**
 - `/lui test` shows a preview of the window.
 - The level-up window now also lists skills you skipped at earlier levels, priest racial spells from quests (with the quest and where to hand it in), and weapon skills with the weapon master, city and price.
 - Weapon skills show their weapon's icon.
+- Test button in the options page shows a preview of the window.
