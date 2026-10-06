@@ -121,7 +121,7 @@ local function test_groups_render_in_order_with_headings()
   trainerSpell(13, MISSED_LEVEL, "Old Skill", "Rank 1")
   otherSources[1] = weaponRow(14, "Axe", "Horde")
   Window.Show(record())
-  Assert.equal(lines("GameFontNormal"), "New skills|New ranks|Not yet learned|Weapon skills")
+  Assert.equal(lines("GameFontNormalLarge"), "New skills|New ranks|Not yet learned|Weapon skills")
   Assert.equal(rowNames(), "New Skill|New Rank|Old Skill|Axe")
 end
 
@@ -133,7 +133,7 @@ local function test_not_yet_learned_caps_at_five_with_more_line()
   addMissed(7)
   Window.Show(record())
   Assert.equal(rowNames(), "Missed 1|Missed 2|Missed 3|Missed 4|Missed 5")
-  Assert.equal(lines("GameFontHighlightSmall"), "+2 more not yet learned")
+  Assert.equal(lines("GameFontDisableSmall"), "+2 more not yet learned")
   Assert.equal(frame():GetHeight() > withFive, true)
 end
 
@@ -141,7 +141,7 @@ local function test_weapon_skills_cap_at_five_with_more_line()
   setupWeapons(6)
   Window.Show(record())
   Assert.equal(rowNames(), "Weapon 1|Weapon 2|Weapon 3|Weapon 4|Weapon 5")
-  Assert.equal(lines("GameFontHighlightSmall"), "+1 more weapon skills")
+  Assert.equal(lines("GameFontDisableSmall"), "+1 more weapon skills")
 end
 
 local function test_no_more_line_at_exactly_five()
@@ -149,7 +149,7 @@ local function test_no_more_line_at_exactly_five()
   addMissed(5)
   Window.Show(record())
   Assert.equal(#shownRows(), 10)
-  Assert.equal(lines("GameFontHighlightSmall"), "")
+  Assert.equal(lines("GameFontDisableSmall"), "")
 end
 
 local function test_reshow_with_fewer_missed_hides_more_line_and_creates_no_frames()
@@ -162,7 +162,7 @@ local function test_reshow_with_fewer_missed_hides_more_line_and_creates_no_fram
   end
   Window.Show(record())
   Assert.equal(rowNames(), "Missed 1|Missed 2")
-  Assert.equal(lines("GameFontHighlightSmall"), "")
+  Assert.equal(lines("GameFontDisableSmall"), "")
   Assert.equal(#W.frames, frameCount)
 end
 

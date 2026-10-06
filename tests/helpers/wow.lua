@@ -207,6 +207,9 @@ local function newWidget(W, frameType, name, parent, template)
   function widget:SetBlendMode(mode)
     stub.blendMode = mode
   end
+  function widget:SetColorTexture(r, g, b, a)
+    stub.colorTexture = { r, g, b, a }
+  end
   function widget:SetAllPoints()
     stub.allPoints = true
   end
@@ -513,6 +516,8 @@ function Wow.Install()
   end
   rawset(_G, "RED_FONT_COLOR", color(1, 0.1, 0.1))
   rawset(_G, "HIGHLIGHT_FONT_COLOR", color(1, 1, 1))
+  rawset(_G, "NORMAL_FONT_COLOR", color(1, 0.82, 0))
+  rawset(_G, "GREEN_FONT_COLOR", color(0.1, 1, 0.1))
   rawset(_G, "HEALTH", "Health")
   rawset(_G, "MANA", "Mana")
   rawset(_G, "TALENT_POINTS", "Talent points")

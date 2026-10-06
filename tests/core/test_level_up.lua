@@ -212,7 +212,8 @@ local function test_test_preview_shows_no_mana_line_for_a_class_without_mana()
       texts[#texts + 1] = widget:GetText()
     end
   end
-  Assert.equal(table.concat(texts, "|"), "Health 85 → 100|Stamina 9 → 10")
+  local arrow = string.format("|TInterface\\Buttons\\Arrow-Up-Up:14:14:0:0:32:32:0:32:0:32:%d:%d:%d|t", 26, 255, 26)
+  Assert.equal(table.concat(texts, "|"), "|cff49d36bHealth|r 85 " .. arrow .. " 100|" .. "|cffd9b38cStamina|r 9 " .. arrow .. " 10")
 end
 
 return function()

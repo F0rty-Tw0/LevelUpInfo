@@ -8,9 +8,11 @@ local SkillList = ns.SkillList or require("LevelUpInfo.Data.SkillList")
 local AutoHide = ns.AutoHide or require("LevelUpInfo.UI.AutoHide")
 local SkillRow = ns.SkillRow or require("LevelUpInfo.UI.SkillRow")
 
+local floor = math.floor
 local format = string.format
 local ipairs = ipairs
 local select = select
+local tostring = tostring
 
 local Text = Localization.Text
 
@@ -20,11 +22,15 @@ local CONTENT_LEFT = 19
 local HEADER_HEIGHT = 68
 local FOOTER_HEIGHT = 12
 local LINE_HEIGHT = 16
-local HEADING_HEIGHT = 20
+local HEADING_HEIGHT = 24
 local SECTION_GAP = 6
 local ROW_HEIGHT = 47
 local TEXT_LEFT = 4
 local GROUP_CAP = 5
+local DIVIDER_ALPHA = 0.25
+local DIVIDER_GAP = 2
+local COLOR_SCALE = 255
+local ARROW_FORMAT = "|TInterface\\Buttons\\Arrow-Up-Up:14:14:0:0:32:32:0:32:0:32:%d:%d:%d|t"
 
 -- Skill groups in display order; a capped group shows its first `cap` rows,
 -- then a `+N more` line for the rest.
@@ -35,16 +41,17 @@ local GROUPS = {
   { group = "weapon", title = "Weapon skills", cap = GROUP_CAP, more = "+%d more weapon skills" },
 }
 
--- Gains in SPEC order; each name is a Blizzard global with an English fallback.
+-- Gains in SPEC order; each name is a Blizzard global with an English fallback,
+-- shown in its own stat color (6-digit hex).
 local GAINS = {
-  { key = "health", global = "HEALTH", fallback = "Health" },
-  { key = "power", global = "MANA", fallback = "Mana" },
-  { key = "talents", global = "TALENT_POINTS", fallback = "Talent points" },
-  { key = "strength", global = "SPELL_STAT1_NAME", fallback = "Strength" },
-  { key = "agility", global = "SPELL_STAT2_NAME", fallback = "Agility" },
-  { key = "stamina", global = "SPELL_STAT3_NAME", fallback = "Stamina" },
-  { key = "intellect", global = "SPELL_STAT4_NAME", fallback = "Intellect" },
-  { key = "spirit", global = "SPELL_STAT5_NAME", fallback = "Spirit" },
+  { key = "health", global = "HEALTH", fallback = "Health", color = "49d36b" },
+  { key = "power", global = "MANA", fallback = "Mana", color = "4d8dff" },
+  { key = "talents", global = "TALENT_POINTS", fallback = "Talent points", color = "c084fc" },
+  { key = "strength", global = "SPELL_STAT1_NAME", fallback = "Strength", color = "ff5c5c" },
+  { key = "agility", global = "SPELL_STAT2_NAME", fallback = "Agility", color = "ffa340" },
+  { key = "stamina", global = "SPELL_STAT3_NAME", fallback = "Stamina", color = "d9b38c" },
+  { key = "intellect", global = "SPELL_STAT4_NAME", fallback = "Intellect", color = "4fd1e8" },
+  { key = "spirit", global = "SPELL_STAT5_NAME", fallback = "Spirit", color = "f5a3d0" },
 }
 
 local Window = {}
@@ -56,8 +63,10 @@ local current
 local gainLines = {}
 local rows = {}
 local headings = {}
+local dividers = {}
 local moreLines = {}
 local rowsUsed
+local arrow
 
 local function applyAnchor()
   frame:ClearAllPoints()
@@ -73,6 +82,10 @@ local function savePosition()
   frame:StopMovingOrSizing()
   local point, _, _, x, y = frame:GetPoint()
   db.position = { point = point, x = x, y = y }
+end
+
+local function to255(c)
+  return floor(c * COLOR_SCALE + 0.5)
 end
 
 local function build()
@@ -93,10 +106,19 @@ local function build()
   content = _G.CreateFrame("Frame", nil, frame)
   content:SetSize(CONTENT_WIDTH, 1)
   content:SetPoint("TOPLEFT", frame, "TOPLEFT", CONTENT_LEFT, -HEADER_HEIGHT)
+  local greenR, greenG, greenB = _G.GREEN_FONT_COLOR:GetRGB()
+  arrow = format(ARROW_FORMAT, to255(greenR), to255(greenG), to255(greenB))
+  local r, g, b = _G.NORMAL_FONT_COLOR:GetRGB()
   for _, spec in ipairs(GROUPS) do
-    headings[spec.group] = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    local heading = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+    headings[spec.group] = heading
+    local divider = content:CreateTexture(nil, "ARTWORK")
+    divider:SetColorTexture(r, g, b, DIVIDER_ALPHA)
+    divider:SetSize(CONTENT_WIDTH, 1)
+    divider:SetPoint("TOPLEFT", heading, "BOTTOMLEFT", -TEXT_LEFT, -DIVIDER_GAP)
+    dividers[spec.group] = divider
     if spec.cap then
-      moreLines[spec.group] = content:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+      moreLines[spec.group] = content:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
     end
   end
 end
@@ -114,12 +136,12 @@ local function gainText(record, gain)
   if not amount or amount == 0 then
     return nil
   end
-  local name = _G[gain.global] or Text(gain.fallback)
+  local coloredName = "|cff" .. gain.color .. (_G[gain.global] or Text(gain.fallback)) .. "|r"
   local before = record.before and record.before[gain.key]
   if gain.key == "talents" or not before then
-    return format(Text("+%d %s"), amount, name)
+    return format(Text("%s %s %s"), arrow, format(Text("+%d"), amount), coloredName)
   end
-  return format(Text("%s %d → %d"), name, before, before + amount)
+  return format(Text("%s %s %s %s"), coloredName, tostring(before), arrow, tostring(before + amount))
 end
 
 local function fillGains(record, y)
@@ -169,6 +191,7 @@ local function fillGroup(spec, entries, money, y)
       if count == 1 then
         heading:SetText(Text(spec.title))
         y = place(heading, TEXT_LEFT, y, HEADING_HEIGHT)
+        dividers[spec.group]:Show()
       end
       if not spec.cap or count <= spec.cap then
         local row = nextRow()
@@ -179,6 +202,7 @@ local function fillGroup(spec, entries, money, y)
   end
   if count == 0 then
     heading:Hide()
+    dividers[spec.group]:Hide()
   end
   return fillMore(spec, count, y)
 end

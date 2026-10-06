@@ -98,6 +98,7 @@ local function rowNames()
 end
 
 local HINT = "Visit your class trainer to see all new skills."
+local ARROW = string.format("|TInterface\\Buttons\\Arrow-Up-Up:14:14:0:0:32:32:0:32:0:32:%d:%d:%d|t", 26, 255, 26)
 
 local function test_no_frame_exists_before_first_show()
   setup()
@@ -131,7 +132,10 @@ end
 local function test_gains_lines_in_spec_order_skip_zeros()
   setup()
   Window.Show(record())
-  Assert.equal(table.concat(lines("GameFontHighlight"), "|"), "Health 100 → 115|Stamina 25 → 26")
+  Assert.equal(
+    table.concat(lines("GameFontHighlight"), "|"),
+    "|cff49d36bHealth|r 100 " .. ARROW .. " 115|" .. "|cffd9b38cStamina|r 25 " .. ARROW .. " 26"
+  )
 end
 
 local function test_talents_and_missing_before_use_plus_format()
@@ -140,7 +144,7 @@ local function test_talents_and_missing_before_use_plus_format()
     gains = { health = 15, talents = 1 },
     before = { health = nil },
   }))
-  Assert.equal(table.concat(lines("GameFontHighlight"), "|"), "+15 Health|+1 Talent points")
+  Assert.equal(table.concat(lines("GameFontHighlight"), "|"), ARROW .. " +15 |cff49d36bHealth|r|" .. ARROW .. " +1 |cffc084fcTalent points|r")
 end
 
 local function test_skill_rows_and_hint_follow_skill_list()
@@ -156,7 +160,7 @@ local function test_new_skills_and_new_ranks_get_headings()
   setup()
   db.trainers.PRIEST.levels[10][139] = nil
   Window.Show(record())
-  Assert.equal(table.concat(lines("GameFontNormal"), "|"), "New skills|New ranks")
+  Assert.equal(table.concat(lines("GameFontNormalLarge"), "|"), "New skills|New ranks")
   Assert.equal(rowNames(), "Mind Blast|Shadow Word: Pain")
 end
 
@@ -165,7 +169,7 @@ local function test_heading_hidden_for_an_empty_group()
   db.trainers.PRIEST.levels[10][8092] = nil
   db.trainers.PRIEST.levels[10][139] = nil
   Window.Show(record())
-  Assert.equal(table.concat(lines("GameFontNormal"), "|"), "New ranks")
+  Assert.equal(table.concat(lines("GameFontNormalLarge"), "|"), "New ranks")
 end
 
 local function test_reshow_without_ranks_hides_new_ranks_heading()
@@ -174,7 +178,7 @@ local function test_reshow_without_ranks_hides_new_ranks_heading()
   Window.Show(record())
   db.trainers.PRIEST.levels[10][589] = nil
   Window.Show(record())
-  Assert.equal(table.concat(lines("GameFontNormal"), "|"), "New skills")
+  Assert.equal(table.concat(lines("GameFontNormalLarge"), "|"), "New skills")
 end
 
 local function test_no_skills_and_no_hint_hides_skills_section()
@@ -184,7 +188,7 @@ local function test_no_skills_and_no_hint_hides_skills_section()
   W.known[139] = true
   W.known[589] = true
   Window.Show(record({ fromLevel = 10, toLevel = 11 }))
-  Assert.equal(#lines("GameFontNormal"), 0)
+  Assert.equal(#lines("GameFontNormalLarge"), 0)
   Assert.equal(#shownRows(), 0)
 end
 
