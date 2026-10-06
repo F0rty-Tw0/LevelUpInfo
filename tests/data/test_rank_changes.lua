@@ -74,6 +74,18 @@ local function test_decimal_is_one_value()
   same(lines, { "Duration: 1.5 sec → " .. W .. "2 sec" .. R })
 end
 
+local function test_thousands_separator_is_one_value()
+  setup()
+  local lines = RankChanges.Lines(facts("Absorbing 1,000 damage."), facts("Absorbing 1,200 damage."))
+  same(lines, { "Absorb: 1,000 → " .. W .. "1,200" .. R })
+end
+
+local function test_comma_before_four_digits_splits()
+  setup()
+  local lines = RankChanges.Lines(facts("Deals 1,2345 damage."), facts("Deals 1,2346 damage."))
+  same(lines, { "Damage: 2345 → " .. W .. "2346" .. R })
+end
+
 local function test_template_differs_keeps_cost_line()
   setup()
   local lines = RankChanges.Lines(
@@ -154,6 +166,8 @@ return function()
   test_duration_keeps_unit()
   test_percent_kept_in_value()
   test_decimal_is_one_value()
+  test_thousands_separator_is_one_value()
+  test_comma_before_four_digits_splits()
   test_template_differs_keeps_cost_line()
   test_only_cost_changed()
   test_cost_label_fallback()

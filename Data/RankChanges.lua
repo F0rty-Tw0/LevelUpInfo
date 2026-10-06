@@ -34,11 +34,19 @@ local KEYWORD_GROUPS = {
   { label = "Mana", words = { "mana" } },
 }
 
--- A number at `pos`: digits, plus `.` and digits when a digit follows the dot.
+-- A number at `pos`: digits, then each `,` + exactly three digits (thousands
+-- separator), plus `.` and digits when a digit follows the dot.
 local function readNumber(text, pos)
   local _, stop = find(text, "^%d+", pos)
   if not stop then
     return nil
+  end
+  while true do
+    local _, groupStop = find(text, "^,%d%d%d", stop + 1)
+    if not groupStop or find(text, "^%d", groupStop + 1) then
+      break
+    end
+    stop = groupStop
   end
   local _, fractionStop = find(text, "^%.%d+", stop + 1)
   stop = fractionStop or stop

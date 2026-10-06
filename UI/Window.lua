@@ -12,6 +12,7 @@ local SpellFacts = ns.SpellFacts or require("LevelUpInfo.Data.SpellFacts")
 local floor = math.floor
 local format = string.format
 local ipairs = ipairs
+local pairs = pairs
 local select = select
 local tostring = tostring
 local xpcall = xpcall
@@ -68,7 +69,9 @@ local rows = {}
 local headings = {}
 local dividers = {}
 local moreLines = {}
+local POOLS = { gainLines, rows, headings, dividers, moreLines } -- all hidden when a fill fails
 local rowsUsed
+local skillEntries, skillHint -- skill list of `current`: built on Show, reused by Refresh
 local arrow
 -- Set while a fill runs, so a load result fired inside it starts no second fill.
 local filling = false
@@ -221,19 +224,21 @@ local function fillGroup(spec, entries, money, y)
 end
 
 local function fillSkills(record, y)
-  local class = select(2, _G.UnitClass("player"))
-  local race = select(2, _G.UnitRace("player"))
-  local faction = _G.UnitFactionGroup("player")
-  local entries, showHint = SkillList.Build(db.trainers, class, race, faction, record.fromLevel, record.toLevel)
+  if not skillEntries then
+    local class = select(2, _G.UnitClass("player"))
+    local race = select(2, _G.UnitRace("player"))
+    local faction = _G.UnitFactionGroup("player")
+    skillEntries, skillHint = SkillList.Build(db.trainers, class, race, faction, record.fromLevel, record.toLevel)
+  end
   local money = _G.GetMoney()
   rowsUsed = 0
-  if y > 0 and (#entries > 0 or showHint) then
+  if y > 0 and (#skillEntries > 0 or skillHint) then
     y = y + SECTION_GAP
   end
   for _, spec in ipairs(GROUPS) do
-    y = fillGroup(spec, entries, money, y)
+    y = fillGroup(spec, skillEntries, money, y)
   end
-  if showHint then
+  if skillHint then
     local row = nextRow()
     SkillRow.SetHint(row)
     y = place(row, 0, y, ROW_HEIGHT)
@@ -254,6 +259,11 @@ local function fill(record)
   end, errorHandler)
   filling = false
   if not ok then
+    for _, pool in ipairs(POOLS) do
+      for _, region in pairs(pool) do
+        region:Hide()
+      end
+    end
     _G.geterrorhandler()(err)
   end
 end
@@ -291,6 +301,7 @@ function Window.Show(record)
   end
   AutoHide.Pause()
   current = record
+  skillEntries = nil
   fill(record)
   Window.ApplyScale()
   applyAnchor()

@@ -81,6 +81,24 @@ local function test_no_subtext_api_gives_nil()
   Assert.equal(entryFor(build(trainers, 9, 10), RANK_2).previousSpellID, nil)
 end
 
+local function test_by_name_lookup_error_gives_nil()
+  setup()
+  W.known[RANK_1] = true
+  W.spells[RANK_1].subtext = "Rank 1"
+  local byID = _G.C_Spell.GetSpellInfo
+  _G.C_Spell.GetSpellInfo = function(arg)
+    if type(arg) == "string" then
+      error("bad argument")
+    end
+    return byID(arg)
+  end
+  local trainers = priest({ [4] = { [QUEST_SPELL] = spell("") }, [10] = { [RANK_2] = spell("Rank 2") } })
+  local ok, entries = pcall(build, trainers, 9, 10)
+  Assert.equal(ok, true)
+  Assert.equal(entryFor(entries, RANK_2).previousSpellID, nil)
+  Assert.equal(entryFor(entries, QUEST_SPELL).group, "missed")
+end
+
 local function test_fallback_wrong_rank_gives_nil()
   setup()
   W.known[RANK_3] = true
@@ -163,6 +181,7 @@ return function()
   test_missed_rank_gets_previous()
   test_spellbook_fallback_for_starting_spell()
   test_no_subtext_api_gives_nil()
+  test_by_name_lookup_error_gives_nil()
   test_fallback_wrong_rank_gives_nil()
   test_missing_everywhere_gives_nil()
   test_rank_text_without_number_skipped()

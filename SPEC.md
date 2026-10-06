@@ -60,6 +60,7 @@ In game on build 16001 (marked **game**) or in Blizzard's `forever` UI source (m
 - **Rage and energy costs** come as display values (not ×10). Pass = a warrior's or rogue's `Rage cost` / `Energy cost` line matches the tooltip.
 - **Change-line arrow:** `→` renders in `GameFontDisableSmall`; if it shows as a box, swap it to `->` in the `%s: %s → %s` format string.
 - **Change labels:** labels read right on real spells. Spot-check 5 ranks (a heal, a shield, a DoT, a buff, a direct damage spell): each line's label names what the number is.
+- **Thousands separators:** whether spell descriptions write numbers over 999 with a `,` (`1,000`). The parser keeps `,` + exactly three digits as part of one number. Pass = a high-rank spell with a value over 999 shows one value per line, e.g. `Absorb: 1,000 → 1,200` (not `000 → 200`).
 - **Tall rows:** the trainer row texture stretched to 59–83 px still looks right, and a busy level (several new ranks with 4 lines) keeps the window a sensible height.
 
 ## The window
@@ -189,7 +190,7 @@ Rows sort by group (skill, rank, missed, weapon), then the order above. Quest ro
 
 - Only when at least one entry is a new rank, Build makes one index of the class cache over levels `1..toLevel`: key = spell name (`C_Spell.GetSpellInfo(id).name`) + rank number (first number in the cached `rank` text), value = spellID. Cache entries with nil info or no number in their rank text are skipped; when two spellIDs share a key, the lower one wins.
 - `previousSpellID = index[name, N - 1]`.
-- **Spellbook fallback** when the index has no `N - 1`: `known = C_Spell.GetSpellInfo(name)` (by name, the player's known spell); if it is not nil and the first number in `C_Spell.GetSpellSubtext(known.spellID)` is `N - 1`, `previousSpellID = known.spellID`. This covers the spells a class starts with (Lesser Heal, Smite, Fireball…): their Rank 1 is known from level 1 and no trainer sells it, so it is never in the cache.
+- **Spellbook fallback** when the index has no `N - 1`: `known = C_Spell.GetSpellInfo(name)` (by name, the player's known spell; called through `pcall`, an error counts as nil); if it is not nil and the first number in `C_Spell.GetSpellSubtext(known.spellID)` is `N - 1`, `previousSpellID = known.spellID`. This covers the spells a class starts with (Lesser Heal, Smite, Fireball…): their Rank 1 is known from level 1 and no trainer sells it, so it is never in the cache.
 - Otherwise `previousSpellID` is nil (the row shows no change lines). No race rule is applied to the previous rank. Rank 1, quest and weapon entries never get the field.
 
 ### Spell text
@@ -201,7 +202,7 @@ The change lines need both ranks' spell facts (`Data/SpellFacts.lua`); `Data/Ran
 3. Facts: `description`; `castTime` from `C_Spell.GetSpellInfo`; `cooldown` = first return of `GetSpellBaseCooldown`; `cost` and power token (`name`) from the first entry of `C_Spell.GetSpellPowerCost`. A missing API or nil return leaves that field nil, and a nil field never makes a line.
 4. Each spell is requested at most once per window lifetime. A spell already requested reads normally even if its description is still `""` (no description, failed load), so there is no request/refresh loop.
 5. `SPELL_DATA_LOAD_RESULT(spellID, success)`: results for spells that are not pending are ignored. Otherwise the spell leaves the pending set (success or not), the event is unregistered when nothing is pending any more, and `Window.Refresh()` runs: one refill per result, so one slow spell does not hold back the other rows.
-6. `Window.Refresh()` does nothing while a fill is running, or when the window is hidden or has no current record; otherwise it refills the current record. It keeps the countdown, anchor and scale, creates no frames (only change-line font strings past a row's highest count) and leaves an open row tooltip as is. With the default `CENTER` anchor the window grows both up and down. Each fill runs inside `xpcall`; the fill flag is cleared before an error goes to `geterrorhandler()`, so an error never leaves Refresh dead.
+6. `Window.Refresh()` does nothing while a fill is running, or when the window is hidden or has no current record; otherwise it refills the current record from the skill list built by the last `Window.Show` (no new `SkillList.Build`; a new show always rebuilds). It keeps the countdown, anchor and scale, creates no frames (only change-line font strings past a row's highest count) and leaves an open row tooltip as is. With the default `CENTER` anchor the window grows both up and down. Each fill runs inside `xpcall`; the fill flag is cleared and every gain line, heading, divider, row and `+N more` line is hidden before an error goes to `geterrorhandler()`, so an error never leaves Refresh dead or an older record's rows under the new title.
 7. Hiding the window (close, countdown, or hiding the whole UI) unregisters the event and forgets every requested and pending spell. Accepted: after Alt+Z while text was loading, the window shown again keeps rows without those lines until the next level-up or `/lui test`.
 
 ## Settings

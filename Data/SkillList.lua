@@ -10,6 +10,7 @@ local WeaponIcons = ns.WeaponIcons or require("LevelUpInfo.Data.WeaponIcons")
 local ipairs = ipairs
 local match = string.match
 local pairs = pairs
+local pcall = pcall
 local sort = table.sort
 local tonumber = tonumber
 
@@ -63,13 +64,14 @@ local function rankIndex(data, toLevel)
 end
 
 -- Starting spells' Rank 1 is never sold by a trainer: take the known spell
--- of that name when its rank text has the wanted number.
+-- of that name when its rank text has the wanted number. The by-name call is
+-- guarded: a client that rejects a string argument gives no previous rank.
 local function knownPrevious(name, previous)
   if _G.C_Spell.GetSpellSubtext == nil then
     return nil
   end
-  local known = _G.C_Spell.GetSpellInfo(name)
-  if known and rankNumber(_G.C_Spell.GetSpellSubtext(known.spellID) or "") == previous then
+  local ok, known = pcall(_G.C_Spell.GetSpellInfo, name)
+  if ok and known and rankNumber(_G.C_Spell.GetSpellSubtext(known.spellID) or "") == previous then
     return known.spellID
   end
   return nil

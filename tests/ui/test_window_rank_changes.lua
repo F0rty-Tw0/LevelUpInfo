@@ -148,6 +148,39 @@ local function test_result_after_new_show_refills_new_record()
   Assert.equal(shownLines(rowNamed("Renew")), 1)
 end
 
+local function test_old_record_result_refills_new_record()
+  setup()
+  W.spells[RANK_2].description = ""
+  Window.Show(record())
+  W.spells[139] = { name = "Renew", iconID = 2, description = "Heals 45 over 15 sec." }
+  W.spells[6074] = { name = "Renew", iconID = 2, description = "Heals 100 over 15 sec." }
+  W.known[139] = true
+  W.known[RANK_2] = true
+  cacheSpell(8, 139, "Rank 1")
+  cacheSpell(12, 6074, "Rank 2")
+  db.trainers.PRIEST.covered.Scourge = 12
+  Window.Show(record(11, 12))
+  loadText(RANK_2, NEW_TEXT)
+  Assert.equal(W.state(frame()).title, "Level 12")
+  Assert.equal(#shownRows(), 1)
+  Assert.equal(shownLines(rowNamed("Renew")), 1)
+end
+
+local function test_refresh_reuses_skill_list()
+  setup()
+  W.spells[RANK_2].description = ""
+  Window.Show(record())
+  local builds = 0
+  local build = ns.SkillList.Build
+  ns.SkillList.Build = function(...)
+    builds = builds + 1
+    return build(...)
+  end
+  loadText(RANK_2, NEW_TEXT)
+  Assert.equal(rankLines(), 2)
+  Assert.equal(builds, 0)
+end
+
 local function test_refresh_while_hidden_does_nothing()
   setup()
   Window.Refresh()
@@ -203,6 +236,23 @@ local function test_fill_error_reports_and_refresh_still_works()
   Assert.equal(W.calls.GetMoney, moneyCalls + 1)
 end
 
+local function test_fill_error_hides_previous_rows()
+  setup()
+  Window.Show(record())
+  Assert.equal(#shownRows(), 1)
+  W.def("geterrorhandler", function()
+    return function() end
+  end)
+  W.def("debugstack", function()
+    return ""
+  end)
+  W.def("GetMoney", function()
+    error("boom")
+  end)
+  Window.Show(record(11, 12))
+  Assert.equal(#shownRows(), 0)
+end
+
 local function test_capped_rank_row_requests_nothing()
   setup()
   db.trainers.PRIEST.levels = {}
@@ -232,9 +282,12 @@ return function()
   test_rank_row_shows_lines_and_frame_grows()
   test_unloaded_then_result_fills_lines()
   test_result_after_new_show_refills_new_record()
+  test_old_record_result_refills_new_record()
+  test_refresh_reuses_skill_list()
   test_refresh_while_hidden_does_nothing()
   test_refresh_during_fill_ignored()
   test_fill_error_reports_and_refresh_still_works()
+  test_fill_error_hides_previous_rows()
   test_capped_rank_row_requests_nothing()
   test_hide_unregisters_event()
 end
