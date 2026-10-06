@@ -51,6 +51,80 @@ local function newAnimationGroup(parent)
   return group
 end
 
+-- Runs a widget's script, then its hooks, like the client does.
+local function runScript(widget, script, ...)
+  local stub = widget._stub
+  if stub.scripts[script] then
+    stub.scripts[script](widget, ...)
+  end
+  for _, fn in ipairs(stub.hooks[script] or {}) do
+    fn(widget, ...)
+  end
+end
+
+local function addScrollFrameMethods(widget, stub)
+  stub.verticalScroll = 0
+  function widget:SetScrollChild(child)
+    stub.scrollChild = child
+  end
+  function widget:GetScrollChild()
+    return stub.scrollChild
+  end
+  function widget:SetVerticalScroll(offset)
+    stub.verticalScroll = offset
+  end
+  function widget:GetVerticalScroll()
+    return stub.verticalScroll
+  end
+  function widget:EnableMouseWheel(enabled)
+    stub.mouseWheel = enabled and true or false
+  end
+  function widget:IsMouseWheelEnabled()
+    return stub.mouseWheel == true
+  end
+end
+
+-- Like the client: the value stays inside [min, max]; OnValueChanged
+-- fires with (widget, value) only when the value actually changes.
+local function addSliderMethods(widget, stub)
+  stub.minValue, stub.maxValue, stub.value = 0, 0, 0
+  local function setValue(value)
+    value = math.max(stub.minValue, math.min(stub.maxValue, value))
+    if value ~= stub.value then
+      stub.value = value
+      runScript(widget, "OnValueChanged", value)
+    end
+  end
+  function widget:SetOrientation(orientation)
+    stub.orientation = orientation
+  end
+  function widget:SetMinMaxValues(minValue, maxValue)
+    stub.minValue, stub.maxValue = minValue, maxValue
+    setValue(stub.value)
+  end
+  function widget:GetMinMaxValues()
+    return stub.minValue, stub.maxValue
+  end
+  function widget:SetValue(value)
+    setValue(value)
+  end
+  function widget:GetValue()
+    return stub.value
+  end
+  function widget:SetValueStep(step)
+    stub.valueStep = step
+  end
+  function widget:SetObeyStepOnDrag(obey)
+    stub.obeyStepOnDrag = obey and true or false
+  end
+  function widget:SetThumbTexture(texture)
+    stub.thumbTexture = texture
+  end
+  function widget:GetThumbTexture()
+    return stub.thumbTexture
+  end
+end
+
 local function newWidget(W, frameType, name, parent, template)
   local stub = {
     frameType = frameType,
@@ -142,13 +216,7 @@ local function newWidget(W, frameType, name, parent, template)
       return
     end
     stub.shown = shown
-    local script = shown and "OnShow" or "OnHide"
-    if stub.scripts[script] then
-      stub.scripts[script](widget)
-    end
-    for _, fn in ipairs(stub.hooks[script] or {}) do
-      fn(widget)
-    end
+    runScript(widget, shown and "OnShow" or "OnHide")
   end
   function widget:Show()
     widget:SetShown(true)
@@ -242,6 +310,13 @@ local function newWidget(W, frameType, name, parent, template)
   function widget:SetTextColor(r, g, b)
     stub.textColor = { r, g, b }
   end
+  -- Takes the font object's name; the stub defines no font-object globals.
+  function widget:SetFontObject(fontObject)
+    stub.fontObject = fontObject
+  end
+  function widget:GetFontObject()
+    return stub.fontObject
+  end
   -- CallbackRegistry (MinimalSliderWithSteppersTemplate): fn(owner, ...).
   function widget:RegisterCallback(event, fn, owner)
     stub.callbacks[event] = { fn = fn, owner = owner }
@@ -265,6 +340,11 @@ local function newWidget(W, frameType, name, parent, template)
       stub.templateHides = (stub.templateHides or 0) + 1
     end
   end
+  if frameType == "ScrollFrame" then
+    addScrollFrameMethods(widget, stub)
+  elseif frameType == "Slider" then
+    addSliderMethods(widget, stub)
+  end
 
   if name then
     rawset(_G, name, widget)
@@ -279,15 +359,7 @@ local function installDrivers(W)
     return widget._stub
   end
 
-  function W.fireScript(widget, script, ...)
-    local stub = widget._stub
-    if stub.scripts[script] then
-      stub.scripts[script](widget, ...)
-    end
-    for _, fn in ipairs(stub.hooks[script] or {}) do
-      fn(widget, ...)
-    end
-  end
+  W.fireScript = runScript
 
   function W.fireEvent(widget, event, ...)
     local stub = widget._stub
