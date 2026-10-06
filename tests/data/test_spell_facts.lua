@@ -4,6 +4,7 @@ local Wow = require("tests.helpers.wow")
 local EVENT = "SPELL_DATA_LOAD_RESULT"
 local OLD_ID = 100
 local NEW_ID = 200
+local LOADED_ID = 594
 
 local function setup()
   local W = Wow.Install()
@@ -189,8 +190,21 @@ local function test_changes_requests_both_spells()
   Assert.equal(table.concat(lines, "\n"), table.concat(expected, "\n"))
 end
 
+local function test_on_loaded_receives_spell_id()
+  local W, _, SpellFacts = setup()
+  local received
+  SpellFacts.Install(function(spellID)
+    received = spellID
+  end)
+  W.spells[LOADED_ID] = { description = "" }
+  SpellFacts.Read(LOADED_ID)
+  W.broadcast(EVENT, LOADED_ID, true)
+  Assert.equal(received, LOADED_ID)
+end
+
 return function()
   test_loaded_returns_facts()
+  test_on_loaded_receives_spell_id()
   test_unloaded_returns_nil_and_requests_once()
   test_result_inside_request_returns_facts()
   test_one_of_two_results_calls_onloaded_keeps_event()
