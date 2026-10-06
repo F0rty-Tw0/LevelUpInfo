@@ -10,7 +10,7 @@ Idea credit: the level-up screen concept of GnomeLevelUp. No code or assets are 
 - Flavor: **WoW: Forever only** (`## Interface: 16001`). Classic Era comes later as its own change (different trainer API order, unverified at runtime).
 - The scan reads class trainers only; profession, pet and weapon trainers are ignored. Weapon skills and quest-reward spells come from a hardcoded table instead (see Other sources).
 - English only. Every player-visible string goes through `Localization.Text("...")` (a `Core/Localization.lua` copied from RaidGroupWrap); Blizzard global strings (`HEALTH`, `MANA`, `SPELL_STAT1_NAME`…) are used where they exist, so those parts are already localized.
-- Repo scaffolding copies RaidGroupWrap: `AGENTS.md`/`CLAUDE.md`, `.luacheckrc`, `stylua.toml`, `.editorconfig`, `.pkgmeta`, `scripts/` (lint, test runner, release, package), `tests/helpers/` and the GitHub CI + release workflows (lint, minify, re-run tests on the minified code).
+- Repo scaffolding copies RaidGroupWrap: `.luacheckrc`, `stylua.toml`, `.editorconfig`, `.pkgmeta`, `scripts/` (lint, test runner, release, package), `tests/helpers/` and the GitHub CI + release workflows (lint, minify, re-run tests on the minified code).
 
 ## Verified Forever facts
 
