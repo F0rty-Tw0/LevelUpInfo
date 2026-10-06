@@ -47,6 +47,9 @@ local function setup()
     "Data/SpellFacts.lua",
     "UI/AutoHide.lua",
     "UI/SkillRow.lua",
+    "UI/SkillGroup.lua",
+    "UI/Layout.lua",
+    "UI/GainLines.lua",
   }) do
     assert(loadfile(file))("LevelUpInfo", ns)
   end
@@ -148,7 +151,7 @@ local function test_result_after_new_show_refills_new_record()
   Assert.equal(shownLines(rowNamed("Renew")), 1)
 end
 
-local function test_old_record_result_refills_new_record()
+local function test_old_record_result_leaves_new_record_alone()
   setup()
   W.spells[RANK_2].description = ""
   Window.Show(record())
@@ -160,7 +163,16 @@ local function test_old_record_result_refills_new_record()
   cacheSpell(12, 6074, "Rank 2")
   db.trainers.PRIEST.covered.Scourge = 12
   Window.Show(record(11, 12))
+  local moneyCalls = W.calls.GetMoney
+  local setSizeCalls = 0
+  local setSize = frame().SetSize
+  frame().SetSize = function(...)
+    setSizeCalls = setSizeCalls + 1
+    return setSize(...)
+  end
   loadText(RANK_2, NEW_TEXT)
+  Assert.equal(W.calls.GetMoney, moneyCalls)
+  Assert.equal(setSizeCalls, 0)
   Assert.equal(W.state(frame()).title, "Level 12")
   Assert.equal(#shownRows(), 1)
   Assert.equal(shownLines(rowNamed("Renew")), 1)
@@ -282,7 +294,7 @@ return function()
   test_rank_row_shows_lines_and_frame_grows()
   test_unloaded_then_result_fills_lines()
   test_result_after_new_show_refills_new_record()
-  test_old_record_result_refills_new_record()
+  test_old_record_result_leaves_new_record_alone()
   test_refresh_reuses_skill_list()
   test_refresh_while_hidden_does_nothing()
   test_refresh_during_fill_ignored()

@@ -38,6 +38,9 @@ local function setup()
     "Data/SpellFacts.lua",
     "UI/AutoHide.lua",
     "UI/SkillRow.lua",
+    "UI/SkillGroup.lua",
+    "UI/Layout.lua",
+    "UI/GainLines.lua",
   }) do
     assert(loadfile(file))("LevelUpInfo", ns)
   end
@@ -85,7 +88,7 @@ end
 local function shownRows()
   local rows = {}
   for _, widget in ipairs(W.frames) do
-    if W.state(widget).frameType == "Button" and widget:GetParent() == content() and widget:IsShown() then
+    if W.state(widget).frameType == "Button" and widget.name and widget:GetParent() == content() and widget:IsShown() then
       rows[#rows + 1] = widget
     end
   end

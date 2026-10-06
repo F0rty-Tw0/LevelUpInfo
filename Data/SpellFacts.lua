@@ -38,7 +38,7 @@ local function onLoadResult(spellID)
     Events.Off(LOAD_EVENT)
   end
   if onLoaded then
-    onLoaded()
+    onLoaded(spellID)
   end
 end
 
