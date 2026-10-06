@@ -151,7 +151,7 @@ local function test_result_after_new_show_refills_new_record()
   Assert.equal(shownLines(rowNamed("Renew")), 1)
 end
 
-local function test_old_record_result_refills_new_record()
+local function test_old_record_result_leaves_new_record_alone()
   setup()
   W.spells[RANK_2].description = ""
   Window.Show(record())
@@ -285,7 +285,7 @@ return function()
   test_rank_row_shows_lines_and_frame_grows()
   test_unloaded_then_result_fills_lines()
   test_result_after_new_show_refills_new_record()
-  test_old_record_result_refills_new_record()
+  test_old_record_result_leaves_new_record_alone()
   test_refresh_reuses_skill_list()
   test_refresh_while_hidden_does_nothing()
   test_refresh_during_fill_ignored()

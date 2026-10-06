@@ -56,9 +56,14 @@ local headings = {}
 local dividers = {}
 local POOLS = { rows, headings, dividers } -- all hidden when a fill fails
 local rowsUsed
+local rowEntries = {} -- entry shown in rows[i], read only when rowLines[i]
+local rowLines = {} -- whether rows[i] shows change lines
 local skillEntries, skillHint -- skill list of `current`: built on Show, reused by Refresh
 -- Set while a fill runs, so a load result fired inside it starts no second fill.
 local filling = false
+-- Set by a failed fill or refresh: its layout list must not be replayed, so
+-- the next refresh is a full fill.
+local stale = false
 local fill
 
 -- A toggle click refills the shown record with the group's new state.
@@ -136,7 +141,10 @@ end
 local function addRow(entry, money, parent)
   local row = nextRow(parent)
   SkillRow.SetSkill(row, entry, money)
-  if entry.previousSpellID then
+  local lines = entry.previousSpellID ~= nil
+  rowLines[rowsUsed] = lines
+  if lines then
+    rowEntries[rowsUsed] = entry
     SkillRow.SetChanges(row, SpellFacts.Changes(entry.previousSpellID, entry.spellID) or NO_LINES)
   end
   Layout.Add(row, parent, 0, nil)
@@ -212,6 +220,7 @@ local function fillSkills(record, gainCount)
   if skillHint then
     local row = nextRow(content)
     SkillRow.SetHint(row)
+    rowLines[rowsUsed] = false
     Layout.Add(row, content, 0, ROW_HEIGHT)
   end
   for index = rowsUsed + 1, #rows do
@@ -229,17 +238,18 @@ local function sizeBoxes(cursors)
   end
 end
 
-function fill(record)
+local function applyLayout()
+  local height, cursors = Layout.Run(content)
+  sizeBoxes(cursors)
+  content:SetHeight(height)
+  frame:SetSize(FRAME_WIDTH, HEADER_HEIGHT + height + FOOTER_HEIGHT)
+end
+
+-- Runs `work` under the `filling` guard; an error hides everything, marks
+-- the window stale and reports it.
+local function guarded(work)
   filling = true
-  local ok, err = xpcall(function()
-    frame:SetTitle(format(Text("Level %d"), record.toLevel))
-    Layout.Reset()
-    fillSkills(record, GainLines.Fill(content, record))
-    local height, cursors = Layout.Run(content)
-    sizeBoxes(cursors)
-    content:SetHeight(height)
-    frame:SetSize(FRAME_WIDTH, HEADER_HEIGHT + height + FOOTER_HEIGHT)
-  end, errorHandler)
+  local ok, err = xpcall(work, errorHandler)
   filling = false
   if not ok then
     Layout.Reset()
@@ -250,7 +260,34 @@ function fill(record)
         region:Hide()
       end
     end
+    stale = true
     _G.geterrorhandler()(err)
+  end
+end
+
+function fill(record)
+  guarded(function()
+    frame:SetTitle(format(Text("Level %d"), record.toLevel))
+    Layout.Reset()
+    fillSkills(record, GainLines.Fill(content, record))
+    applyLayout()
+    stale = false
+  end)
+end
+
+-- Recomputes the change lines of shown rows that use `spellID`; places the
+-- window again only when one matched.
+local function refreshRows(spellID)
+  local changed = false
+  for index = 1, rowsUsed do
+    local entry = rowEntries[index]
+    if rowLines[index] and (entry.spellID == spellID or entry.previousSpellID == spellID) then
+      SkillRow.SetChanges(rows[index], SpellFacts.Changes(entry.previousSpellID, entry.spellID) or NO_LINES)
+      changed = true
+    end
+  end
+  if changed then
+    applyLayout()
   end
 end
 
@@ -296,13 +333,20 @@ function Window.Show(record)
   AutoHide.Resume()
 end
 
--- Refills the shown record when spell text arrives; keeps countdown, anchor,
--- scale and each group's expanded state and scroll position.
-function Window.Refresh()
+-- Spell text for `spellID` arrived: updates only the rows using it (nil or
+-- stale: a full refill). Keeps countdown, anchor, scale, expanded state and
+-- scroll position.
+function Window.Refresh(spellID)
   if filling or not current or not frame or not frame:IsShown() then
     return
   end
-  fill(current)
+  if spellID == nil or stale then
+    fill(current)
+  else
+    guarded(function()
+      refreshRows(spellID)
+    end)
+  end
 end
 
 ns.Window = Window
