@@ -8,8 +8,9 @@ local SkillList = ns.SkillList or require("LevelUpInfo.Data.SkillList")
 local AutoHide = ns.AutoHide or require("LevelUpInfo.UI.AutoHide")
 local SkillRow = ns.SkillRow or require("LevelUpInfo.UI.SkillRow")
 local SpellFacts = ns.SpellFacts or require("LevelUpInfo.Data.SpellFacts")
+local Layout = ns.Layout or require("LevelUpInfo.UI.Layout")
+local GainLines = ns.GainLines or require("LevelUpInfo.UI.GainLines")
 
-local floor = math.floor
 local format = string.format
 local ipairs = ipairs
 local pairs = pairs
@@ -32,9 +33,7 @@ local TEXT_LEFT = 4
 local GROUP_CAP = 5
 local DIVIDER_ALPHA = 0.25
 local DIVIDER_GAP = 2
-local COLOR_SCALE = 255
 local NO_LINES = {}
-local ARROW_FORMAT = "|TInterface\\Buttons\\Arrow-Up-Up:14:14:0:0:32:32:0:32:0:32:%d:%d:%d|t"
 
 -- Skill groups in display order; a capped group shows its first `cap` rows,
 -- then a `+N more` line for the rest.
@@ -45,34 +44,19 @@ local GROUPS = {
   { group = "weapon", title = "Weapon skills", cap = GROUP_CAP, more = "+%d more weapon skills" },
 }
 
--- Gains in SPEC order; each name is a Blizzard global with an English fallback,
--- shown in its own stat color (6-digit hex).
-local GAINS = {
-  { key = "health", global = "HEALTH", fallback = "Health", color = "49d36b" },
-  { key = "power", global = "MANA", fallback = "Mana", color = "4d8dff" },
-  { key = "talents", global = "TALENT_POINTS", fallback = "Talent points", color = "c084fc" },
-  { key = "strength", global = "SPELL_STAT1_NAME", fallback = "Strength", color = "ff5c5c" },
-  { key = "agility", global = "SPELL_STAT2_NAME", fallback = "Agility", color = "ffa340" },
-  { key = "stamina", global = "SPELL_STAT3_NAME", fallback = "Stamina", color = "d9b38c" },
-  { key = "intellect", global = "SPELL_STAT4_NAME", fallback = "Intellect", color = "4fd1e8" },
-  { key = "spirit", global = "SPELL_STAT5_NAME", fallback = "Spirit", color = "f5a3d0" },
-}
-
 local Window = {}
 
 local db
 local frame
 local content
 local current
-local gainLines = {}
 local rows = {}
 local headings = {}
 local dividers = {}
 local moreLines = {}
-local POOLS = { gainLines, rows, headings, dividers, moreLines } -- all hidden when a fill fails
+local POOLS = { rows, headings, dividers, moreLines } -- all hidden when a fill fails
 local rowsUsed
 local skillEntries, skillHint -- skill list of `current`: built on Show, reused by Refresh
-local arrow
 -- Set while a fill runs, so a load result fired inside it starts no second fill.
 local filling = false
 
@@ -96,10 +80,6 @@ local function errorHandler(err)
   return tostring(err) .. "\n" .. _G.debugstack()
 end
 
-local function to255(c)
-  return floor(c * COLOR_SCALE + 0.5)
-end
-
 local function build()
   frame = _G.CreateFrame("Frame", "LevelUpInfoFrame", _G.UIParent, "ButtonFrameTemplate")
   frame:Hide()
@@ -119,8 +99,6 @@ local function build()
   content = _G.CreateFrame("Frame", nil, frame)
   content:SetSize(CONTENT_WIDTH, 1)
   content:SetPoint("TOPLEFT", frame, "TOPLEFT", CONTENT_LEFT, -HEADER_HEIGHT)
-  local greenR, greenG, greenB = _G.GREEN_FONT_COLOR:GetRGB()
-  arrow = format(ARROW_FORMAT, to255(greenR), to255(greenG), to255(greenB))
   local r, g, b = _G.NORMAL_FONT_COLOR:GetRGB()
   for _, spec in ipairs(GROUPS) do
     local heading = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -136,44 +114,6 @@ local function build()
   end
 end
 
--- Puts a region at the cursor and returns the cursor below it.
-local function place(region, x, y, height)
-  region:ClearAllPoints()
-  region:SetPoint("TOPLEFT", content, "TOPLEFT", x, -y)
-  region:Show()
-  return y + height
-end
-
-local function gainText(record, gain)
-  local amount = record.gains[gain.key]
-  if not amount or amount == 0 then
-    return nil
-  end
-  local coloredName = "|cff" .. gain.color .. (_G[gain.global] or Text(gain.fallback)) .. "|r"
-  local before = record.before and record.before[gain.key]
-  if gain.key == "talents" or not before then
-    return format(Text("%s %s %s"), arrow, format(Text("+%d"), amount), coloredName)
-  end
-  return format(Text("%s %s %s %s"), coloredName, tostring(before), arrow, tostring(before + amount))
-end
-
-local function fillGains(record, y)
-  local used = 0
-  for _, gain in ipairs(GAINS) do
-    local text = gainText(record, gain)
-    if text then
-      used = used + 1
-      gainLines[used] = gainLines[used] or content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-      gainLines[used]:SetText(text)
-      y = place(gainLines[used], TEXT_LEFT, y, LINE_HEIGHT)
-    end
-  end
-  for index = used + 1, #gainLines do
-    gainLines[index]:Hide()
-  end
-  return y
-end
-
 local function nextRow()
   rowsUsed = rowsUsed + 1
   rows[rowsUsed] = rows[rowsUsed] or SkillRow.Create(content, AutoHide.Pause, AutoHide.Resume)
@@ -181,21 +121,21 @@ local function nextRow()
 end
 
 -- The `+N more` line of a capped group, shown only when rows were left out.
-local function fillMore(spec, count, y)
+local function fillMore(spec, count)
   local line = moreLines[spec.group]
   if not line then
-    return y
+    return
   end
   local hidden = count - spec.cap
   if hidden <= 0 then
     line:Hide()
-    return y
+    return
   end
   line:SetText(format(Text(spec.more), hidden))
-  return place(line, TEXT_LEFT, y, LINE_HEIGHT)
+  Layout.Add(line, content, TEXT_LEFT, LINE_HEIGHT)
 end
 
-local function fillGroup(spec, entries, money, y)
+local function fillGroup(spec, entries, money)
   local heading = headings[spec.group]
   local count = 0
   for _, entry in ipairs(entries) do
@@ -203,7 +143,7 @@ local function fillGroup(spec, entries, money, y)
       count = count + 1
       if count == 1 then
         heading:SetText(Text(spec.title))
-        y = place(heading, TEXT_LEFT, y, HEADING_HEIGHT)
+        Layout.Add(heading, content, TEXT_LEFT, HEADING_HEIGHT)
         dividers[spec.group]:Show()
       end
       if not spec.cap or count <= spec.cap then
@@ -212,7 +152,7 @@ local function fillGroup(spec, entries, money, y)
         if entry.previousSpellID then
           SkillRow.SetChanges(row, SpellFacts.Changes(entry.previousSpellID, entry.spellID) or NO_LINES)
         end
-        y = place(row, 0, y, row:GetHeight())
+        Layout.Add(row, content, 0, nil)
       end
     end
   end
@@ -220,10 +160,10 @@ local function fillGroup(spec, entries, money, y)
     heading:Hide()
     dividers[spec.group]:Hide()
   end
-  return fillMore(spec, count, y)
+  fillMore(spec, count)
 end
 
-local function fillSkills(record, y)
+local function fillSkills(record, gainCount)
   if not skillEntries then
     local class = select(2, _G.UnitClass("player"))
     local race = select(2, _G.UnitRace("player"))
@@ -232,33 +172,36 @@ local function fillSkills(record, y)
   end
   local money = _G.GetMoney()
   rowsUsed = 0
-  if y > 0 and (#skillEntries > 0 or skillHint) then
-    y = y + SECTION_GAP
+  if gainCount > 0 and (#skillEntries > 0 or skillHint) then
+    Layout.AddGap(content, SECTION_GAP)
   end
   for _, spec in ipairs(GROUPS) do
-    y = fillGroup(spec, skillEntries, money, y)
+    fillGroup(spec, skillEntries, money)
   end
   if skillHint then
     local row = nextRow()
     SkillRow.SetHint(row)
-    y = place(row, 0, y, ROW_HEIGHT)
+    Layout.Add(row, content, 0, ROW_HEIGHT)
   end
   for index = rowsUsed + 1, #rows do
     rows[index]:Hide()
   end
-  return y
 end
 
 local function fill(record)
   filling = true
   local ok, err = xpcall(function()
     frame:SetTitle(format(Text("Level %d"), record.toLevel))
-    local height = fillSkills(record, fillGains(record, 0))
+    Layout.Reset()
+    fillSkills(record, GainLines.Fill(content, record))
+    local height = Layout.Run(content)
     content:SetHeight(height)
     frame:SetSize(FRAME_WIDTH, HEADER_HEIGHT + height + FOOTER_HEIGHT)
   end, errorHandler)
   filling = false
   if not ok then
+    Layout.Reset()
+    GainLines.HideAll()
     for _, pool in ipairs(POOLS) do
       for _, region in pairs(pool) do
         region:Hide()

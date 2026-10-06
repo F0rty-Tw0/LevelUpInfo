@@ -47,6 +47,9 @@ local function setup()
     "Data/SpellFacts.lua",
     "UI/AutoHide.lua",
     "UI/SkillRow.lua",
+    "UI/SkillGroup.lua",
+    "UI/Layout.lua",
+    "UI/GainLines.lua",
   }) do
     assert(loadfile(file))("LevelUpInfo", ns)
   end

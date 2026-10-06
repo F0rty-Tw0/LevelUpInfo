@@ -21,6 +21,8 @@ Data/SpellFacts.lua
 UI/AutoHide.lua
 UI/SkillRow.lua
 UI/SkillGroup.lua
+UI/Layout.lua
+UI/GainLines.lua
 UI/Window.lua
 Core/LevelUp.lua
 Settings/Panel.lua
