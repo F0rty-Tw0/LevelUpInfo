@@ -10,6 +10,8 @@ local next, pairs, ipairs, type = next, pairs, ipairs, type
 
 -- Steps like 0.05 leave float noise; round to 2 decimals so 1.05 == 1.05.
 local DECIMAL_SCALE = 100
+local FULL_CIRCLE = 360
+local HUGE = math.huge
 
 local ANCHOR_POINTS = {
   TOPLEFT = true,
@@ -67,6 +69,14 @@ local function normalizePosition(position)
     return nil
   end
   return { point = position.point, x = position.x, y = position.y }
+end
+
+-- Degrees; nil (the default angle) unless a finite number.
+local function normalizeAngle(angle)
+  if not isNumber(angle) or angle == HUGE or angle == -HUGE then
+    return nil
+  end
+  return angle % FULL_CIRCLE
 end
 
 local function cleanRaces(races)
@@ -149,6 +159,7 @@ function SavedState.Initialize(saved)
   saved = type(saved) == "table" and saved or {}
   local db = {
     position = normalizePosition(saved.position),
+    minimapAngle = normalizeAngle(saved.minimapAngle),
     trainers = cleanTrainers(saved.trainers),
   }
   for _, setting in ipairs(Defaults.list) do

@@ -15,6 +15,7 @@ local Defaults = {
     { key = "waitForCombat", kind = "checkbox", label = Text("Wait for combat to end"), default = true },
     { key = "scale", kind = "slider", label = Text("Scale"), default = 1.0, min = 0.5, max = 1.5, step = 0.05 },
     { key = "reducedMotion", kind = "checkbox", label = Text("Reduced motion"), default = false },
+    { key = "minimapButton", kind = "checkbox", label = Text("Show minimap button"), default = true },
   },
   byKey = {},
 }

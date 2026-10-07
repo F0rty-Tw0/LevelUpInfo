@@ -11,7 +11,7 @@ local framesBefore
 local log
 local hiddenFrame
 
-local CHECKBOX_KEYS = { "enabled", "waitForCombat", "reducedMotion" }
+local CHECKBOX_KEYS = { "enabled", "waitForCombat", "reducedMotion", "minimapButton" }
 
 -- Fresh fake client, module and saved variables per test; the panel is registered, not opened.
 local function setup()
@@ -19,7 +19,7 @@ local function setup()
   Panel = assert(loadfile("Settings/Panel.lua"))("LevelUpInfo", {})
   db = SavedState.Initialize(nil)
   db.trainers = { PRIEST = { covered = { Scourge = 5 }, levels = {} } }
-  calls = { scale = 0, resetPosition = 0 }
+  calls = { scale = 0, resetPosition = 0, minimapButton = 0 }
   log = {}
   hiddenFrame = nil
   W.def("HideUIPanel", function(frame)
@@ -36,6 +36,10 @@ local function setup()
     end,
     onTest = function()
       log[#log + 1] = "test"
+    end,
+    onMinimapButton = function()
+      calls.minimapButton = calls.minimapButton + 1
+      calls.minimapButtonSeen = db.minimapButton
     end,
   })
   canvas = W.settings.category.frame
@@ -101,7 +105,7 @@ local function test_first_show_builds_controls_in_defaults_order()
       kinds[#kinds + 1] = "slider"
     end
   end
-  Assert.equal(table.concat(kinds, ","), "checkbox,slider,checkbox,slider,checkbox")
+  Assert.equal(table.concat(kinds, ","), "checkbox,slider,checkbox,slider,checkbox,checkbox")
 end
 
 local function test_second_show_builds_nothing_new()
@@ -146,6 +150,23 @@ local function test_checkbox_click_writes_its_setting()
     click(checkboxes()[index], wanted)
     Assert.equal(db[key], wanted, key)
   end
+end
+
+local function test_minimap_checkbox_applies_after_writing()
+  setup()
+  open()
+  click(checkboxes()[4], false)
+  Assert.equal(calls.minimapButton, 1)
+  Assert.equal(calls.minimapButtonSeen, false)
+end
+
+local function test_other_checkboxes_do_not_apply_minimap_button()
+  setup()
+  open()
+  for index = 1, 3 do
+    click(checkboxes()[index], false)
+  end
+  Assert.equal(calls.minimapButton, 0)
 end
 
 local function test_slider_change_writes_the_stepped_value()
@@ -222,6 +243,15 @@ local function test_default_button_restores_every_default_and_applies_scale()
   Assert.equal(calls.scale, 1)
 end
 
+local function test_default_button_restores_and_applies_minimap_button()
+  setup()
+  db.minimapButton = false
+  canvas.OnDefault()
+  Assert.equal(db.minimapButton, true)
+  Assert.equal(calls.minimapButton, 1)
+  Assert.equal(calls.minimapButtonSeen, true)
+end
+
 local function test_default_button_before_first_show_builds_nothing()
   setup()
   db.enabled = false
@@ -266,6 +296,8 @@ return function()
   test_checkboxes_show_saved_values()
   test_sliders_start_at_saved_value_with_range_and_steps()
   test_checkbox_click_writes_its_setting()
+  test_minimap_checkbox_applies_after_writing()
+  test_other_checkboxes_do_not_apply_minimap_button()
   test_slider_change_writes_the_stepped_value()
   test_scale_change_writes_stepped_value_and_applies_at_once()
   test_reset_position_button_calls_the_action()
@@ -275,6 +307,7 @@ return function()
   test_test_button_in_combat_previews_without_closing_options()
   test_test_button_without_settings_panel_still_previews()
   test_default_button_restores_every_default_and_applies_scale()
+  test_default_button_restores_and_applies_minimap_button()
   test_default_button_before_first_show_builds_nothing()
   test_default_button_refreshes_built_controls()
   test_show_refreshes_controls_from_saved_values()

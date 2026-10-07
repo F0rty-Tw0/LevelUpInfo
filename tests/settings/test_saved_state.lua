@@ -16,6 +16,8 @@ local function test_fresh_install_gets_every_default()
   Assert.equal(db.waitForCombat, true)
   Assert.equal(db.scale, 1.0)
   Assert.equal(db.reducedMotion, false)
+  Assert.equal(db.minimapButton, true)
+  Assert.equal(db.minimapAngle, nil)
   Assert.equal(db.position, nil)
   Assert.equal(next(db.trainers), nil)
 end
@@ -55,6 +57,19 @@ local function test_position_kept_only_when_valid()
   Assert.equal(SavedState.Initialize({ position = { point = 5, x = 1, y = 2 } }).position, nil)
   Assert.equal(SavedState.Initialize({ position = { point = "MIDDLE", x = 1, y = 2 } }).position, nil)
   Assert.equal(SavedState.Initialize({ position = { point = "TOP", x = "1", y = 2 } }).position, nil)
+end
+
+local function test_minimap_angle_kept_and_wrapped()
+  Assert.equal(SavedState.Initialize({ minimapAngle = 225 }).minimapAngle, 225)
+  Assert.equal(SavedState.Initialize({ minimapAngle = 370 }).minimapAngle, 10)
+  Assert.equal(SavedState.Initialize({ minimapAngle = -90 }).minimapAngle, 270)
+end
+
+local function test_bad_minimap_angle_is_dropped()
+  Assert.equal(SavedState.Initialize({ minimapAngle = 0 / 0 }).minimapAngle, nil)
+  Assert.equal(SavedState.Initialize({ minimapAngle = math.huge }).minimapAngle, nil)
+  Assert.equal(SavedState.Initialize({ minimapAngle = -math.huge }).minimapAngle, nil)
+  Assert.equal(SavedState.Initialize({ minimapAngle = "90" }).minimapAngle, nil)
 end
 
 local function test_valid_trainer_entry_survives()
@@ -113,6 +128,8 @@ return function()
   test_non_boolean_flags_fall_back_to_default()
   test_saved_booleans_are_kept()
   test_position_kept_only_when_valid()
+  test_minimap_angle_kept_and_wrapped()
+  test_bad_minimap_angle_is_dropped()
   test_valid_trainer_entry_survives()
   test_malformed_trainer_entries_are_dropped()
   test_entry_without_any_valid_race_is_dropped()
