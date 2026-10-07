@@ -97,6 +97,7 @@ local function test_header_profession_and_zero_level_rows_are_skipped()
   Assert.equal(levels(db)[5], nil)
   Assert.equal(levels(db)[0], nil)
   Assert.equal(levels(db)[8][139].rank, "")
+  Assert.equal(covered(db), 8)
 end
 
 local function test_no_spell_tooltip_data_skips_the_row()

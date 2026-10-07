@@ -66,10 +66,15 @@ local function rowSpellID(i, forever)
   end
 end
 
--- Classic only: hunter trainers list pet-learn rows next to the player's spells.
+-- Hunter trainers list pet-learn rows next to the player's spells. Classic
+-- returns 1/nil, so test by truth like Blizzard's trainer UI does.
 local function isPetLearn(i)
   local isLearnSpell = _G.IsTrainerServiceLearnSpell
-  return isLearnSpell ~= nil and select(2, isLearnSpell(i)) == true
+  if not isLearnSpell then
+    return false
+  end
+  local _, isPetLearnSpell = isLearnSpell(i)
+  return isPetLearnSpell and true or false
 end
 
 -- Records every kept row; returns the highest kept level (or nil) and whether

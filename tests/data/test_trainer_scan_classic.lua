@@ -119,6 +119,7 @@ local function test_classic_collapsed_header_records_rows_but_keeps_coverage()
   local W, db, frame = setup({ services = services })
   showTrainer(W, frame)
   Assert.equal(levels(db)[6][591].cost, 100)
+  Assert.equal(levels(db)[10][594].cost, 200)
   Assert.equal(covered(db), nil)
 end
 

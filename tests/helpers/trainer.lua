@@ -102,7 +102,7 @@ function Trainer.InstallClassic(W, opts)
   end)
   W.def("IsTrainerServiceLearnSpell", function(i)
     local s = service(i)
-    return s.learnSpell == true, s.petLearn == true
+    return s.learnSpell and 1 or nil, s.petLearn and 1 or nil
   end)
   local createFrame = _G.CreateFrame
   W.def("CreateFrame", function(frameType, ...)
