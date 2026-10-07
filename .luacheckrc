@@ -41,6 +41,7 @@ read_globals = {
   "GetTrainerServiceLevelReq",
   "GetTrainerServiceTypeFilter",
   "IsTradeskillTrainer",
+  "IsTrainerServiceLearnSpell",
   "SetTrainerServiceTypeFilter",
   "UnitClass",
   "UnitRace",

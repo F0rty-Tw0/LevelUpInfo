@@ -65,6 +65,12 @@ local function rowSpellID(i, forever)
   end
 end
 
+-- Classic only: hunter trainers list pet-learn rows next to the player's spells.
+local function isPetLearn(i)
+  local isLearnSpell = _G.IsTrainerServiceLearnSpell
+  return isLearnSpell ~= nil and select(2, isLearnSpell(i)) == true
+end
+
 -- Records every kept row; returns the highest kept level, or nil.
 local function recordRows(class, race)
   local seen
@@ -74,7 +80,7 @@ local function recordRows(class, race)
     if KEPT_TYPES[serviceType] then
       local level = _G.GetTrainerServiceLevelReq(i)
       local cost, isProfession = _G.GetTrainerServiceCost(i)
-      local spellID = type(level) == "number" and level > 0 and not isProfession and rowSpellID(i, forever)
+      local spellID = type(level) == "number" and level > 0 and not isProfession and not isPetLearn(i) and rowSpellID(i, forever)
       if spellID then
         TrainerCache.Record(db.trainers, class, race, level, spellID, cost, subText or "")
         if not seen or level > seen then

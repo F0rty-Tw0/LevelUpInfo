@@ -94,6 +94,19 @@ local function test_classic_tradeskill_trainer_is_ignored()
   Assert.equal(tooltipCount(W), 0)
 end
 
+local function covered(db)
+  return db.trainers.PRIEST and db.trainers.PRIEST.covered.Scourge
+end
+
+local function test_classic_pet_learn_row_is_not_recorded_and_does_not_raise_coverage()
+  local services = classicServices()
+  services[#services + 1] = { name = "Bite", type = "available", level = 20, cost = 300, spellID = 17253, petLearn = true }
+  local W, db, frame = setup({ services = services })
+  showTrainer(W, frame)
+  Assert.equal(levels(db)[20], nil)
+  Assert.equal(covered(db), 10)
+end
+
 return function()
   test_classic_scan_records_spell_level_cost_and_rank()
   test_classic_scan_never_sets_a_header_row()
@@ -101,4 +114,5 @@ return function()
   test_classic_row_without_spell_id_is_not_recorded()
   test_classic_class_trainer_scans_without_trainer_type()
   test_classic_tradeskill_trainer_is_ignored()
+  test_classic_pet_learn_row_is_not_recorded_and_does_not_raise_coverage()
 end

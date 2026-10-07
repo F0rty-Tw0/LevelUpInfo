@@ -100,6 +100,10 @@ function Trainer.InstallClassic(W, opts)
     local s = service(i)
     return s.name, s.rank, s.type, 1
   end)
+  W.def("IsTrainerServiceLearnSpell", function(i)
+    local s = service(i)
+    return s.learnSpell == true, s.petLearn == true
+  end)
   local createFrame = _G.CreateFrame
   W.def("CreateFrame", function(frameType, ...)
     local frame = createFrame(frameType, ...)
