@@ -124,11 +124,13 @@ local function keywordLabel(words)
   return Text("Effect")
 end
 
+-- Callers check this before computing a diff, so dropped lines cost nothing.
+local function full(lines)
+  return #lines >= MAX_LINES
+end
+
 -- `diff` is the colored difference text, or nil for none.
 local function addLine(lines, label, old, new, diff)
-  if #lines >= MAX_LINES then
-    return
-  end
   local newText = NEW_VALUE_COLOR .. new .. COLOR_END
   if diff then
     lines[#lines + 1] = format(Text("%s: %s %s %s %s"), label, old, Format.ARROW, newText, diff)
@@ -138,6 +140,9 @@ local function addLine(lines, label, old, new, diff)
 end
 
 local function addValueLine(lines, old, new)
+  if full(lines) then
+    return
+  end
   local diff = RankDiff.Values(old.display, new.display, false)
   if new.unit == Text("sec") then
     addLine(lines, Text("Duration"), format(Text("%s sec"), old.display), format(Text("%s sec"), new.display), diff)
@@ -206,15 +211,15 @@ end
 -- Cost, cast time and cooldown: lower is better. A cooldown diff is in the
 -- new value's unit, or the old value's when the new one is None.
 local function addStatLines(lines, old, new)
-  if changed(old.cost, new.cost) then
+  if not full(lines) and changed(old.cost, new.cost) then
     local oldCost, newCost = tostring(old.cost), tostring(new.cost)
     addLine(lines, costLabel(new.powerToken), oldCost, newCost, RankDiff.Values(oldCost, newCost, true))
   end
-  if changed(old.castTime, new.castTime) then
+  if not full(lines) and changed(old.castTime, new.castTime) then
     local diff = RankDiff.Times(old.castTime, new.castTime, MS_PER_SECOND)
     addLine(lines, Text("Cast time"), castTimeText(old.castTime), castTimeText(new.castTime), diff)
   end
-  if changed(old.cooldown, new.cooldown) then
+  if not full(lines) and changed(old.cooldown, new.cooldown) then
     local unit = cooldownUnit(new.cooldown ~= 0 and new.cooldown or old.cooldown)
     local diff = RankDiff.Times(old.cooldown, new.cooldown, unit)
     addLine(lines, Text("Cooldown"), cooldownText(old.cooldown), cooldownText(new.cooldown), diff)

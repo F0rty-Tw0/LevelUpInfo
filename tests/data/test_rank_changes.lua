@@ -17,6 +17,7 @@ local function setup()
   assert(loadfile("Core/Format.lua"))("LevelUpInfo", ns)
   assert(loadfile("Data/RankDiff.lua"))("LevelUpInfo", ns)
   RankChanges = assert(loadfile("Data/RankChanges.lua"))("LevelUpInfo", ns)
+  return ns
 end
 
 local function facts(description, extra)
@@ -172,6 +173,22 @@ local function test_cap_four_in_order()
   })
 end
 
+-- RankDiff.Times goes through RankDiff.Values, so counting Values counts every diff.
+local function test_dropped_lines_compute_no_diff()
+  local ns = setup()
+  local values = ns.RankDiff.Values
+  local calls = 0
+  ns.RankDiff.Values = function(...)
+    calls = calls + 1
+    return values(...)
+  end
+  RankChanges.Lines(
+    facts("Deals 10 damage. Heals 5. Lasts 10 sec. Absorbs 3. Armor 7.", { cost = 30, castTime = 1500, cooldown = 6000 }),
+    facts("Deals 20 damage. Heals 8. Lasts 12 sec. Absorbs 6. Armor 9.", { cost = 45, castTime = 2000, cooldown = 8000 })
+  )
+  Assert.equal(calls, 4)
+end
+
 local function test_higher_cost_is_red()
   setup()
   local lines = RankChanges.Lines(facts("Heals.", { cost = 25, powerToken = "MANA" }), facts("Heals.", { cost = 40, powerToken = "MANA" }))
@@ -230,6 +247,7 @@ return function()
   test_nil_stat_makes_no_line()
   test_identical_facts_empty()
   test_cap_four_in_order()
+  test_dropped_lines_compute_no_diff()
   test_higher_cost_is_red()
   test_damage_range_diff_is_green()
   test_line_without_diff_has_no_trailing_space()
