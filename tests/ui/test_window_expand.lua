@@ -12,7 +12,8 @@ local MISSED_BASE = 1000
 local WEAPON_BASE = 2000
 local ROW_HEIGHT = 47
 local SOURCE_ROW_HEIGHT = 59
-local BOX_HEIGHT = 235
+local ROW_GAP = 4
+local BOX_HEIGHT = 235 + 4 * ROW_GAP
 local CAP = 5
 local RANK_1 = 589
 local RANK_2 = 594
@@ -178,7 +179,17 @@ local function test_expand_moves_all_rows_into_box()
   Assert.equal(box:IsShown(), true)
   Assert.equal(box:GetHeight(), BOX_HEIGHT)
   Assert.equal(toggle("Show less") ~= nil, true)
-  Assert.equal(frame():GetHeight(), collapsed - CAP * ROW_HEIGHT + BOX_HEIGHT)
+  Assert.equal(frame():GetHeight(), collapsed)
+end
+
+local function test_expand_keeps_group_height_with_tall_rows()
+  setupWeapons(7)
+  Window.Show(record())
+  local collapsed = frame():GetHeight()
+  click(toggle("weapon skills"))
+  local box = boxOf("Weapon 1")
+  Assert.equal(box:GetHeight(), CAP * SOURCE_ROW_HEIGHT + (CAP - 1) * ROW_GAP)
+  Assert.equal(frame():GetHeight(), collapsed)
 end
 
 local function test_collapse_returns_five_rows_to_content()
@@ -237,6 +248,25 @@ local function test_expanded_rows_past_cap_get_change_lines()
   Assert.equal(shownLines(row) > 0, true)
 end
 
+-- Shadow Word: Pain Rank 2 (level 3) sorts first among six missed entries;
+-- its two change lines arrive after the expand and make it 59 px.
+local function test_box_grows_when_a_visible_row_gets_lines()
+  setup()
+  addMissed(5)
+  W.spells[RANK_1] = { name = "Shadow Word: Pain", iconID = 1, description = "", costs = { { cost = 25, name = "MANA" } } }
+  W.spells[RANK_2] = { name = "Shadow Word: Pain", iconID = 1, description = "", costs = { { cost = 50, name = "MANA" } } }
+  W.known[RANK_1] = true
+  trainerSpell(RANK_1, 2, "Shadow Word: Pain", "Rank 1")
+  trainerSpell(RANK_2, 3, "Shadow Word: Pain", "Rank 2")
+  Window.Show(record())
+  click(toggle("not yet learned"))
+  local box = boxOf("Missed 1")
+  Assert.equal(box:GetHeight(), BOX_HEIGHT)
+  loadText(RANK_1, "Deals 30 Shadow damage over 18 sec.")
+  loadText(RANK_2, "Deals 66 Shadow damage over 18 sec.")
+  Assert.equal(box:GetHeight(), 4 * ROW_HEIGHT + SOURCE_ROW_HEIGHT + 4 * ROW_GAP)
+end
+
 local function test_second_expand_creates_no_frames()
   setup()
   addMissed(8)
@@ -261,8 +291,8 @@ local function test_both_groups_expand_independently()
   local weaponBox, weaponChild = boxOf("Weapon 1")
   Assert.equal(#rowsIn(missedChild), 8)
   Assert.equal(#rowsIn(weaponChild), 7)
-  Assert.equal(missedChild:GetHeight(), 8 * ROW_HEIGHT)
-  Assert.equal(weaponChild:GetHeight(), 7 * SOURCE_ROW_HEIGHT)
+  Assert.equal(missedChild:GetHeight(), 8 * ROW_HEIGHT + 7 * ROW_GAP)
+  Assert.equal(weaponChild:GetHeight(), 7 * SOURCE_ROW_HEIGHT + 6 * ROW_GAP)
   click(missed)
   Assert.equal(#rowsIn(content()), CAP)
   Assert.equal(missed.label:GetText(), "+3 more not yet learned")
@@ -302,8 +332,10 @@ end
 return function()
   test_more_line_is_a_hidden_toggle_until_needed()
   test_expand_moves_all_rows_into_box()
+  test_expand_keeps_group_height_with_tall_rows()
   test_collapse_returns_five_rows_to_content()
   test_expanded_rows_past_cap_get_change_lines()
+  test_box_grows_when_a_visible_row_gets_lines()
   test_second_expand_creates_no_frames()
   test_both_groups_expand_independently()
   test_new_show_collapses_and_reparents_rows()

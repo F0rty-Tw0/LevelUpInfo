@@ -13,7 +13,10 @@ local cos, sin, rad, deg = math.cos, math.sin, math.rad, math.deg
 local Text = Localization.Text
 
 local BUTTON_NAME = "LevelUpInfoMinimapButton"
+-- 31x31, strata MEDIUM, frame level 8, both locked: what LibDBIcon gives
+-- every minimap button, so ours stacks like theirs under open windows.
 local BUTTON_SIZE = 31
+local STRATA = "MEDIUM"
 local FRAME_LEVEL = 8
 local DEFAULT_ANGLE = 225
 local RING_OFFSET = 10
@@ -29,8 +32,8 @@ local ICON_TEXTURE = "Interface\\AddOns\\LevelUpInfo\\Media\\Icon"
 local BORDER_TEXTURE = "Interface\\Minimap\\MiniMap-TrackingBorder"
 local HIGHLIGHT_TEXTURE = "Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight"
 
--- Our own button on the minimap ring. No events, no timers, no OnUpdate:
--- a drag moves it freely and it snaps back onto the ring on release.
+-- Our own button on the minimap ring. No events, no timers; an OnUpdate
+-- runs only while it is dragged, sliding it along the ring under the cursor.
 local MinimapButton = {}
 
 local db
@@ -64,19 +67,33 @@ local function onClick(_self, mouseButton)
   end
 end
 
-local function onDragStart(self)
-  self:StartMoving()
+-- GetCursorPosition is in unscaled screen pixels and GetCenter in the
+-- minimap's own scale, so the cursor is divided by the minimap's effective
+-- scale. GetCenter can return nothing; that frame is skipped.
+local function followCursor()
+  local minimap = _G.Minimap
+  local centerX, centerY = minimap:GetCenter()
+  if not centerX then
+    return
+  end
+  local scale = minimap:GetEffectiveScale()
+  local cursorX, cursorY = _G.GetCursorPosition()
+  db.minimapAngle = MinimapButton.AngleFor(cursorX / scale - centerX, cursorY / scale - centerY)
+  place()
 end
 
--- SetUserPlaced(false) keeps the frame out of the game's layout cache;
--- place() drops the UIParent points StopMovingOrSizing left.
+local function onDragStart(self)
+  self:SetScript("OnUpdate", followCursor)
+end
+
 local function onDragStop(self)
-  self:StopMovingOrSizing()
-  self:SetUserPlaced(false)
-  local buttonX, buttonY = self:GetCenter()
-  local minimapX, minimapY = _G.Minimap:GetCenter()
-  db.minimapAngle = MinimapButton.AngleFor(buttonX - minimapX, buttonY - minimapY)
-  place()
+  self:SetScript("OnUpdate", nil)
+  followCursor()
+end
+
+-- Hidden mid-drag (Alt+Z, a loading screen), OnDragStop may never fire.
+local function onHide(self)
+  self:SetScript("OnUpdate", nil)
 end
 
 local function onEnter(self)
@@ -102,9 +119,10 @@ end
 local function build()
   button = _G.CreateFrame("Button", BUTTON_NAME, _G.Minimap)
   button:SetSize(BUTTON_SIZE, BUTTON_SIZE)
-  button:SetFrameStrata("MEDIUM")
+  button:SetFrameStrata(STRATA)
+  button:SetFixedFrameStrata(true)
   button:SetFrameLevel(FRAME_LEVEL)
-  button:SetMovable(true)
+  button:SetFixedFrameLevel(true)
   button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
   button:RegisterForDrag("LeftButton")
   addTexture("BACKGROUND", BACKGROUND_TEXTURE, BACKGROUND_SIZE, TEXTURE_X, BACKGROUND_Y)
@@ -114,6 +132,7 @@ local function build()
   button:SetScript("OnClick", onClick)
   button:SetScript("OnDragStart", onDragStart)
   button:SetScript("OnDragStop", onDragStop)
+  button:SetScript("OnHide", onHide)
   button:SetScript("OnEnter", onEnter)
   button:SetScript("OnLeave", onLeave)
   place()

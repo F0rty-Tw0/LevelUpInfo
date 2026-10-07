@@ -84,18 +84,6 @@ local function children(frameType, template)
   return found
 end
 
-local function dividers()
-  return children("Texture")
-end
-
-local function dividerOf(heading)
-  for _, divider in ipairs(dividers()) do
-    if select(2, divider:GetPoint()) == heading then
-      return divider
-    end
-  end
-end
-
 local function headingNamed(title)
   for _, heading in ipairs(children("FontString", HEADING_FONT)) do
     if heading:GetText() == title then
@@ -161,56 +149,34 @@ local function test_every_gain_has_distinct_hex_color()
   end
 end
 
-local function test_one_divider_per_group()
+local function test_headings_have_no_divider_lines()
   setup()
   Window.Show(record())
-  Assert.equal(#dividers(), 4)
+  Assert.equal(headingNamed("New skills"):IsShown(), true)
+  Assert.equal(#children("Texture"), 0)
 end
 
-local function test_shown_group_has_divider_under_heading()
+local function topOf(region)
+  return select(5, region:GetPoint(1))
+end
+
+local function test_gain_lines_sit_under_a_stats_heading()
   setup()
   Window.Show(record())
-  local heading = headingNamed("New skills")
+  local heading = headingNamed("Stats")
   Assert.equal(heading:IsShown(), true)
-  local divider = dividerOf(heading)
-  Assert.equal(divider:IsShown(), true)
-  Assert.equal(table.concat({ divider:GetSize() }, ","), "298,1")
-  local point, _, relativePoint, x, y = divider:GetPoint()
-  Assert.equal(table.concat({ point, relativePoint, x, y }, ","), "TOPLEFT,BOTTOMLEFT,-4,-2")
-  Assert.equal(table.concat(W.state(divider).colorTexture, ","), "1,0.82,0,0.25")
+  Assert.equal(topOf(heading), 0)
+  Assert.equal(select(4, heading:GetPoint(1)), 4)
+  local first = children("FontString", "GameFontHighlight")[1]
+  Assert.equal(topOf(first), -24)
 end
 
-local function test_divider_hidden_when_heading_hidden()
+local function test_no_stats_heading_without_gains()
   setup()
   Window.Show(record())
-  Assert.equal(#dividers(), 4)
-  local hiddenHeadings = 0
-  for _, heading in ipairs(children("FontString", HEADING_FONT)) do
-    if not heading:IsShown() then
-      hiddenHeadings = hiddenHeadings + 1
-      Assert.equal(dividerOf(heading):IsShown(), false)
-    end
-  end
-  Assert.equal(hiddenHeadings, 2)
-end
-
-local function test_reshow_hides_divider_of_emptied_group()
-  setup()
-  Window.Show(record())
-  local divider = dividerOf(headingNamed("New ranks"))
-  Assert.equal(divider:IsShown(), true)
-  db.trainers.PRIEST.levels[10][589] = nil
-  Window.Show(record())
-  Assert.equal(divider:IsShown(), false)
-end
-
-local function test_reshow_shows_divider_of_refilled_group()
-  setup()
-  db.trainers.PRIEST.levels[10][589] = nil
-  Window.Show(record())
-  db.trainers.PRIEST.levels[10][589] = spell(50, "Rank 2")
-  Window.Show(record())
-  Assert.equal(dividerOf(headingNamed("New ranks")):IsShown(), true)
+  Window.Show(record({ gains = {} }))
+  Assert.equal(headingNamed("Stats"):IsShown(), false)
+  Assert.equal(topOf(headingNamed("New skills")), 0)
 end
 
 local function test_fallback_gain_name_keeps_its_color()
@@ -224,10 +190,8 @@ return function()
   test_gain_with_before_reads_gray_old_arrow_new_and_green_gain()
   test_talent_line_uses_short_form()
   test_every_gain_has_distinct_hex_color()
-  test_one_divider_per_group()
-  test_shown_group_has_divider_under_heading()
-  test_divider_hidden_when_heading_hidden()
-  test_reshow_hides_divider_of_emptied_group()
-  test_reshow_shows_divider_of_refilled_group()
+  test_headings_have_no_divider_lines()
+  test_gain_lines_sit_under_a_stats_heading()
+  test_no_stats_heading_without_gains()
   test_fallback_gain_name_keeps_its_color()
 end

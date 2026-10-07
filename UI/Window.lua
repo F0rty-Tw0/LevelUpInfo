@@ -14,6 +14,7 @@ local GainLines = ns.GainLines or require("LevelUpInfo.UI.GainLines")
 
 local format = string.format
 local ipairs = ipairs
+local min = math.min
 local pairs = pairs
 local select = select
 local tostring = tostring
@@ -28,12 +29,17 @@ local HEADER_HEIGHT = 68
 local FOOTER_HEIGHT = 12
 local LINE_HEIGHT = 16
 local HEADING_HEIGHT = 24
-local SECTION_GAP = 6
+-- Spacing hierarchy: rows of a group sit closest, a heading sits right on its
+-- rows, blocks (stats, each skill group, the hint) are pushed further apart.
+local GROUP_GAP = 14
 local ROW_HEIGHT = 47
+local ROW_GAP = 4
 local TEXT_LEFT = 4
 local GROUP_CAP = 5
-local DIVIDER_ALPHA = 0.25
-local DIVIDER_GAP = 2
+-- Congratulation line in the header strip right of the portrait.
+local HEADER_LEFT = 62
+local HEADER_TOP = -35
+local HEADER_WIDTH = 262
 local NO_LINES = {}
 
 -- Skill groups in display order; a capped group shows its first `cap` rows
@@ -50,14 +56,15 @@ local Window = {}
 local db
 local frame
 local content
+local reachedLine
 local current
 local rows = {}
 local headings = {}
-local dividers = {}
-local POOLS = { rows, headings, dividers } -- all hidden when a fill fails
+local POOLS = { rows, headings } -- all hidden when a fill fails
 local rowsUsed
 local rowEntries = {} -- entry shown in rows[i], read only when rowLines[i]
 local rowLines = {} -- whether rows[i] shows change lines
+local boxFirstRow = {} -- group → index in `rows` of its expanded box's first row
 local skillEntries, skillHint -- skill list of `current`: built on Show, reused by Refresh
 -- Set while a fill runs, so a load result fired inside it starts no second fill.
 local filling = false
@@ -93,6 +100,15 @@ local function errorHandler(err)
   return tostring(err) .. "\n" .. _G.debugstack()
 end
 
+local function buildHeader()
+  frame:SetTitle(Text("Level Up!"))
+  reachedLine = frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+  reachedLine:SetWidth(HEADER_WIDTH)
+  reachedLine:SetJustifyH("LEFT")
+  reachedLine:SetWordWrap(false)
+  reachedLine:SetPoint("TOPLEFT", frame, "TOPLEFT", HEADER_LEFT, HEADER_TOP)
+end
+
 local function build()
   frame = _G.CreateFrame("Frame", "LevelUpInfoFrame", _G.UIParent, "ButtonFrameTemplate")
   frame:Hide()
@@ -109,18 +125,13 @@ local function build()
   end)
   AutoHide.Attach(frame, db)
   frame.CloseButton:SetScript("OnClick", AutoHide.Close)
+  buildHeader()
   content = _G.CreateFrame("Frame", nil, frame)
   content:SetSize(CONTENT_WIDTH, 1)
   content:SetPoint("TOPLEFT", frame, "TOPLEFT", CONTENT_LEFT, -HEADER_HEIGHT)
-  local r, g, b = _G.NORMAL_FONT_COLOR:GetRGB()
+  GainLines.Build(content)
   for _, spec in ipairs(GROUPS) do
-    local heading = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-    headings[spec.group] = heading
-    local divider = content:CreateTexture(nil, "ARTWORK")
-    divider:SetColorTexture(r, g, b, DIVIDER_ALPHA)
-    divider:SetSize(CONTENT_WIDTH, 1)
-    divider:SetPoint("TOPLEFT", heading, "BOTTOMLEFT", -TEXT_LEFT, -DIVIDER_GAP)
-    dividers[spec.group] = divider
+    headings[spec.group] = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
   end
   SkillGroup.Build(content, GROUPS, onToggle)
 end
@@ -170,7 +181,8 @@ local function fillToggle(spec, count)
   end
 end
 
-local function fillGroup(spec, entries, money)
+-- `gap` goes above the heading when the group has rows; returns the row count.
+local function fillGroup(spec, entries, money, gap)
   local heading = headings[spec.group]
   local expanded = SkillGroup.IsExpanded(spec.group)
   local parent = content
@@ -180,26 +192,30 @@ local function fillGroup(spec, entries, money)
       count = count + 1
       if count == 1 then
         heading:SetText(Text(spec.title))
+        Layout.AddGap(content, gap)
         Layout.Add(heading, content, TEXT_LEFT, HEADING_HEIGHT)
-        dividers[spec.group]:Show()
         if expanded then
           local box
           box, parent = SkillGroup.Box(spec.group)
+          boxFirstRow[spec.group] = rowsUsed + 1
           Layout.Add(box, content, 0, nil)
         end
       end
       if expanded or not spec.cap or count <= spec.cap then
+        if count > 1 then
+          Layout.AddGap(parent, ROW_GAP)
+        end
         addRow(entry, money, parent)
       end
     end
   end
   if count == 0 then
     heading:Hide()
-    dividers[spec.group]:Hide()
   end
   if spec.cap then
     fillToggle(spec, count)
   end
+  return count
 end
 
 local function fillSkills(record, gainCount)
@@ -211,13 +227,15 @@ local function fillSkills(record, gainCount)
   end
   local money = _G.GetMoney()
   rowsUsed = 0
-  if gainCount > 0 and (#skillEntries > 0 or skillHint) then
-    Layout.AddGap(content, SECTION_GAP)
-  end
+  _G.wipe(boxFirstRow)
+  local gap = gainCount > 0 and GROUP_GAP or 0
   for _, spec in ipairs(GROUPS) do
-    fillGroup(spec, skillEntries, money)
+    if fillGroup(spec, skillEntries, money, gap) > 0 then
+      gap = GROUP_GAP
+    end
   end
   if skillHint then
+    Layout.AddGap(content, gap)
     local row = nextRow(content)
     SkillRow.SetHint(row)
     rowLines[rowsUsed] = false
@@ -238,7 +256,25 @@ local function sizeBoxes(cursors)
   end
 end
 
+-- An expanded box is as tall as its group's first `cap` rows and the gaps
+-- between them, so expanding keeps the group's size and only adds the
+-- scrollbar. Runs before placing: the layout reads the box's height.
+local function fitBoxes()
+  for _, spec in ipairs(GROUPS) do
+    local first = boxFirstRow[spec.group]
+    if spec.cap and first and SkillGroup.IsExpanded(spec.group) then
+      local last = min(first + spec.cap - 1, rowsUsed)
+      local height = (last - first) * ROW_GAP
+      for index = first, last do
+        height = height + rows[index]:GetHeight()
+      end
+      SkillGroup.SetBoxHeight(spec.group, height)
+    end
+  end
+end
+
 local function applyLayout()
+  fitBoxes()
   local height, cursors = Layout.Run(content)
   sizeBoxes(cursors)
   content:SetHeight(height)
@@ -267,7 +303,7 @@ end
 
 function fill(record)
   guarded(function()
-    frame:SetTitle(format(Text("Level %d"), record.toLevel))
+    reachedLine:SetText(format(Text("Congratulations! You reached level %d."), record.toLevel))
     Layout.Reset()
     fillSkills(record, GainLines.Fill(content, record))
     applyLayout()

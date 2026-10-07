@@ -8,6 +8,12 @@ local W
 local ns
 local baseFrames
 
+-- The from and to level of the record the window shows.
+local function shownLevels()
+  local record = ns.Window.Current()
+  return record.fromLevel .. " to " .. record.toLevel
+end
+
 local function tocFiles()
   local files = {}
   for line in io.lines("LevelUpInfo.toc") do
@@ -160,7 +166,7 @@ local function test_minimap_button_clicks_preview_and_open_options()
   setup(nil)
   W.fireScript(_G.LevelUpInfoMinimapButton, "OnClick", "LeftButton")
   Assert.equal(_G.LevelUpInfoFrame:IsShown(), true)
-  Assert.equal(W.state(_G.LevelUpInfoFrame).title, "Level 10")
+  Assert.equal(shownLevels(), "9 to 10")
   W.fireScript(_G.LevelUpInfoMinimapButton, "OnClick", "RightButton")
   Assert.equal(W.settings.openedID, 77)
 end
@@ -187,7 +193,7 @@ local function test_slash_test_shows_the_window()
   setup(nil)
   slashTest()
   Assert.equal(_G.LevelUpInfoFrame:IsShown(), true)
-  Assert.equal(W.state(_G.LevelUpInfoFrame).title, "Level 10")
+  Assert.equal(shownLevels(), "9 to 10")
 end
 
 local function test_scale_slider_rescales_the_visible_window()
@@ -229,7 +235,7 @@ local function test_options_test_button_shows_preview()
   local frame = ns.Window.Frame()
   Assert.equal(frame ~= nil and frame:IsShown(), true)
   Assert.equal(frame, _G.LevelUpInfoFrame)
-  Assert.equal(W.state(frame).title, "Level 10")
+  Assert.equal(shownLevels(), "9 to 10")
 end
 
 local function test_escape_list_and_tooltip_are_never_written()

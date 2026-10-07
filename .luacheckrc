@@ -68,6 +68,7 @@ read_globals = {
   "HIGHLIGHT_FONT_COLOR",
   "MANA",
   "Minimap",
+  "GetCursorPosition",
   "NORMAL_FONT_COLOR",
   "RED_FONT_COLOR",
   "SPELL_STAT1_NAME",

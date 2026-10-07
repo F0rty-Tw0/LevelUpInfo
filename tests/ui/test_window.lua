@@ -132,7 +132,7 @@ local function test_show_builds_named_frame_with_portrait_and_title()
   Assert.equal(_G.LevelUpInfoFrame, Window.Frame())
   Assert.equal(W.state(frame()).template, "ButtonFrameTemplate")
   Assert.equal(W.state(frame()).portraitUnit, "player")
-  Assert.equal(W.state(frame()).title, "Level 10")
+  Assert.equal(W.state(frame()).title, "Level Up!")
   Assert.equal(W.calls.ButtonFrameTemplate_HideButtonBar, 1)
   Assert.equal(frame():GetParent(), _G.UIParent)
   Assert.equal(({ frame():GetSize() })[1], 338)
@@ -186,7 +186,7 @@ local function test_new_skills_and_new_ranks_get_headings()
   setup()
   db.trainers.PRIEST.levels[10][139] = nil
   Window.Show(record())
-  Assert.equal(table.concat(lines("GameFontNormalLarge"), "|"), "New skills|New ranks")
+  Assert.equal(table.concat(lines("GameFontNormalLarge"), "|"), "Stats|New skills|New ranks")
   Assert.equal(rowNames(), "Mind Blast|Shadow Word: Pain")
 end
 
@@ -195,7 +195,7 @@ local function test_heading_hidden_for_an_empty_group()
   db.trainers.PRIEST.levels[10][8092] = nil
   db.trainers.PRIEST.levels[10][139] = nil
   Window.Show(record())
-  Assert.equal(table.concat(lines("GameFontNormalLarge"), "|"), "New ranks")
+  Assert.equal(table.concat(lines("GameFontNormalLarge"), "|"), "Stats|New ranks")
 end
 
 local function test_reshow_without_ranks_hides_new_ranks_heading()
@@ -204,7 +204,7 @@ local function test_reshow_without_ranks_hides_new_ranks_heading()
   Window.Show(record())
   db.trainers.PRIEST.levels[10][589] = nil
   Window.Show(record())
-  Assert.equal(table.concat(lines("GameFontNormalLarge"), "|"), "New skills")
+  Assert.equal(table.concat(lines("GameFontNormalLarge"), "|"), "Stats|New skills")
 end
 
 local function test_no_skills_and_no_hint_hides_skills_section()
@@ -214,7 +214,7 @@ local function test_no_skills_and_no_hint_hides_skills_section()
   W.known[139] = true
   W.known[589] = true
   Window.Show(record({ fromLevel = 10, toLevel = 11 }))
-  Assert.equal(#lines("GameFontNormalLarge"), 0)
+  Assert.equal(table.concat(lines("GameFontNormalLarge"), "|"), "Stats")
   Assert.equal(#shownRows(), 0)
 end
 

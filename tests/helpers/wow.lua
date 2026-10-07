@@ -193,6 +193,16 @@ local function newWidget(W, frameType, name, parent, template)
   function widget:GetFrameStrata()
     return stub.strata
   end
+  function widget:SetFixedFrameStrata(fixed)
+    stub.fixedStrata = fixed and true or false
+  end
+  function widget:SetFixedFrameLevel(fixed)
+    stub.fixedLevel = fixed and true or false
+  end
+  -- The test sets stub.effectiveScale; 1 until then.
+  function widget:GetEffectiveScale()
+    return stub.effectiveScale or 1
+  end
   function widget:EnableMouse(enabled)
     stub.mouse = enabled and true or false
   end
@@ -621,6 +631,11 @@ function Wow.Install()
   def("ButtonFrameTemplate_HideButtonBar", function() end)
   def("GetMoney", function()
     return W.money
+  end)
+  -- Unscaled screen pixels, like the game's; the test sets W.cursor = { x, y }.
+  def("GetCursorPosition", function()
+    local cursor = W.cursor or { 0, 0 }
+    return cursor[1], cursor[2]
   end)
   def("GetMoneyString", function(copper)
     return copper .. "c"
