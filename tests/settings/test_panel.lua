@@ -194,6 +194,14 @@ local function test_test_button_closes_options_then_previews()
   Assert.equal(hiddenFrame, _G.SettingsPanel)
 end
 
+local function test_test_button_in_combat_previews_without_closing_options()
+  setup()
+  W.inCombat = true
+  open()
+  W.fireScript(button("Test"), "OnClick")
+  Assert.equal(table.concat(log, ","), "test")
+end
+
 local function test_test_button_without_settings_panel_still_previews()
   setup()
   _G.SettingsPanel = nil
@@ -264,6 +272,7 @@ return function()
   test_clear_skill_data_empties_trainers_in_place()
   test_test_button_shown_after_first_open()
   test_test_button_closes_options_then_previews()
+  test_test_button_in_combat_previews_without_closing_options()
   test_test_button_without_settings_panel_still_previews()
   test_default_button_restores_every_default_and_applies_scale()
   test_default_button_before_first_show_builds_nothing()

@@ -110,9 +110,10 @@ local function build(frame, db, actions)
   addButton(frame, Text("Clear skill data"), LEFT + BUTTON_WIDTH + BUTTON_GAP, y - BUTTON_GAP, function()
     _G.wipe(db.trainers)
   end)
-  -- The options window draws above ours, so it closes before the preview shows.
+  -- The options window draws above ours, so it closes before the preview
+  -- shows. Not in combat: closing it from addon code is blocked there.
   addButton(frame, Text("Test"), LEFT + 2 * (BUTTON_WIDTH + BUTTON_GAP), y - BUTTON_GAP, function()
-    if _G.SettingsPanel then
+    if _G.SettingsPanel and not _G.InCombatLockdown() then
       _G.HideUIPanel(_G.SettingsPanel)
     end
     actions.onTest()
