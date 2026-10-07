@@ -6,6 +6,8 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-08
+
 - First release: level-up window with stat gains and new class skills.
 - Settings page under Options, AddOns, Level Up Info (also `/lui`): turn it off, change how long it stays, wait for combat to end, size, and reduced motion.
 - `/lui test` shows a preview of the window.
@@ -26,3 +28,4 @@ All releases: **0.1.x (current)**
 - Every skill list shows its first 5 skills, so a big level jump stays short; `+N more` shows the rest.
 - New addon icon in the AddOns list.
 - Works on Classic Era and TBC Anniversary: the window lists your trainer's skills after a visit.
+
