@@ -107,6 +107,21 @@ local function test_classic_pet_learn_row_is_not_recorded_and_does_not_raise_cov
   Assert.equal(covered(db), 10)
 end
 
+local function test_classic_scan_with_all_headers_expanded_raises_coverage()
+  local W, db, frame = setup()
+  showTrainer(W, frame)
+  Assert.equal(covered(db), 10)
+end
+
+local function test_classic_collapsed_header_records_rows_but_keeps_coverage()
+  local services = classicServices()
+  services[3].collapsed = true
+  local W, db, frame = setup({ services = services })
+  showTrainer(W, frame)
+  Assert.equal(levels(db)[6][591].cost, 100)
+  Assert.equal(covered(db), nil)
+end
+
 return function()
   test_classic_scan_records_spell_level_cost_and_rank()
   test_classic_scan_never_sets_a_header_row()
@@ -115,4 +130,6 @@ return function()
   test_classic_class_trainer_scans_without_trainer_type()
   test_classic_tradeskill_trainer_is_ignored()
   test_classic_pet_learn_row_is_not_recorded_and_does_not_raise_coverage()
+  test_classic_scan_with_all_headers_expanded_raises_coverage()
+  test_classic_collapsed_header_records_rows_but_keeps_coverage()
 end

@@ -34,14 +34,15 @@ local function isForever()
   return _G.C_TooltipInfo ~= nil and _G.C_TooltipInfo.GetTrainerService ~= nil
 end
 
--- Returns serviceType, subText (rank) in either client's order.
+-- Returns serviceType, subText (rank), isExpanded in either client's order.
+-- Forever has no isExpanded; its rows always count as expanded.
 local function serviceInfo(i, forever)
   if forever then
     local _, serviceType, _, _, subText = _G.GetTrainerServiceInfo(i)
-    return serviceType, subText
+    return serviceType, subText, true
   end
-  local _, subText, serviceType = _G.GetTrainerServiceInfo(i)
-  return serviceType, subText
+  local _, subText, serviceType, isExpanded = _G.GetTrainerServiceInfo(i)
+  return serviceType, subText, isExpanded
 end
 
 local function tooltipSpellID(i)
@@ -71,13 +72,16 @@ local function isPetLearn(i)
   return isLearnSpell ~= nil and select(2, isLearnSpell(i)) == true
 end
 
--- Records every kept row; returns the highest kept level, or nil.
+-- Records every kept row; returns the highest kept level (or nil) and whether
+-- a collapsed header hid rows from the scan.
 local function recordRows(class, race)
-  local seen
+  local seen, collapsed
   local forever = isForever()
   for i = 1, _G.GetNumTrainerServices() do
-    local serviceType, subText = serviceInfo(i, forever)
-    if KEPT_TYPES[serviceType] then
+    local serviceType, subText, isExpanded = serviceInfo(i, forever)
+    if serviceType == "header" and not isExpanded then
+      collapsed = true
+    elseif KEPT_TYPES[serviceType] then
       local level = _G.GetTrainerServiceLevelReq(i)
       local cost, isProfession = _G.GetTrainerServiceCost(i)
       local spellID = type(level) == "number" and level > 0 and not isProfession and not isPetLearn(i) and rowSpellID(i, forever)
@@ -89,7 +93,7 @@ local function recordRows(class, race)
       end
     end
   end
-  return seen
+  return seen, collapsed
 end
 
 local function allFiltersOn()
@@ -107,7 +111,7 @@ function TrainerScan.Scan()
   end
   scanning = true
   local flipped = {}
-  local class, race, allOn, seen
+  local class, race, allOn, seen, collapsed
   local ok, err = xpcall(function()
     class = select(2, _G.UnitClass("player"))
     race = select(2, _G.UnitRace("player"))
@@ -118,7 +122,7 @@ function TrainerScan.Scan()
       end
     end
     allOn = allFiltersOn()
-    seen = recordRows(class, race)
+    seen, collapsed = recordRows(class, race)
   end, errorHandler)
   for _, serviceType in ipairs(flipped) do
     _G.SetTrainerServiceTypeFilter(serviceType, false)
@@ -126,7 +130,7 @@ function TrainerScan.Scan()
   scanning = false
   if not ok then
     _G.geterrorhandler()(err)
-  elseif allOn and seen then
+  elseif allOn and not collapsed and seen then
     TrainerCache.Cover(db.trainers, class, race, seen)
   end
 end

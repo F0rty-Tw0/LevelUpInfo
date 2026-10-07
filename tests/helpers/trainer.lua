@@ -98,7 +98,7 @@ function Trainer.InstallClassic(W, opts)
   rawset(_G, "C_Trainer", {})
   W.def("GetTrainerServiceInfo", function(i)
     local s = service(i)
-    return s.name, s.rank, s.type, 1
+    return s.name, s.rank, s.type, (not s.collapsed) and 1 or nil
   end)
   W.def("IsTrainerServiceLearnSpell", function(i)
     local s = service(i)
