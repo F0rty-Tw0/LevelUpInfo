@@ -212,12 +212,9 @@ local function test_cast_time_rounding_to_same_seconds_has_no_diff()
   same(RankChanges.Lines(facts("Heals.", { castTime = 1020 }), facts("Heals.", { castTime = 1040 })), { line("Cast time", "1 sec", "1 sec") })
 end
 
-local function test_cooldown_diff_uses_new_value_unit()
+local function test_cooldown_in_different_units_has_no_diff()
   setup()
-  same(
-    RankChanges.Lines(facts("Shields.", { cooldown = 30000 }), facts("Shields.", { cooldown = 120000 })),
-    { line("Cooldown", "30 sec", "2 min", RED, "(+1.5)") }
-  )
+  same(RankChanges.Lines(facts("Shields.", { cooldown = 90000 }), facts("Shields.", { cooldown = 120000 })), { line("Cooldown", "90 sec", "2 min") })
 end
 
 local function test_cooldown_to_none_uses_old_value_unit()
@@ -252,6 +249,6 @@ return function()
   test_damage_range_diff_is_green()
   test_line_without_diff_has_no_trailing_space()
   test_cast_time_rounding_to_same_seconds_has_no_diff()
-  test_cooldown_diff_uses_new_value_unit()
+  test_cooldown_in_different_units_has_no_diff()
   test_cooldown_to_none_uses_old_value_unit()
 end

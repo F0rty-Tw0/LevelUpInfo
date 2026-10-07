@@ -186,6 +186,18 @@ local function cooldownUnit(ms)
   return MS_PER_SECOND
 end
 
+-- The unit both cooldowns show, or nil when they differ; None (0) takes the
+-- other side's unit.
+local function sharedCooldownUnit(oldMs, newMs)
+  if oldMs == 0 then
+    return cooldownUnit(newMs)
+  end
+  local unit = cooldownUnit(oldMs)
+  if newMs == 0 or cooldownUnit(newMs) == unit then
+    return unit
+  end
+end
+
 local function cooldownText(ms)
   if ms == 0 then
     return Text("None")
@@ -208,8 +220,8 @@ local function changed(old, new)
   return old ~= nil and new ~= nil and old ~= new
 end
 
--- Cost, cast time and cooldown: lower is better. A cooldown diff is in the
--- new value's unit, or the old value's when the new one is None.
+-- Cost, cast time and cooldown: lower is better. A cooldown diff shows only
+-- when both sides are in the same unit.
 local function addStatLines(lines, old, new)
   if not full(lines) and changed(old.cost, new.cost) then
     local oldCost, newCost = tostring(old.cost), tostring(new.cost)
@@ -220,8 +232,8 @@ local function addStatLines(lines, old, new)
     addLine(lines, Text("Cast time"), castTimeText(old.castTime), castTimeText(new.castTime), diff)
   end
   if not full(lines) and changed(old.cooldown, new.cooldown) then
-    local unit = cooldownUnit(new.cooldown ~= 0 and new.cooldown or old.cooldown)
-    local diff = RankDiff.Times(old.cooldown, new.cooldown, unit)
+    local unit = sharedCooldownUnit(old.cooldown, new.cooldown)
+    local diff = unit and RankDiff.Times(old.cooldown, new.cooldown, unit)
     addLine(lines, Text("Cooldown"), cooldownText(old.cooldown), cooldownText(new.cooldown), diff)
   end
 end
