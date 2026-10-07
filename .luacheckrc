@@ -45,6 +45,7 @@ read_globals = {
   "UnitClass",
   "UnitRace",
   "UnitFactionGroup",
+  "WorldFrame",
   "debugstack",
   "geterrorhandler",
   -- Skill list
