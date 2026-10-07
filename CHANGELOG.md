@@ -13,6 +13,7 @@ All releases: **0.1.x (current)**
 - The level-up window now also lists skills you skipped at earlier levels, priest racial spells from quests (with the quest and where to hand it in), and weapon skills with the weapon master, city and price.
 - Weapon skills show their weapon's icon.
 - Test button in the options page shows a preview of the window.
+- Added a minimap button: left-click shows a preview of the window, right-click opens the options. Drag it around the minimap, or turn it off in the options.
 - Clearer colors: each stat has its own color and secondary text is gray.
 - Stat gains read like "Stamina 27 to 28 (+1)", with a small arrow between the values: the old value is gray and the gain is green.
 - A window shown during combat fills in the old stat values as soon as combat ends.
