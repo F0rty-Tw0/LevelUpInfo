@@ -26,6 +26,7 @@ UI/SkillGroup.lua
 UI/Layout.lua
 UI/GainLines.lua
 UI/Window.lua
+UI/MinimapButton.lua
 Core/LevelUp.lua
 Settings/Panel.lua
 Core/SlashCommand.lua

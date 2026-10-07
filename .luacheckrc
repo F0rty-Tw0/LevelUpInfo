@@ -67,6 +67,7 @@ read_globals = {
   "HEALTH",
   "HIGHLIGHT_FONT_COLOR",
   "MANA",
+  "Minimap",
   "NORMAL_FONT_COLOR",
   "RED_FONT_COLOR",
   "SPELL_STAT1_NAME",
