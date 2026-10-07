@@ -616,6 +616,15 @@ function Wow.Install()
   def("UnitFactionGroup", function()
     return W.faction, W.faction
   end)
+  -- A secret value: arithmetic on a table errors, like on a secret number in game.
+  W.secret = setmetatable({}, {
+    __tostring = function()
+      return "<secret>"
+    end,
+  })
+  def("issecretvalue", function(value)
+    return value == W.secret
+  end)
   def("UnitHealthMax", function()
     return W.healthMax
   end)

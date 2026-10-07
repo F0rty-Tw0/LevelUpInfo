@@ -15,6 +15,7 @@ All releases: **0.1.x (current)**
 - Test button in the options page shows a preview of the window.
 - Clearer colors: each stat has its own color and secondary text is gray.
 - Stat gains read like "Stamina 27 to 28 (+1)", with a small arrow between the values: the old value is gray and the gain is green.
+- A window shown during combat fills in the old stat values as soon as combat ends.
 - New ranks list what changed from the previous rank — damage, healing, cost, cast time — like patch notes.
 - Click `+N more` to scroll through the rest of the list in place; `Show less` folds it back.
 - New addon icon in the AddOns list.

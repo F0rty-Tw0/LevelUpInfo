@@ -200,6 +200,124 @@ local function test_merged_ding_keeps_first_before()
   Assert.equal(Window.Current().before.health, 100)
 end
 
+local function test_secret_stats_at_ding_are_left_out_of_before()
+  setup()
+  db.waitForCombat = false
+  W.inCombat = true
+  W.healthMax = W.secret
+  ding(10, 15)
+  local record = Window.Current()
+  Assert.equal(record.before.health, nil)
+  Assert.equal(record.before.power, 50)
+end
+
+local function test_combat_ding_reads_missing_before_after_combat_as_live_minus_gain()
+  setup()
+  W.inCombat = true
+  W.healthMax = W.secret
+  ding(10, 15)
+  W.inCombat = false
+  W.healthMax = 115
+  W.fireEvent(Events.frame, "PLAYER_REGEN_ENABLED")
+  Assert.equal(Window.Current().before.health, 100)
+end
+
+local function test_test_preview_with_secret_stats_shows_gain_without_before()
+  setup()
+  W.healthMax = W.secret
+  LevelUp.ShowTest()
+  local record = Window.Current()
+  Assert.equal(record.gains.health, 15)
+  Assert.equal(record.before.health, nil)
+end
+
+local function shownGainTexts()
+  local texts = {}
+  for _, widget in ipairs(W.frames) do
+    local stub = W.state(widget)
+    if stub.frameType == "FontString" and stub.template == "GameFontHighlight" and stub.shown then
+      texts[#texts + 1] = widget:GetText()
+    end
+  end
+  return table.concat(texts, "|")
+end
+
+local function endCombat()
+  W.inCombat = false
+  W.fireEvent(Events.frame, "PLAYER_REGEN_ENABLED")
+end
+
+local function test_window_shown_in_combat_refreshes_secret_stat_after_combat()
+  setup()
+  db.waitForCombat = false
+  W.inCombat = true
+  W.stats[3] = W.secret
+  ding(10, 0, 0, 0, 1)
+  local record = Window.Current()
+  Assert.equal(regenRegistered(), true)
+  Assert.equal(string.find(shownGainTexts(), ARROW .. " 26", 1, true), nil)
+  W.stats[3] = 26
+  endCombat()
+  Assert.equal(Window.Current(), record)
+  Assert.equal(record.before.stamina, 25)
+  Assert.equal(string.find(shownGainTexts(), ARROW .. " 26", 1, true) ~= nil, true)
+  Assert.equal(regenRegistered(), false)
+end
+
+local function test_test_preview_in_combat_refreshes_after_combat()
+  setup()
+  W.inCombat = true
+  W.stats[3] = W.secret
+  LevelUp.ShowTest()
+  W.stats[3] = 26
+  endCombat()
+  Assert.equal(Window.Current().before.stamina, 25)
+end
+
+local function test_refreshed_preview_hides_a_stat_whose_live_value_is_zero()
+  setup()
+  W.inCombat = true
+  W.manaMax = W.secret
+  LevelUp.ShowTest()
+  W.manaMax = 0
+  endCombat()
+  Assert.equal(Window.Current().gains.power, 0)
+  Assert.equal(string.find(shownGainTexts(), "Mana", 1, true), nil)
+end
+
+local function test_window_closed_before_combat_ends_is_not_reshown()
+  setup()
+  W.inCombat = true
+  W.stats[3] = W.secret
+  LevelUp.ShowTest()
+  Window.Frame():Hide()
+  W.stats[3] = 26
+  endCombat()
+  Assert.equal(Window.Frame():IsShown(), false)
+  Assert.equal(regenRegistered(), false)
+end
+
+local function test_window_in_combat_with_readable_stats_registers_nothing()
+  setup()
+  W.inCombat = true
+  LevelUp.ShowTest()
+  Assert.equal(regenRegistered(), false)
+end
+
+local function test_pending_ding_over_awaiting_preview_shows_the_ding()
+  setup()
+  W.inCombat = true
+  W.stats[3] = W.secret
+  LevelUp.ShowTest()
+  ding(10, 15)
+  W.stats[3] = 26
+  endCombat()
+  local record = Window.Current()
+  Assert.equal(record.isTest, nil)
+  Assert.equal(record.gains.health, 15)
+  Assert.equal(regenRegistered(), false)
+end
+
 local function test_test_preview_at_a_given_level_previews_that_ding()
   setup()
   W.level = 11
@@ -271,6 +389,15 @@ return function()
   test_test_preview_ignores_enabled_and_combat()
   test_ding_snapshots_before_values()
   test_merged_ding_keeps_first_before()
+  test_secret_stats_at_ding_are_left_out_of_before()
+  test_combat_ding_reads_missing_before_after_combat_as_live_minus_gain()
+  test_test_preview_with_secret_stats_shows_gain_without_before()
+  test_window_shown_in_combat_refreshes_secret_stat_after_combat()
+  test_test_preview_in_combat_refreshes_after_combat()
+  test_refreshed_preview_hides_a_stat_whose_live_value_is_zero()
+  test_window_closed_before_combat_ends_is_not_reshown()
+  test_window_in_combat_with_readable_stats_registers_nothing()
+  test_pending_ding_over_awaiting_preview_shows_the_ding()
   test_test_preview_at_a_given_level_previews_that_ding()
   test_test_preview_level_outside_2_to_60_uses_current_level()
   test_test_preview_before_is_live_minus_sample()

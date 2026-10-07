@@ -12,8 +12,10 @@ local select = select
 local LevelUp = {}
 
 local db
--- A record waiting for combat to end; PLAYER_REGEN_ENABLED is registered only while it exists.
+-- PLAYER_REGEN_ENABLED is registered only while one of these exists:
+-- a record waiting for combat to end, or a shown record whose stats were secret.
 local pending
+local awaitingStats
 
 local STAT_COUNT = 5
 local MIN_PREVIEW_LEVEL = 2
@@ -21,16 +23,52 @@ local MAX_PREVIEW_LEVEL = 60
 local STAT_KEYS = { "strength", "agility", "stamina", "intellect", "spirit" }
 local SAMPLE_GAINS = { health = 15, power = 20, talents = 0, strength = 0, agility = 0, stamina = 1, intellect = 0, spirit = 0 }
 
+-- In combat, Forever returns secret numbers that addon code may not do math
+-- on; a secret value is dropped, so its gain line shows `+N` only.
+local function readable(value)
+  local isSecret = _G.issecretvalue
+  if isSecret and isSecret(value) then
+    return nil
+  end
+  return value
+end
+
 -- Reads the player's current maximums; UnitStat's second return is the effective value.
 local function snapshot()
   local before = {
-    health = _G.UnitHealthMax("player"),
-    power = _G.UnitPowerMax("player", _G.Enum.PowerType.Mana),
+    health = readable(_G.UnitHealthMax("player")),
+    power = readable(_G.UnitPowerMax("player", _G.Enum.PowerType.Mana)),
   }
   for index = 1, STAT_COUNT do
-    before[STAT_KEYS[index]] = select(2, _G.UnitStat("player", index))
+    before[STAT_KEYS[index]] = readable(select(2, _G.UnitStat("player", index)))
   end
   return before
+end
+
+-- After combat the gains are in the live values: a before value that was
+-- secret at the ding becomes live - gain. A live 0 (no mana) drops the gain,
+-- as ShowTest does, so its line hides.
+local function fillMissingBefore(record)
+  local live = snapshot()
+  local before, gains = record.before, record.gains
+  for key, value in pairs(live) do
+    if before[key] == nil then
+      if value == 0 then
+        gains[key] = 0
+      else
+        before[key] = value - gains[key]
+      end
+    end
+  end
+end
+
+local function hasMissingBefore(record)
+  for key, amount in pairs(record.gains) do
+    if key ~= "talents" and amount ~= 0 and record.before[key] == nil then
+      return true
+    end
+  end
+  return false
 end
 
 local function newRecord(fromLevel, toLevel)
@@ -55,11 +93,28 @@ local function addGains(record, level, health, power, talents, _pvpSlots, streng
   gains.spirit = gains.spirit + (spirit or 0)
 end
 
+-- A waiting ding shows now; else a window still showing the record it showed
+-- in combat refills in place with the readable values.
 local function onRegenEnabled()
   Events.Off("PLAYER_REGEN_ENABLED")
-  local record = pending
-  pending = nil
+  local record, shown = pending, awaitingStats
+  pending, awaitingStats = nil, nil
+  if record then
+    fillMissingBefore(record)
+    Window.Show(record)
+  elseif shown and Window.Current() == shown then
+    fillMissingBefore(shown)
+    Window.Refresh()
+  end
+end
+
+-- Shows now; in combat, a stat line left at `+N` waits for combat to end.
+local function show(record)
   Window.Show(record)
+  if _G.InCombatLockdown() and hasMissingBefore(record) then
+    awaitingStats = record
+    Events.On("PLAYER_REGEN_ENABLED", onRegenEnabled)
+  end
 end
 
 local function onLevelUp(level, ...)
@@ -69,7 +124,7 @@ local function onLevelUp(level, ...)
   local shown = Window.Current()
   if shown and not shown.isTest then
     addGains(shown, level, ...)
-    Window.Show(shown)
+    show(shown)
     return
   end
   if pending then
@@ -82,7 +137,7 @@ local function onLevelUp(level, ...)
     pending = record
     Events.On("PLAYER_REGEN_ENABLED", onRegenEnabled)
   else
-    Window.Show(record)
+    show(record)
   end
 end
 
@@ -109,7 +164,7 @@ function LevelUp.ShowTest(level)
       end
     end
   end
-  Window.Show(record)
+  show(record)
 end
 
 ns.LevelUp = LevelUp

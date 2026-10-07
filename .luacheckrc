@@ -82,6 +82,7 @@ read_globals = {
   -- Level-up records
   "InCombatLockdown",
   "UnitHealthMax",
+  "issecretvalue",
   "UnitLevel",
   "UnitPowerMax",
   "UnitStat",
