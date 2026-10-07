@@ -16,7 +16,6 @@ ignore:
   - stylua.toml
   - CLAUDE.md
   - AGENTS.md
-  - SPEC.md
   - README.md
   - CHANGELOG.md
 

@@ -105,7 +105,7 @@ local function test_other_race_racial_hidden_when_another_covering_race_lacks_it
   Assert.equal(ids(SkillList.Build(trainers, "PRIEST", "Dwarf", "Horde", 9, 10)), "")
 end
 
--- SPEC row 3 at the boundary: Human covered exactly level 10, Dwarf only 9.
+-- Coverage at the boundary: Human covered exactly level 10, Dwarf only 9.
 local function test_racial_hidden_when_covering_race_covered_exactly_its_level()
   setup()
   local trainers = priest({ Dwarf = 9, Human = 10 }, { [10] = { [2944] = spell({ Scourge = true }) } })
