@@ -137,6 +137,9 @@ end
 function Panel.Register(db, actions)
   controls = {}
   local frame = _G.CreateFrame("Frame")
+  -- New frames start shown, and the options window only calls Show(); without
+  -- this, the first open is no hidden -> shown change and OnShow never runs.
+  frame:Hide()
   local built = false
   frame:SetScript("OnShow", function(self)
     if not built then

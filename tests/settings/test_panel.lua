@@ -41,8 +41,14 @@ local function setup()
   canvas = W.settings.category.frame
 end
 
+-- The options window shows the canvas when its category is picked and hides it
+-- when another one is; OnShow runs only on a real hidden -> shown change.
 local function open()
-  W.fireScript(canvas, "OnShow")
+  canvas:Show()
+end
+
+local function close()
+  canvas:Hide()
 end
 
 local function withTemplate(template)
@@ -102,6 +108,7 @@ local function test_second_show_builds_nothing_new()
   setup()
   open()
   local count = #W.frames
+  close()
   open()
   Assert.equal(#W.frames, count)
 end
@@ -230,6 +237,7 @@ end
 local function test_show_refreshes_controls_from_saved_values()
   setup()
   open()
+  close()
   db.reducedMotion = true
   db.duration = 5
   open()
