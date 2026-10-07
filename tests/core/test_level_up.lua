@@ -200,6 +200,25 @@ local function test_merged_ding_keeps_first_before()
   Assert.equal(Window.Current().before.health, 100)
 end
 
+local function test_test_preview_at_a_given_level_previews_that_ding()
+  setup()
+  W.level = 11
+  LevelUp.ShowTest(40)
+  local record = Window.Current()
+  Assert.equal(record.fromLevel, 39)
+  Assert.equal(record.toLevel, 40)
+  Assert.equal(W.state(Window.Frame()).title, "Level 40")
+end
+
+local function test_test_preview_level_outside_2_to_60_uses_current_level()
+  setup()
+  W.level = 11
+  LevelUp.ShowTest(1)
+  Assert.equal(Window.Current().toLevel, 11)
+  LevelUp.ShowTest(61)
+  Assert.equal(Window.Current().toLevel, 11)
+end
+
 local function test_test_preview_before_is_live_minus_sample()
   setup()
   W.healthMax, W.manaMax, W.stats[3] = 115, 70, 26
@@ -252,6 +271,8 @@ return function()
   test_test_preview_ignores_enabled_and_combat()
   test_ding_snapshots_before_values()
   test_merged_ding_keeps_first_before()
+  test_test_preview_at_a_given_level_previews_that_ding()
+  test_test_preview_level_outside_2_to_60_uses_current_level()
   test_test_preview_before_is_live_minus_sample()
   test_test_preview_shows_no_mana_line_for_a_class_without_mana()
 end

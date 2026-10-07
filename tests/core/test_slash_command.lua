@@ -3,15 +3,17 @@ local Wow = require("tests.helpers.wow")
 
 local opened
 local tested
+local testedLevel
 
 local function setup()
   Wow.Install()
   local SlashCommand = assert(loadfile("Core/SlashCommand.lua"))("LevelUpInfo", {})
-  opened, tested = 0, 0
+  opened, tested, testedLevel = 0, 0, nil
   SlashCommand.Register(function()
     opened = opened + 1
-  end, function()
+  end, function(level)
     tested = tested + 1
+    testedLevel = level
   end)
 end
 
@@ -45,6 +47,26 @@ local function test_test_argument_ignores_case_and_surrounding_spaces()
   Assert.equal(opened, 0)
 end
 
+local function test_test_without_level_passes_no_level()
+  setup()
+  run("test")
+  Assert.equal(testedLevel, nil)
+end
+
+local function test_test_with_level_passes_the_level()
+  setup()
+  run(" test 40 ")
+  Assert.equal(tested, 1)
+  Assert.equal(testedLevel, 40)
+end
+
+local function test_test_with_non_number_opens_settings()
+  setup()
+  run("test x")
+  Assert.equal(opened, 1)
+  Assert.equal(tested, 0)
+end
+
 local function test_unknown_argument_opens_settings()
   setup()
   run("bogus")
@@ -57,5 +79,8 @@ return function()
   test_bare_command_opens_settings()
   test_test_argument_runs_the_preview()
   test_test_argument_ignores_case_and_surrounding_spaces()
+  test_test_without_level_passes_no_level()
+  test_test_with_level_passes_the_level()
+  test_test_with_non_number_opens_settings()
   test_unknown_argument_opens_settings()
 end

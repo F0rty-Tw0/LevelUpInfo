@@ -16,6 +16,8 @@ local db
 local pending
 
 local STAT_COUNT = 5
+local MIN_PREVIEW_LEVEL = 2
+local MAX_PREVIEW_LEVEL = 60
 local STAT_KEYS = { "strength", "agility", "stamina", "intellect", "spirit" }
 local SAMPLE_GAINS = { health = 15, power = 20, talents = 0, strength = 0, agility = 0, stamina = 1, intellect = 0, spirit = 0 }
 
@@ -89,10 +91,13 @@ function LevelUp.Install(savedDB)
   Events.On("PLAYER_LEVEL_UP", onLevelUp)
 end
 
--- Preview of the current level with sample gains; ignores Enabled and Wait for combat.
+-- Preview of a ding to `level` (default and out of range: the current level)
+-- with sample gains; ignores Enabled and Wait for combat.
 -- A gain whose live value is 0 (no mana on a Warrior) stays 0, so its line hides.
-function LevelUp.ShowTest()
-  local level = _G.UnitLevel("player")
+function LevelUp.ShowTest(level)
+  if not level or level < MIN_PREVIEW_LEVEL or level > MAX_PREVIEW_LEVEL then
+    level = _G.UnitLevel("player")
+  end
   local record = newRecord(level - 1, level)
   record.isTest = true
   for key, amount in pairs(SAMPLE_GAINS) do
