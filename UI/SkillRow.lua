@@ -22,6 +22,7 @@ local SOURCE_GAP = 2
 local ICON_TOP = (ROW_HEIGHT - ICON_SIZE) / 2
 local CHANGE_LINE_HEIGHT = 12
 local NO_LINES = {}
+local sourceLines = {}
 
 -- One trainer-style row. Its fields (icon, name, rank, price) belong to our
 -- own frame; Blizzard frames are never touched.
@@ -51,13 +52,19 @@ local function newTexture(row, layer, firstCoord, lastCoord)
   return texture
 end
 
--- Second line for quest and weapon-master spells. NPC names and quest titles
--- are proper names and stay unlocalized; the place is a localized key.
+-- Two lines under the name for quest and weapon-master spells (one line is
+-- too narrow). NPC names and quest titles are proper names and stay
+-- unlocalized; the place is a localized key. Fills a reused buffer.
 local function sourceText(source)
+  local place = Text(source.place)
   if source.kind == "quest" then
-    return format(Text("Quest: %s · %s · %s"), source.quest, source.npc, Text(source.place))
+    sourceLines[1] = format(Text("Quest: %s"), source.quest)
+    sourceLines[2] = format(Text("%s · %s"), source.npc, place)
+  else
+    sourceLines[1] = format(Text("Weapon master: %s"), source.npc)
+    sourceLines[2] = place
   end
-  return format(Text("Weapon master: %s · %s"), source.npc, Text(source.place))
+  return sourceLines
 end
 
 -- Change line i sits under the name; lines are spaced by exactly the row's
@@ -90,11 +97,6 @@ function SkillRow.Create(parent, enterFn, leaveFn)
   row.price = row:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
   row.price:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -PAD, PAD)
   row.price:SetJustifyH("RIGHT")
-  row.sourceLine = row:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
-  row.sourceLine:SetPoint("TOPLEFT", row.name, "BOTTOMLEFT", 0, -SOURCE_GAP)
-  row.sourceLine:SetWidth(SOURCE_WIDTH)
-  row.sourceLine:SetJustifyH("LEFT")
-  row.sourceLine:SetWordWrap(false)
   row.changeLines = {}
   row:SetScript("OnEnter", onEnter)
   row:SetScript("OnLeave", onLeave)
@@ -118,7 +120,7 @@ function SkillRow.SetChanges(row, lines)
 end
 
 function SkillRow.SetSkill(row, entry, money)
-  SkillRow.SetChanges(row, NO_LINES)
+  SkillRow.SetChanges(row, entry.source and sourceText(entry.source) or NO_LINES)
   row.spellID = entry.spellID
   row.icon:SetTexture(entry.icon)
   row.name:SetWidth(0)
@@ -131,12 +133,6 @@ function SkillRow.SetSkill(row, entry, money)
   else
     row.price:SetText("")
   end
-  if entry.source then
-    row.sourceLine:SetText(sourceText(entry.source))
-    row.sourceLine:Show()
-  else
-    row.sourceLine:Hide()
-  end
 end
 
 function SkillRow.SetHint(row)
@@ -147,7 +143,6 @@ function SkillRow.SetHint(row)
   row.name:SetText(Text("Visit your class trainer to see all new skills."))
   row.rank:SetText("")
   row.price:SetText("")
-  row.sourceLine:Hide()
 end
 
 ns.SkillRow = SkillRow
