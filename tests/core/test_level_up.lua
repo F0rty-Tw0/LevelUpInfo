@@ -8,6 +8,12 @@ local Events
 local LevelUp
 local db
 
+-- The from and to level of the record the window shows.
+local function shownLevels()
+  local record = Window.Current()
+  return record.fromLevel .. " to " .. record.toLevel
+end
+
 -- Fresh fake client, modules and db per test; the player is level 10.
 local function setup()
   W = Wow.Install()
@@ -113,7 +119,7 @@ local function test_two_dings_in_combat_merge_into_one_window()
   Assert.equal(record.toLevel, 11)
   Assert.equal(table.concat({ record.gains.health, record.gains.power, record.gains.talents, record.gains.stamina }, ","), "31,41,1,3")
   Assert.equal(regenRegistered(), false)
-  Assert.equal(W.state(Window.Frame()).title, "Level 11")
+  Assert.equal(shownLevels(), "9 to 11")
 end
 
 local function test_ding_while_live_window_visible_merges_and_refills_even_in_combat()
@@ -126,7 +132,7 @@ local function test_ding_while_live_window_visible_merges_and_refills_even_in_co
   Assert.equal(record.fromLevel, 9)
   Assert.equal(record.toLevel, 11)
   Assert.equal(record.gains.health, 31)
-  Assert.equal(W.state(Window.Frame()).title, "Level 11")
+  Assert.equal(shownLevels(), "9 to 11")
   Assert.equal(regenRegistered(), false)
 end
 
@@ -176,7 +182,7 @@ local function test_test_preview_ignores_enabled_and_combat()
   Assert.equal(record.fromLevel, 19)
   Assert.equal(record.toLevel, 20)
   Assert.equal(table.concat({ record.gains.health, record.gains.power, record.gains.stamina, record.gains.talents }, ","), "15,20,1,0")
-  Assert.equal(W.state(Window.Frame()).title, "Level 20")
+  Assert.equal(shownLevels(), "19 to 20")
   Assert.equal(regenRegistered(), false)
 end
 
@@ -231,11 +237,13 @@ local function test_test_preview_with_secret_stats_shows_gain_without_before()
   Assert.equal(record.before.health, nil)
 end
 
+-- Gain lines live on the content frame; the header line on the window frame is skipped.
 local function shownGainTexts()
   local texts = {}
   for _, widget in ipairs(W.frames) do
     local stub = W.state(widget)
-    if stub.frameType == "FontString" and stub.template == "GameFontHighlight" and stub.shown then
+    local gainLine = stub.template == "GameFontHighlight" and widget:GetParent() ~= Window.Frame()
+    if stub.frameType == "FontString" and gainLine and stub.shown then
       texts[#texts + 1] = widget:GetText()
     end
   end
@@ -325,7 +333,7 @@ local function test_test_preview_at_a_given_level_previews_that_ding()
   local record = Window.Current()
   Assert.equal(record.fromLevel, 39)
   Assert.equal(record.toLevel, 40)
-  Assert.equal(W.state(Window.Frame()).title, "Level 40")
+  Assert.equal(shownLevels(), "39 to 40")
 end
 
 local function test_test_preview_level_outside_2_to_60_uses_current_level()
@@ -349,16 +357,9 @@ local function test_test_preview_shows_no_mana_line_for_a_class_without_mana()
   setup()
   W.manaMax = 0
   LevelUp.ShowTest()
-  local texts = {}
-  for _, widget in ipairs(W.frames) do
-    local stub = W.state(widget)
-    if stub.frameType == "FontString" and stub.template == "GameFontHighlight" and stub.shown then
-      texts[#texts + 1] = widget:GetText()
-    end
-  end
   local green, gray = "|cff1aff1a", "|cff808080"
   Assert.equal(
-    table.concat(texts, "|"),
+    shownGainTexts(),
     "|cff49d36bHealth|r "
       .. gray
       .. "85|r "

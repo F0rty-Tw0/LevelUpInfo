@@ -14,6 +14,7 @@ local tostring = tostring
 local Text = Localization.Text
 
 local LINE_HEIGHT = 16
+local HEADING_HEIGHT = 24 -- same heading line as the skill groups
 local TEXT_LEFT = 4
 local OLD_VALUE_COLOR = "|cff808080" -- the gray of GameFontDisable
 
@@ -30,9 +31,11 @@ local GAINS = {
   { key = "spirit", global = "SPELL_STAT5_NAME", fallback = "Spirit", color = "f5a3d0" },
 }
 
--- The window's stat gain lines: pooled font strings on the content frame.
+-- The window's stat gain lines under a `Stats` heading: pooled font strings
+-- on the content frame.
 local GainLines = {}
 
+local heading
 local lines = {}
 local green -- "|cffRRGGBB" from GREEN_FONT_COLOR, set on first fill
 
@@ -49,7 +52,14 @@ local function gainText(record, gain, amount)
   return format(Text("%s %s %s %s %s"), coloredName, old, Format.ARROW, tostring(before + amount), plus)
 end
 
--- Sets and lays out one line per non-zero gain; returns how many were used.
+-- Makes the heading; called once when the window is built.
+function GainLines.Build(content)
+  heading = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+  heading:SetText(Text("Stats"))
+end
+
+-- Sets and lays out the heading and one line per non-zero gain; returns how
+-- many lines were used.
 function GainLines.Fill(content, record)
   if not green then
     green = Format.ColorCode(_G.GREEN_FONT_COLOR)
@@ -58,6 +68,9 @@ function GainLines.Fill(content, record)
   for _, gain in ipairs(GAINS) do
     local amount = record.gains[gain.key]
     if amount and amount ~= 0 then
+      if used == 0 then
+        Layout.Add(heading, content, TEXT_LEFT, HEADING_HEIGHT)
+      end
       used = used + 1
       lines[used] = lines[used] or content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
       lines[used]:SetText(gainText(record, gain, amount))
@@ -67,10 +80,14 @@ function GainLines.Fill(content, record)
   for index = used + 1, #lines do
     lines[index]:Hide()
   end
+  if used == 0 then
+    heading:Hide()
+  end
   return used
 end
 
 function GainLines.HideAll()
+  heading:Hide()
   for _, line in ipairs(lines) do
     line:Hide()
   end

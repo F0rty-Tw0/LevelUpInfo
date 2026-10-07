@@ -147,7 +147,7 @@ local function test_result_after_new_show_refills_new_record()
   Window.Show(record(11, 12))
   Assert.equal(shownLines(rowNamed("Renew")), 0)
   loadText(6074, "Heals 100 over 15 sec.")
-  Assert.equal(W.state(frame()).title, "Level 12")
+  Assert.equal(Window.Current().toLevel, 12)
   Assert.equal(shownLines(rowNamed("Renew")), 1)
 end
 
@@ -173,7 +173,7 @@ local function test_old_record_result_leaves_new_record_alone()
   loadText(RANK_2, NEW_TEXT)
   Assert.equal(W.calls.GetMoney, moneyCalls)
   Assert.equal(setSizeCalls, 0)
-  Assert.equal(W.state(frame()).title, "Level 12")
+  Assert.equal(Window.Current().toLevel, 12)
   Assert.equal(#shownRows(), 1)
   Assert.equal(shownLines(rowNamed("Renew")), 1)
 end

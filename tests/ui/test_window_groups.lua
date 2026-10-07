@@ -135,8 +135,51 @@ local function test_groups_render_in_order_with_headings()
   trainerSpell(13, MISSED_LEVEL, "Old Skill", "Rank 1")
   otherSources[1] = weaponRow(14, "Axe", "Horde")
   Window.Show(record())
-  Assert.equal(lines("GameFontNormalLarge"), "New skills|New ranks|Not yet learned|Weapon skills")
+  Assert.equal(lines("GameFontNormalLarge"), "Stats|New skills|New ranks|Not yet learned|Weapon skills")
   Assert.equal(rowNames(), "New Skill|New Rank|Old Skill|Axe")
+end
+
+local function topOf(region)
+  return select(5, region:GetPoint(1))
+end
+
+local function headingNamed(text)
+  for _, widget in ipairs(W.frames) do
+    if W.state(widget).frameType == "FontString" and widget:GetText() == text then
+      return widget
+    end
+  end
+end
+
+local function test_rows_in_a_group_sit_4px_apart()
+  setup()
+  addMissed(3)
+  Window.Show(record())
+  local rows = shownRows()
+  Assert.equal(topOf(rows[1]) - topOf(rows[2]), 47 + 4)
+  Assert.equal(topOf(rows[2]) - topOf(rows[3]), 47 + 4)
+end
+
+local function test_first_row_follows_the_heading_line()
+  setup()
+  addMissed(1)
+  Window.Show(record())
+  Assert.equal(topOf(headingNamed("Not yet learned")) - topOf(shownRows()[1]), 24)
+end
+
+local function test_next_group_heading_sits_14px_below_the_last_row()
+  setup()
+  trainerSpell(11, 10, "New Skill", "Rank 1")
+  addMissed(1)
+  Window.Show(record())
+  Assert.equal(topOf(shownRows()[1]) - topOf(headingNamed("Not yet learned")), 47 + 14)
+end
+
+local function test_first_skill_heading_sits_14px_below_the_gain_lines()
+  setup()
+  addMissed(1)
+  Window.Show(record())
+  Assert.equal(topOf(headingNamed("Not yet learned")), -(24 + 16 + 14))
 end
 
 local function test_not_yet_learned_caps_at_five_with_more_line()
@@ -222,6 +265,10 @@ end
 
 return function()
   test_groups_render_in_order_with_headings()
+  test_rows_in_a_group_sit_4px_apart()
+  test_first_row_follows_the_heading_line()
+  test_next_group_heading_sits_14px_below_the_last_row()
+  test_first_skill_heading_sits_14px_below_the_gain_lines()
   test_not_yet_learned_caps_at_five_with_more_line()
   test_weapon_skills_cap_at_five_with_more_line()
   test_new_skills_cap_at_five_with_more_line()
