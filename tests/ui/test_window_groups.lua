@@ -258,7 +258,16 @@ local function test_hint_row_sits_14px_below_the_last_block()
   db.trainers.PRIEST.covered.Scourge = 9
   Window.Show(record())
   local rows = shownRows()
-  Assert.equal(topOf(rows[1]) - topOf(rows[2]), 59 + 14)
+  Assert.equal(topOf(rows[1]) - topOf(rows[2]), rows[1]:GetHeight() + 14)
+end
+
+local function test_groups_sit_14px_apart_without_gain_lines()
+  setup()
+  trainerSpell(11, 10, "New Skill", "Rank 1")
+  addMissed(1)
+  Window.Show({ fromLevel = 9, toLevel = 10, gains = {}, before = {} })
+  local first = shownRows()[1]
+  Assert.equal(topOf(first) - topOf(headingNamed("Not yet learned")), first:GetHeight() + 14)
 end
 
 local function test_fill_reads_player_faction()
@@ -285,5 +294,6 @@ return function()
   test_reshow_with_fewer_missed_hides_more_line_and_creates_no_frames()
   test_hint_row_follows_weapon_skills()
   test_hint_row_sits_14px_below_the_last_block()
+  test_groups_sit_14px_apart_without_gain_lines()
   test_fill_reads_player_faction()
 end
