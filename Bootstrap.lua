@@ -23,7 +23,6 @@ function Bootstrap.Initialize(saved)
   Window.Install(db)
   SpellFacts.Install(Window.Refresh)
   LevelUp.Install(db)
-  MinimapButton.Install(db, { onPreview = LevelUp.ShowTest, onOptions = Panel.Open })
   Panel.Register(db, {
     onScale = Window.ApplyScale,
     onResetPosition = Window.ResetPosition,
@@ -31,6 +30,8 @@ function Bootstrap.Initialize(saved)
     onMinimapButton = MinimapButton.Apply,
   })
   SlashCommand.Register(Panel.Open, LevelUp.ShowTest)
+  -- Last: the button is optional, so a failure building it leaves /lui and the options working.
+  MinimapButton.Install(db, { onPreview = LevelUp.ShowTest, onOptions = Panel.Open })
   return db
 end
 

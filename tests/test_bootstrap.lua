@@ -135,9 +135,18 @@ local function test_login_creates_only_event_frame_settings_canvas_and_minimap_b
   setup(nil)
   Assert.equal(#W.frames - baseFrames, 2 + MINIMAP_BUTTON_FRAMES)
   Assert.equal(W.frames[baseFrames + 1], ns.Events.frame)
-  Assert.equal(W.frames[baseFrames + 2], _G.LevelUpInfoMinimapButton)
-  Assert.equal(W.frames[#W.frames], W.settings.category.frame)
+  Assert.equal(W.frames[baseFrames + 2], W.settings.category.frame)
+  Assert.equal(W.frames[baseFrames + 3], _G.LevelUpInfoMinimapButton)
   Assert.equal(_G.LevelUpInfoFrame, nil)
+end
+
+-- The button is optional: if building it fails, /lui and the options page still work.
+local function test_failing_minimap_button_leaves_slash_and_options_registered()
+  login(nil)
+  rawset(_G, "Minimap", nil)
+  Assert.equal(pcall(loaded), false)
+  Assert.equal(type(_G.SlashCmdList["LEVELUPINFO"]), "function")
+  Assert.equal(W.settings.category ~= nil, true)
 end
 
 local function test_login_with_minimap_button_off_creates_only_event_frame_and_settings_canvas()
@@ -282,6 +291,7 @@ return function()
   test_idle_events_are_level_up_and_trainer_show_only()
   test_login_creates_only_event_frame_settings_canvas_and_minimap_button()
   test_login_with_minimap_button_off_creates_only_event_frame_and_settings_canvas()
+  test_failing_minimap_button_leaves_slash_and_options_registered()
   test_minimap_button_clicks_preview_and_open_options()
   test_minimap_checkbox_hides_the_button()
   test_disabled_still_scans_trainers()

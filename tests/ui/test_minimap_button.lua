@@ -82,6 +82,45 @@ local function test_apply_after_turning_off_hides_the_button()
   Assert.equal(_G.LevelUpInfoMinimapButton:IsShown(), false)
 end
 
+local function test_apply_off_then_on_shows_the_button_again()
+  setup(true)
+  db.minimapButton = false
+  MinimapButton.Apply()
+  db.minimapButton = true
+  MinimapButton.Apply()
+  Assert.equal(_G.LevelUpInfoMinimapButton:IsShown(), true)
+end
+
+local function test_button_takes_both_clicks_and_left_drag()
+  setup(true)
+  local state = W.state(_G.LevelUpInfoMinimapButton)
+  Assert.equal(table.concat(state.clickButtons, ","), "LeftButtonUp,RightButtonUp")
+  Assert.equal(table.concat(state.dragButtons, ","), "LeftButton")
+  Assert.equal(state.movable, true)
+end
+
+local function tooltipLog()
+  local lines = {}
+  for _, call in ipairs(W.tooltip) do
+    local parts = { call[1] }
+    for i = 2, #call do
+      parts[#parts + 1] = call[i] == _G.LevelUpInfoMinimapButton and "button" or tostring(call[i])
+    end
+    lines[#lines + 1] = table.concat(parts, " ")
+  end
+  return table.concat(lines, "|")
+end
+
+local function test_tooltip_names_both_clicks_and_hides_on_leave()
+  setup(true)
+  W.fireScript(_G.LevelUpInfoMinimapButton, "OnEnter")
+  W.fireScript(_G.LevelUpInfoMinimapButton, "OnLeave")
+  Assert.equal(
+    tooltipLog(),
+    "SetOwner button ANCHOR_LEFT|SetText Level Up Info|AddLine Left-click: preview 1 1 1|" .. "AddLine Right-click: options 1 1 1|Show|Hide"
+  )
+end
+
 local function test_right_click_opens_options()
   setup(true)
   W.fireScript(_G.LevelUpInfoMinimapButton, "OnClick", "RightButton")
@@ -122,6 +161,9 @@ return function()
   test_apply_after_turning_on_creates_the_button()
   test_second_apply_creates_no_second_frame()
   test_apply_after_turning_off_hides_the_button()
+  test_apply_off_then_on_shows_the_button_again()
+  test_button_takes_both_clicks_and_left_drag()
+  test_tooltip_names_both_clicks_and_hides_on_leave()
   test_right_click_opens_options()
   test_left_click_shows_preview_without_arguments()
   test_drag_stop_saves_angle_and_anchors_once_on_minimap()
