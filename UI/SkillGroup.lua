@@ -174,10 +174,18 @@ function SkillGroup.HideAll()
   end
 end
 
+-- The box and bar are as tall as the rows a collapsed group shows.
+function SkillGroup.SetBoxHeight(group, height)
+  local state = groups[group]
+  state.boxHeight = height
+  state.box:SetHeight(height)
+  state.bar:SetHeight(height)
+end
+
 -- The kept scroll position is clamped to the new range.
 function SkillGroup.SetContentHeight(group, height)
   local state = groups[group]
-  local range = max(0, height - BOX_HEIGHT)
+  local range = max(0, height - (state.boxHeight or BOX_HEIGHT))
   local scroll = min(state.scroll, range)
   state.child:SetHeight(height)
   state.bar:SetMinMaxValues(0, range)
