@@ -14,6 +14,7 @@ All releases: **0.1.x (current)**
 - Weapon skills show their weapon's icon.
 - Test button in the options page shows a preview of the window.
 - Added a minimap button: left-click shows a preview of the window, right-click opens the options. Drag it around the minimap, or turn it off in the options.
+- Dragging the minimap button slides it around the edge of the minimap, and open windows now cover it instead of it showing on top.
 - Clearer colors: each stat has its own color and secondary text is gray.
 - Stat gains read like "Stamina 27 to 28 (+1)", with a small arrow between the values: the old value is gray and the gain is green.
 - A window shown during combat fills in the old stat values as soon as combat ends.

@@ -96,7 +96,15 @@ local function test_button_takes_both_clicks_and_left_drag()
   local state = W.state(_G.LevelUpInfoMinimapButton)
   Assert.equal(table.concat(state.clickButtons, ","), "LeftButtonUp,RightButtonUp")
   Assert.equal(table.concat(state.dragButtons, ","), "LeftButton")
-  Assert.equal(state.movable, true)
+end
+
+local function test_strata_and_level_are_locked_like_other_minimap_buttons()
+  setup(true)
+  local state = W.state(_G.LevelUpInfoMinimapButton)
+  Assert.equal(state.strata, "MEDIUM")
+  Assert.equal(state.frameLevel, 8)
+  Assert.equal(state.fixedStrata, true)
+  Assert.equal(state.fixedLevel, true)
 end
 
 local function tooltipLog()
@@ -136,15 +144,16 @@ local function test_left_click_shows_preview_without_arguments()
   Assert.equal(calls.options, 0)
 end
 
-local function test_drag_stop_saves_angle_and_anchors_once_on_minimap()
-  setup(true)
-  local button = _G.LevelUpInfoMinimapButton
+-- Minimap center (500, 400) at effective scale 2: the cursor at unscaled
+-- (900, 900) is (450, 450) in minimap space, up-left of center = 135 degrees.
+local function dragTo135(button)
+  W.state(_G.Minimap).effectiveScale = 2
+  W.cursor = { 900, 900 }
   W.fireScript(button, "OnDragStart")
-  W.dropAt = { point = "CENTER", x = 450, y = 450 }
-  W.state(button).center = { 450, 450 }
-  W.fireScript(button, "OnDragStop")
+end
+
+local function assertOnRingAt135(button)
   near(db.minimapAngle, 135)
-  Assert.equal(W.state(button).userPlaced, false)
   Assert.equal(button:GetNumPoints(), 1)
   local point, relativeTo, relativePoint, x, y = button:GetPoint()
   Assert.equal(point .. "," .. relativePoint, "CENTER,CENTER")
@@ -152,6 +161,34 @@ local function test_drag_stop_saves_angle_and_anchors_once_on_minimap()
   local wantX, wantY = MinimapButton.OffsetFor(135, 80)
   near(x, wantX)
   near(y, wantY)
+end
+
+local function test_dragging_slides_the_button_along_the_ring()
+  setup(true)
+  local button = _G.LevelUpInfoMinimapButton
+  dragTo135(button)
+  W.fireScript(button, "OnUpdate", 0.016)
+  assertOnRingAt135(button)
+  Assert.equal(W.state(button).moving, nil)
+end
+
+local function test_drag_stop_removes_the_update_and_stays_on_the_ring()
+  setup(true)
+  local button = _G.LevelUpInfoMinimapButton
+  Assert.equal(button:GetScript("OnUpdate"), nil)
+  dragTo135(button)
+  W.fireScript(button, "OnDragStop")
+  Assert.equal(button:GetScript("OnUpdate"), nil)
+  assertOnRingAt135(button)
+end
+
+local function test_drag_skips_a_frame_while_the_minimap_center_is_unreadable()
+  setup(true)
+  local button = _G.LevelUpInfoMinimapButton
+  dragTo135(button)
+  W.state(_G.Minimap).center = nil
+  W.fireScript(button, "OnUpdate", 0.016)
+  Assert.equal(db.minimapAngle, nil)
 end
 
 return function()
@@ -166,5 +203,8 @@ return function()
   test_tooltip_names_both_clicks_and_hides_on_leave()
   test_right_click_opens_options()
   test_left_click_shows_preview_without_arguments()
-  test_drag_stop_saves_angle_and_anchors_once_on_minimap()
+  test_strata_and_level_are_locked_like_other_minimap_buttons()
+  test_dragging_slides_the_button_along_the_ring()
+  test_drag_stop_removes_the_update_and_stays_on_the_ring()
+  test_drag_skips_a_frame_while_the_minimap_center_is_unreadable()
 end
