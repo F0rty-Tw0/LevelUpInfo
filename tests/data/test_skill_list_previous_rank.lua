@@ -164,6 +164,32 @@ local function test_non_rank_entries_have_no_field()
   Assert.equal(entryFor(entries, STAVES).previousSpellID, nil)
 end
 
+-- The trainer gives no rank text for spells above your level: the spell's
+-- own subtext stands in for an empty cached rank.
+local function test_empty_cached_rank_reads_spell_subtext()
+  setup()
+  W.spells[RANK_2].subtext = "Rank 2"
+  local entry = entryFor(build(priest({ [10] = { [RANK_2] = spell("") } }), 9, 10), RANK_2)
+  Assert.equal(entry.rank, "Rank 2")
+  Assert.equal(entry.group, "rank")
+end
+
+local function test_empty_cached_rank_finds_previous_by_subtext()
+  setup()
+  W.spells[RANK_2].subtext = "Rank 2"
+  W.spells[RANK_3].subtext = "Rank 3"
+  local trainers = priest({ [10] = { [RANK_2] = spell("") }, [12] = { [RANK_3] = spell("") } })
+  Assert.equal(entryFor(build(trainers, 11, 12), RANK_3).previousSpellID, RANK_2)
+end
+
+local function test_empty_cached_rank_without_subtext_api_stays_empty()
+  setup()
+  _G.C_Spell.GetSpellSubtext = nil
+  local entry = entryFor(build(priest({ [10] = { [RANK_2] = spell("") } }), 9, 10), RANK_2)
+  Assert.equal(entry.rank, "")
+  Assert.equal(entry.group, "skill")
+end
+
 local function test_no_rank_entry_builds_no_index()
   setup()
   W.known[RANK_3] = true
@@ -189,4 +215,7 @@ return function()
   test_duplicate_key_lower_id_wins()
   test_non_rank_entries_have_no_field()
   test_no_rank_entry_builds_no_index()
+  test_empty_cached_rank_reads_spell_subtext()
+  test_empty_cached_rank_finds_previous_by_subtext()
+  test_empty_cached_rank_without_subtext_api_stays_empty()
 end

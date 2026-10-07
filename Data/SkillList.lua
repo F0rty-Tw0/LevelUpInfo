@@ -37,6 +37,15 @@ local function rankNumber(rank)
   return tonumber(match(rank, "%d+"))
 end
 
+-- The cached rank text, or the spell's own subtext when the trainer gave
+-- none (it leaves it empty for spells above your level).
+local function rankOf(spellID, entry)
+  if entry.rank ~= "" or _G.C_Spell.GetSpellSubtext == nil then
+    return entry.rank
+  end
+  return _G.C_Spell.GetSpellSubtext(spellID) or ""
+end
+
 local function isNewRank(rank)
   return (rankNumber(rank) or 0) >= FIRST_NEW_RANK
 end
@@ -50,7 +59,7 @@ local function rankIndex(data, toLevel)
   local index = {}
   for level = 1, toLevel do
     for spellID, entry in pairs(data.levels[level] or {}) do
-      local number = rankNumber(entry.rank)
+      local number = rankNumber(rankOf(spellID, entry))
       local info = number and _G.C_Spell.GetSpellInfo(spellID)
       if info then
         local key = rankKey(info.name, number)
@@ -118,13 +127,14 @@ local function addLevel(bySpell, data, race, level, fromLevel)
     if isVisible(data.covered, race, level, entry) and not _G.IsPlayerSpell(spellID) then
       local info = _G.C_Spell.GetSpellInfo(spellID)
       if info then
-        local newRank = isNewRank(entry.rank)
+        local rank = rankOf(spellID, entry)
+        local newRank = isNewRank(rank)
         bySpell[spellID] = {
           spellID = spellID,
           level = level,
           name = info.name,
           icon = info.iconID,
-          rank = entry.rank,
+          rank = rank,
           cost = entry.cost,
           newRank = newRank,
           group = groupOf(level, fromLevel, newRank),
