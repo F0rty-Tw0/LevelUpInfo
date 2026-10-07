@@ -182,6 +182,16 @@ local function test_drag_stop_removes_the_update_and_stays_on_the_ring()
   assertOnRingAt135(button)
 end
 
+-- Alt+Z or a loading screen can hide the button mid-drag, and OnDragStop
+-- may then never fire.
+local function test_hiding_mid_drag_removes_the_update()
+  setup(true)
+  local button = _G.LevelUpInfoMinimapButton
+  dragTo135(button)
+  W.fireScript(button, "OnHide")
+  Assert.equal(button:GetScript("OnUpdate"), nil)
+end
+
 local function test_drag_skips_a_frame_while_the_minimap_center_is_unreadable()
   setup(true)
   local button = _G.LevelUpInfoMinimapButton
@@ -206,5 +216,6 @@ return function()
   test_strata_and_level_are_locked_like_other_minimap_buttons()
   test_dragging_slides_the_button_along_the_ring()
   test_drag_stop_removes_the_update_and_stays_on_the_ring()
+  test_hiding_mid_drag_removes_the_update()
   test_drag_skips_a_frame_while_the_minimap_center_is_unreadable()
 end

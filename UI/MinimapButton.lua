@@ -91,6 +91,11 @@ local function onDragStop(self)
   followCursor()
 end
 
+-- Hidden mid-drag (Alt+Z, a loading screen), OnDragStop may never fire.
+local function onHide(self)
+  self:SetScript("OnUpdate", nil)
+end
+
 local function onEnter(self)
   local tooltip = _G.GameTooltip
   tooltip:SetOwner(self, "ANCHOR_LEFT")
@@ -127,6 +132,7 @@ local function build()
   button:SetScript("OnClick", onClick)
   button:SetScript("OnDragStart", onDragStart)
   button:SetScript("OnDragStop", onDragStop)
+  button:SetScript("OnHide", onHide)
   button:SetScript("OnEnter", onEnter)
   button:SetScript("OnLeave", onLeave)
   place()
