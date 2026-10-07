@@ -51,8 +51,18 @@ local function test_toc_icon_points_at_the_shipped_tga()
   assert(io.open(file, "rb"), "missing " .. file)
 end
 
+-- Slot order Era, Forever, TBC; release.sh rewrites the numbers, so only the shape is fixed.
+local function test_toc_interface_lists_era_forever_and_tbc()
+  local interface
+  for line in io.lines("LevelUpInfo.toc") do
+    interface = interface or string.match(line, "^## Interface: (.+)$")
+  end
+  assert(string.match(interface or "", "^1%d%d%d%d, 1%d%d%d%d, 2%d%d%d%d$"), tostring(interface))
+end
+
 return function()
   test_every_toc_file_loads_in_order_without_require()
   test_toc_lists_bootstrap_last()
   test_toc_icon_points_at_the_shipped_tga()
+  test_toc_interface_lists_era_forever_and_tbc()
 end

@@ -42,7 +42,9 @@ Open them with `/lui` or under Options, AddOns, Level Up Info.
 
 ## Game versions
 
-WoW: Forever.
+- WoW: Forever
+- Classic Era
+- TBC Anniversary
 
 ## License
 

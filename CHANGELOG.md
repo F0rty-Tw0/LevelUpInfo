@@ -21,3 +21,4 @@ All releases: **0.1.x (current)**
 - Skills above your level show their rank too, so new ranks and what they change appear for them.
 - Every skill list shows its first 5 skills, so a big level jump stays short; `+N more` shows the rest.
 - New addon icon in the AddOns list.
+- Works on Classic Era and TBC Anniversary: the window lists your trainer's skills after a visit.

@@ -44,7 +44,16 @@ fi
 
 echo "Releasing LevelUpInfo ${TAG_VERSION}..."
 
-# Fetch the live WoW: Forever TOC interface number from Blizzard's patch CDN.
+# The TOC lists one interface number per client, in a fixed slot order:
+# Classic Era, WoW: Forever, TBC Anniversary. Check the shape before any edit.
+CURRENT_INTERFACE=$(sed -n 's/^## Interface: //p' LevelUpInfo.toc | tr -d '\r')
+IFS=', ' read -r -a SLOTS <<< "$CURRENT_INTERFACE"
+if [[ ${#SLOTS[@]} -ne 3 ]]; then
+  echo "Error: '## Interface: ${CURRENT_INTERFACE}' must list exactly three numbers (Era, Forever, TBC)."
+  exit 1
+fi
+
+# Fetch a live TOC interface number from Blizzard's patch CDN.
 fetch_toc() {
   local product="$1"
   python -c "
@@ -65,25 +74,28 @@ for line in text.splitlines():
 "
 }
 
-echo "Fetching live TOC interface number from Blizzard CDN..."
-# Soft-fail: the beta lives under 'wow_classic_beta' and the launch product
-# key is unknown until 2026-11-04. If the fetch fails, warn and keep whatever
-# the TOC currently has (16001).
-TOC_FOREVER=$(fetch_toc wow_classic_beta) || true
-
-if [[ -n "$TOC_FOREVER" ]]; then
-  echo "  forever: ${TOC_FOREVER}"
-else
-  echo "  forever: skipped (CDN fetch failed, keeping current TOC value)"
-fi
+echo "Fetching live TOC interface numbers from Blizzard CDN..."
+# Soft-fail per client: a failed fetch keeps that slot's current value.
+# WoW: Forever's beta lives under 'wow_classic_beta'; the launch product key
+# is unknown until 2026-11-04.
+PRODUCTS=(wow_classic_era wow_classic_beta wow_anniversary)
+LABELS=(era forever tbc)
+for i in 0 1 2; do
+  fetched=$(fetch_toc "${PRODUCTS[$i]}") || true
+  if [[ -n "$fetched" ]]; then
+    SLOTS[$i]="$fetched"
+    echo "  ${LABELS[$i]}: ${fetched}"
+  else
+    echo "  ${LABELS[$i]}: skipped (CDN fetch failed, keeping ${SLOTS[$i]})"
+  fi
+done
+NEW_INTERFACE="${SLOTS[0]}, ${SLOTS[1]}, ${SLOTS[2]}"
 
 # Move [Unreleased] notes into this release's section. Runs before any other
 # file edit so a missing-notes error leaves the tree untouched.
 python scripts/promote_changelog.py --version "${TAG_VERSION}"
 
-if [[ -n "$TOC_FOREVER" ]]; then
-  sed -i "s/^## Interface: .*/## Interface: ${TOC_FOREVER}/" LevelUpInfo.toc
-fi
+sed -i "s/^## Interface: .*/## Interface: ${NEW_INTERFACE}/" LevelUpInfo.toc
 
 # Update version in TOC
 sed -i "s/^## Version: .*/## Version: ${TAG_VERSION}/" LevelUpInfo.toc
