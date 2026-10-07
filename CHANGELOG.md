@@ -19,4 +19,5 @@ All releases: **0.1.x (current)**
 - New ranks list what changed from the previous rank — damage, healing, cost, cast time — like patch notes.
 - Click `+N more` to scroll through the rest of the list in place; `Show less` folds it back.
 - Skills above your level show their rank too, so new ranks and what they change appear for them.
+- Every skill list shows its first 5 skills, so a big level jump stays short; `+N more` shows the rest.
 - New addon icon in the AddOns list.
