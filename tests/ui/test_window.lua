@@ -1,5 +1,6 @@
 local Assert = require("tests.helpers.assert")
 local Wow = require("tests.helpers.wow")
+local ARROW = require("LevelUpInfo.Core.Format").ARROW
 
 local W
 local Window
@@ -31,6 +32,7 @@ local function setup()
   local ns = { OtherSources = {} }
   for _, file in ipairs({
     "Core/Localization.lua",
+    "Core/Format.lua",
     "Core/Events.lua",
     "Data/TrainerCache.lua",
     "Data/SkillList.lua",
@@ -104,7 +106,9 @@ local function rowNames()
 end
 
 local HINT = "Visit your class trainer to see all new skills."
-local ARROW = string.format("|TInterface\\Buttons\\Arrow-Up-Up:14:14:0:0:32:32:0:32:0:32:%d:%d:%d|t", 26, 255, 26)
+-- GREEN_FONT_COLOR (0.1, 1, 0.1) as hex.
+local GREEN = "|cff1aff1a"
+local GRAY = "|cff808080"
 
 local function test_no_frame_exists_before_first_show()
   setup()
@@ -140,7 +144,20 @@ local function test_gains_lines_in_spec_order_skip_zeros()
   Window.Show(record())
   Assert.equal(
     table.concat(lines("GameFontHighlight"), "|"),
-    "|cff49d36bHealth|r 100 " .. ARROW .. " 115|" .. "|cffd9b38cStamina|r 25 " .. ARROW .. " 26"
+    "|cff49d36bHealth|r "
+      .. GRAY
+      .. "100|r "
+      .. ARROW
+      .. " 115 "
+      .. GREEN
+      .. "(+15)|r|"
+      .. "|cffd9b38cStamina|r "
+      .. GRAY
+      .. "25|r "
+      .. ARROW
+      .. " 26 "
+      .. GREEN
+      .. "(+1)|r"
   )
 end
 
@@ -150,7 +167,10 @@ local function test_talents_and_missing_before_use_plus_format()
     gains = { health = 15, talents = 1 },
     before = { health = nil },
   }))
-  Assert.equal(table.concat(lines("GameFontHighlight"), "|"), ARROW .. " +15 |cff49d36bHealth|r|" .. ARROW .. " +1 |cffc084fcTalent points|r")
+  Assert.equal(
+    table.concat(lines("GameFontHighlight"), "|"),
+    "|cff49d36bHealth|r " .. GREEN .. "(+15)|r|" .. "|cffc084fcTalent points|r " .. GREEN .. "(+1)|r"
+  )
 end
 
 local function test_skill_rows_and_hint_follow_skill_list()

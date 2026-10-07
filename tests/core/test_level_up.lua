@@ -1,5 +1,6 @@
 local Assert = require("tests.helpers.assert")
 local Wow = require("tests.helpers.wow")
+local ARROW = require("LevelUpInfo.Core.Format").ARROW
 
 local W
 local Window
@@ -22,6 +23,7 @@ local function setup()
   local ns = { OtherSources = {} }
   for _, file in ipairs({
     "Core/Localization.lua",
+    "Core/Format.lua",
     "Core/Events.lua",
     "Data/TrainerCache.lua",
     "Data/SkillList.lua",
@@ -217,8 +219,24 @@ local function test_test_preview_shows_no_mana_line_for_a_class_without_mana()
       texts[#texts + 1] = widget:GetText()
     end
   end
-  local arrow = string.format("|TInterface\\Buttons\\Arrow-Up-Up:14:14:0:0:32:32:0:32:0:32:%d:%d:%d|t", 26, 255, 26)
-  Assert.equal(table.concat(texts, "|"), "|cff49d36bHealth|r 85 " .. arrow .. " 100|" .. "|cffd9b38cStamina|r 9 " .. arrow .. " 10")
+  local green, gray = "|cff1aff1a", "|cff808080"
+  Assert.equal(
+    table.concat(texts, "|"),
+    "|cff49d36bHealth|r "
+      .. gray
+      .. "85|r "
+      .. ARROW
+      .. " 100 "
+      .. green
+      .. "(+15)|r|"
+      .. "|cffd9b38cStamina|r "
+      .. gray
+      .. "9|r "
+      .. ARROW
+      .. " 10 "
+      .. green
+      .. "(+1)|r"
+  )
 end
 
 return function()

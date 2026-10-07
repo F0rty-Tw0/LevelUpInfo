@@ -1,5 +1,6 @@
 local Assert = require("tests.helpers.assert")
 local Wow = require("tests.helpers.wow")
+local ARROW = require("LevelUpInfo.Core.Format").ARROW
 
 local W
 local Window
@@ -32,6 +33,7 @@ local function setup()
   local ns = { OtherSources = {} }
   for _, file in ipairs({
     "Core/Localization.lua",
+    "Core/Format.lua",
     "Core/Events.lua",
     "Data/TrainerCache.lua",
     "Data/SkillList.lua",
@@ -102,9 +104,11 @@ local function headingNamed(title)
   end
 end
 
-local ARROW = string.format("|TInterface\\Buttons\\Arrow-Up-Up:14:14:0:0:32:32:0:32:0:32:%d:%d:%d|t", 26, 255, 26)
+-- GREEN_FONT_COLOR (0.1, 1, 0.1) as hex.
+local GREEN = "|cff1aff1a"
+local GRAY = "|cff808080"
 
--- Every gain key with its stub name and expected stat color, in SPEC order.
+-- Every gain key with its stub name and expected stat color, in display order.
 local GAIN_COLORS = {
   { key = "health", name = "Health", hex = "49d36b" },
   { key = "power", name = "Mana", hex = "4d8dff" },
@@ -126,16 +130,16 @@ local function gainLines()
   return texts
 end
 
-local function test_gain_with_before_has_colored_name_white_numbers_arrow()
+local function test_gain_with_before_reads_gray_old_arrow_new_and_green_gain()
   setup()
   Window.Show(record({ gains = { stamina = 1 } }))
-  Assert.equal(gainLines()[1], "|cffd9b38cStamina|r 25 " .. ARROW .. " 26")
+  Assert.equal(gainLines()[1], "|cffd9b38cStamina|r " .. GRAY .. "25|r " .. ARROW .. " 26 " .. GREEN .. "(+1)|r")
 end
 
 local function test_talent_line_uses_short_form()
   setup()
   Window.Show(record({ gains = { talents = 1 }, before = { talents = 0 } }))
-  Assert.equal(gainLines()[1], ARROW .. " +1 |cffc084fcTalent points|r")
+  Assert.equal(gainLines()[1], "|cffc084fcTalent points|r " .. GREEN .. "(+1)|r")
 end
 
 local function test_every_gain_has_distinct_hex_color()
@@ -213,11 +217,11 @@ local function test_fallback_gain_name_keeps_its_color()
   setup()
   rawset(_G, "SPELL_STAT3_NAME", nil)
   Window.Show(record({ gains = { stamina = 1 } }))
-  Assert.equal(gainLines()[1], "|cffd9b38cStamina|r 25 " .. ARROW .. " 26")
+  Assert.equal(gainLines()[1], "|cffd9b38cStamina|r " .. GRAY .. "25|r " .. ARROW .. " 26 " .. GREEN .. "(+1)|r")
 end
 
 return function()
-  test_gain_with_before_has_colored_name_white_numbers_arrow()
+  test_gain_with_before_reads_gray_old_arrow_new_and_green_gain()
   test_talent_line_uses_short_form()
   test_every_gain_has_distinct_hex_color()
   test_one_divider_per_group()
