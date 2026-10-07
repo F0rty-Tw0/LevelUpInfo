@@ -16,6 +16,14 @@ local tonumber = tonumber
 
 local SkillList = {}
 
+-- Classic Era and TBC drop IsPlayerSpell unless a deprecation CVar is on.
+local function isKnown(spellID)
+  if _G.IsPlayerSpell then
+    return _G.IsPlayerSpell(spellID)
+  end
+  return _G.C_SpellBook.IsSpellKnown(spellID)
+end
+
 -- An entry your race has not seen is another race's racial when any race
 -- that covered its level lacks it; your own race counts as one of them.
 local function isVisible(covered, race, level, entry)
@@ -124,7 +132,7 @@ end
 
 local function addLevel(bySpell, data, race, level, fromLevel)
   for spellID, entry in pairs(data.levels[level] or {}) do
-    if isVisible(data.covered, race, level, entry) and not _G.IsPlayerSpell(spellID) then
+    if isVisible(data.covered, race, level, entry) and not isKnown(spellID) then
       local info = _G.C_Spell.GetSpellInfo(spellID)
       if info then
         local rank = rankOf(spellID, entry)
@@ -148,7 +156,7 @@ local function rowApplies(row, race, faction, toLevel)
   return row.level <= toLevel
     and (row.race == nil or row.race == race)
     and (row.faction == nil or row.faction == faction)
-    and not _G.IsPlayerSpell(row.spellID)
+    and not isKnown(row.spellID)
 end
 
 -- A quest row yields to any visible candidate with its spell; a weapon row

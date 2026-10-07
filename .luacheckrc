@@ -54,6 +54,7 @@ read_globals = {
   "GetSpellBaseCooldown",
   "RAGE",
   "IsPlayerSpell",
+  "C_SpellBook",
   -- Auto-hide
   "C_Timer",
   -- Window and skill rows

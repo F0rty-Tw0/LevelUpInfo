@@ -87,6 +87,21 @@ local function test_known_spells_are_hidden()
   Assert.equal(ids(SkillList.Build(trainers, "PRIEST", "Scourge", "Horde", 9, 10)), "")
 end
 
+-- Classic Era / TBC: IsPlayerSpell is gone unless a deprecation CVar is on.
+local function test_known_spell_is_hidden_when_only_spellbook_api_exists()
+  setup()
+  rawset(_G, "IsPlayerSpell", nil)
+  rawset(_G, "C_SpellBook", {
+    IsSpellKnown = function(spellID)
+      return spellID == 8092
+    end,
+  })
+  local trainers = priest({ Scourge = 12 }, {
+    [10] = { [8092] = spell({ Scourge = true }), [2944] = spell({ Scourge = true }) },
+  })
+  Assert.equal(ids(SkillList.Build(trainers, "PRIEST", "Scourge", "Horde", 9, 10)), "2944")
+end
+
 local function test_own_race_saw_it_shows()
   setup()
   local trainers = priest({ Scourge = 12, Dwarf = 20 }, { [10] = { [2944] = spell({ Scourge = true }) } })
@@ -205,6 +220,7 @@ return function()
   test_learned_spells_are_hidden_in_missed_too()
   test_missed_sorts_lowest_level_first_then_name()
   test_known_spells_are_hidden()
+  test_known_spell_is_hidden_when_only_spellbook_api_exists()
   test_own_race_saw_it_shows()
   test_other_race_racial_hidden_when_own_race_covered()
   test_other_race_racial_hidden_when_another_covering_race_lacks_it()
