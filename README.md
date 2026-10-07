@@ -1,6 +1,10 @@
+<p align="center"><img src=".github/assets/logo.png" alt="Level Up Info logo" width="128"></p>
+
 <h1 align="center">Level Up Info</h1>
 
 <p align="center"><b>When you level up, a small window in Blizzard's own trainer style shows what you gained and which class skills you can now buy, with their price.</b></p>
+
+<p align="center"><img src=".github/assets/window-preview-congrats.png" alt="The Level Up Info window congratulating you on reaching level 12: health, mana and stamina gains under Stats, a new skill with its price, and new ranks with what changed" width="360"></p>
 
 <p align="center"><img src=".github/assets/window-preview.png" alt="The Level Up Info window at level 14: health, mana and stamina gains, new skills with prices, and missed ranks with what changed" width="360">
 <img src=".github/assets/window-preview-classic.png" alt="The Level Up Info window at level 5 with the Classic look: gains, skills not yet learned, and weapon skills with their weapon master and city" width="360"></p>
