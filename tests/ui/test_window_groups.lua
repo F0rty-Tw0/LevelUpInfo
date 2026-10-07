@@ -253,6 +253,14 @@ local function test_hint_row_follows_weapon_skills()
   Assert.equal(rowNames(), "Weapon 1|" .. HINT)
 end
 
+local function test_hint_row_sits_14px_below_the_last_block()
+  setupWeapons(1)
+  db.trainers.PRIEST.covered.Scourge = 9
+  Window.Show(record())
+  local rows = shownRows()
+  Assert.equal(topOf(rows[1]) - topOf(rows[2]), 59 + 14)
+end
+
 local function test_fill_reads_player_faction()
   local otherSources = {}
   setup(otherSources)
@@ -276,5 +284,6 @@ return function()
   test_no_more_line_at_exactly_five()
   test_reshow_with_fewer_missed_hides_more_line_and_creates_no_frames()
   test_hint_row_follows_weapon_skills()
+  test_hint_row_sits_14px_below_the_last_block()
   test_fill_reads_player_faction()
 end

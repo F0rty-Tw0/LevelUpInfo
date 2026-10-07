@@ -279,6 +279,14 @@ local function test_error_sets_stale_and_next_result_does_full_fill()
   Assert.equal(toggle("more"), nil)
   Assert.equal(shownBoxes(), 0)
   Assert.equal(#allRows(), 0)
+  local statsHeadings = 0
+  for _, widget in ipairs(W.frames) do
+    if W.state(widget).frameType == "FontString" and widget:GetText() == "Stats" then
+      statsHeadings = statsHeadings + 1
+      Assert.equal(widget:IsShown(), false)
+    end
+  end
+  Assert.equal(statsHeadings, 1)
   W.def("GetMoney", function()
     return W.money
   end)

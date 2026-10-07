@@ -14,6 +14,15 @@ local function shownLevels()
   return record.fromLevel .. " to " .. record.toLevel
 end
 
+-- The header line beside the portrait: the window's only own font string.
+local function headerText()
+  for _, widget in ipairs(W.frames) do
+    if W.state(widget).frameType == "FontString" and widget:GetParent() == Window.Frame() then
+      return widget:GetText()
+    end
+  end
+end
+
 -- Fresh fake client, modules and db per test; the player is level 10.
 local function setup()
   W = Wow.Install()
@@ -119,7 +128,7 @@ local function test_two_dings_in_combat_merge_into_one_window()
   Assert.equal(record.toLevel, 11)
   Assert.equal(table.concat({ record.gains.health, record.gains.power, record.gains.talents, record.gains.stamina }, ","), "31,41,1,3")
   Assert.equal(regenRegistered(), false)
-  Assert.equal(shownLevels(), "9 to 11")
+  Assert.equal(headerText(), "Congratulations! You reached level 11.")
 end
 
 local function test_ding_while_live_window_visible_merges_and_refills_even_in_combat()
@@ -132,7 +141,7 @@ local function test_ding_while_live_window_visible_merges_and_refills_even_in_co
   Assert.equal(record.fromLevel, 9)
   Assert.equal(record.toLevel, 11)
   Assert.equal(record.gains.health, 31)
-  Assert.equal(shownLevels(), "9 to 11")
+  Assert.equal(headerText(), "Congratulations! You reached level 11.")
   Assert.equal(regenRegistered(), false)
 end
 
