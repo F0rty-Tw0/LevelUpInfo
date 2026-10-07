@@ -1,4 +1,4 @@
-<h1 align="center">LevelUpInfo</h1>
+<h1 align="center">Level Up Info</h1>
 
 <p align="center"><b>When you level up, a small window in Blizzard's own trainer style shows what you gained and which class skills you can now buy, with their price.</b></p>
 
@@ -22,7 +22,7 @@ The window closes by itself after a few seconds. Hover it to keep it open, drag 
 
 ## Settings
 
-Open them with `/lui` or under Options, AddOns, LevelUpInfo.
+Open them with `/lui` or under Options, AddOns, Level Up Info.
 
 | Setting | What it does | Default |
 | --- | --- | --- |

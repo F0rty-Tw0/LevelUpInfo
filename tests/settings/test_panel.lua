@@ -85,7 +85,7 @@ end
 local function test_register_creates_only_the_empty_canvas_in_the_addons_list()
   setup()
   Assert.equal(#W.frames - framesBefore, 1)
-  Assert.equal(W.settings.category.name, "LevelUpInfo")
+  Assert.equal(W.settings.category.name, "Level Up Info")
   Assert.equal(W.settings.category.registered, true)
 end
 

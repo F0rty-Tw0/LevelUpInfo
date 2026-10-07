@@ -12,7 +12,7 @@ local ipairs = ipairs
 
 local Text = Localization.Text
 
-local CATEGORY_NAME = "LevelUpInfo"
+local CATEGORY_NAME = "Level Up Info"
 local LEFT = 16
 local TOP = -16
 local TITLE_HEIGHT = 36
