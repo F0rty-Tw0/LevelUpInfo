@@ -4,6 +4,8 @@ if type(ns) ~= "table" then
 end
 
 local Localization = ns.Localization or require("LevelUpInfo.Core.Localization")
+local Format = ns.Format or require("LevelUpInfo.Core.Format")
+local RankDiff = ns.RankDiff or require("LevelUpInfo.Data.RankDiff")
 
 local Text = Localization.Text
 local concat = table.concat
@@ -15,6 +17,7 @@ local ipairs = ipairs
 local lower = string.lower
 local match = string.match
 local sub = string.sub
+local tostring = tostring
 
 local RankChanges = {}
 
@@ -121,19 +124,32 @@ local function keywordLabel(words)
   return Text("Effect")
 end
 
-local function addLine(lines, label, old, new)
-  if #lines < MAX_LINES then
-    lines[#lines + 1] = format(Text("%s: %s → %s"), label, old, NEW_VALUE_COLOR .. new .. COLOR_END)
+-- Callers check this before computing a diff, so dropped lines cost nothing.
+local function full(lines)
+  return #lines >= MAX_LINES
+end
+
+-- `diff` is the colored difference text, or nil for none.
+local function addLine(lines, label, old, new, diff)
+  local newText = NEW_VALUE_COLOR .. new .. COLOR_END
+  if diff then
+    lines[#lines + 1] = format(Text("%s: %s %s %s %s"), label, old, Format.ARROW, newText, diff)
+  else
+    lines[#lines + 1] = format(Text("%s: %s %s %s"), label, old, Format.ARROW, newText)
   end
 end
 
 local function addValueLine(lines, old, new)
+  if full(lines) then
+    return
+  end
+  local diff = RankDiff.Values(old.display, new.display, false)
   if new.unit == Text("sec") then
-    addLine(lines, Text("Duration"), format(Text("%s sec"), old.display), format(Text("%s sec"), new.display))
+    addLine(lines, Text("Duration"), format(Text("%s sec"), old.display), format(Text("%s sec"), new.display), diff)
   elseif new.unit == Text("min") then
-    addLine(lines, Text("Duration"), format(Text("%s min"), old.display), format(Text("%s min"), new.display))
+    addLine(lines, Text("Duration"), format(Text("%s min"), old.display), format(Text("%s min"), new.display), diff)
   else
-    addLine(lines, keywordLabel(new.words), old.display, new.display)
+    addLine(lines, keywordLabel(new.words), old.display, new.display, diff)
   end
 end
 
@@ -162,11 +178,31 @@ local function castTimeText(ms)
   return seconds(ms)
 end
 
+-- Cooldowns show in minutes when whole minutes, else in seconds.
+local function cooldownUnit(ms)
+  if ms >= MS_PER_MINUTE and ms % MS_PER_MINUTE == 0 then
+    return MS_PER_MINUTE
+  end
+  return MS_PER_SECOND
+end
+
+-- The unit both cooldowns show, or nil when they differ; None (0) takes the
+-- other side's unit.
+local function sharedCooldownUnit(oldMs, newMs)
+  if oldMs == 0 then
+    return cooldownUnit(newMs)
+  end
+  local unit = cooldownUnit(oldMs)
+  if newMs == 0 or cooldownUnit(newMs) == unit then
+    return unit
+  end
+end
+
 local function cooldownText(ms)
   if ms == 0 then
     return Text("None")
   end
-  if ms >= MS_PER_MINUTE and ms % MS_PER_MINUTE == 0 then
+  if cooldownUnit(ms) == MS_PER_MINUTE then
     return format(Text("%s min"), format("%d", ms / MS_PER_MINUTE))
   end
   return seconds(ms)
@@ -184,20 +220,26 @@ local function changed(old, new)
   return old ~= nil and new ~= nil and old ~= new
 end
 
+-- Cost, cast time and cooldown: lower is better. A cooldown diff shows only
+-- when both sides are in the same unit.
 local function addStatLines(lines, old, new)
-  if changed(old.cost, new.cost) then
-    addLine(lines, costLabel(new.powerToken), old.cost, new.cost)
+  if not full(lines) and changed(old.cost, new.cost) then
+    local oldCost, newCost = tostring(old.cost), tostring(new.cost)
+    addLine(lines, costLabel(new.powerToken), oldCost, newCost, RankDiff.Values(oldCost, newCost, true))
   end
-  if changed(old.castTime, new.castTime) then
-    addLine(lines, Text("Cast time"), castTimeText(old.castTime), castTimeText(new.castTime))
+  if not full(lines) and changed(old.castTime, new.castTime) then
+    local diff = RankDiff.Times(old.castTime, new.castTime, MS_PER_SECOND)
+    addLine(lines, Text("Cast time"), castTimeText(old.castTime), castTimeText(new.castTime), diff)
   end
-  if changed(old.cooldown, new.cooldown) then
-    addLine(lines, Text("Cooldown"), cooldownText(old.cooldown), cooldownText(new.cooldown))
+  if not full(lines) and changed(old.cooldown, new.cooldown) then
+    local unit = sharedCooldownUnit(old.cooldown, new.cooldown)
+    local diff = unit and RankDiff.Times(old.cooldown, new.cooldown, unit)
+    addLine(lines, Text("Cooldown"), cooldownText(old.cooldown), cooldownText(new.cooldown), diff)
   end
 end
 
--- Up to MAX_LINES "Label: old → new" lines, description values first, then
--- cost, cast time and cooldown; only values that differ.
+-- Up to MAX_LINES "Label: old ARROW new (diff)" lines, description values
+-- first, then cost, cast time and cooldown; only values that differ.
 function RankChanges.Lines(old, new)
   local lines = {}
   addDescriptionLines(lines, old.description, new.description)

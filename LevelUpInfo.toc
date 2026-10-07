@@ -1,13 +1,14 @@
-## Interface: 16001
-## Title: LevelUpInfo
+## Interface: 11509, 16001, 20506
+## Title: Level Up Info
 ## Notes: When you level up, a small trainer-style window shows what you gained and which class skills you can now buy, with their price.
 ## Author: F0rty_tw0
-## IconTexture: Interface\Icons\INV_Misc_Book_09
+## IconTexture: Interface\AddOns\LevelUpInfo\Media\Icon
 ## Version: v0.1.0
 ## SavedVariables: LevelUpInfoDB
 
 Core/Constants.lua
 Core/Localization.lua
+Core/Format.lua
 Core/Events.lua
 Settings/Defaults.lua
 Settings/SavedState.lua
@@ -16,6 +17,7 @@ Data/TrainerScan.lua
 Data/OtherSources.lua
 Data/WeaponIcons.lua
 Data/SkillList.lua
+Data/RankDiff.lua
 Data/RankChanges.lua
 Data/SpellFacts.lua
 UI/AutoHide.lua

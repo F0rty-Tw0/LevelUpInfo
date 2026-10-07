@@ -4,9 +4,9 @@ if type(ns) ~= "table" then
 end
 
 local Localization = ns.Localization or require("LevelUpInfo.Core.Localization")
+local Format = ns.Format or require("LevelUpInfo.Core.Format")
 local Layout = ns.Layout or require("LevelUpInfo.UI.Layout")
 
-local floor = math.floor
 local format = string.format
 local ipairs = ipairs
 local tostring = tostring
@@ -15,10 +15,9 @@ local Text = Localization.Text
 
 local LINE_HEIGHT = 16
 local TEXT_LEFT = 4
-local COLOR_SCALE = 255
-local ARROW_FORMAT = "|TInterface\\Buttons\\Arrow-Up-Up:14:14:0:0:32:32:0:32:0:32:%d:%d:%d|t"
+local OLD_VALUE_COLOR = "|cff808080" -- the gray of GameFontDisable
 
--- Gains in SPEC order; each name is a Blizzard global with an English fallback,
+-- Gains in display order; each name is a Blizzard global with an English fallback,
 -- shown in its own stat color (6-digit hex).
 local GAINS = {
   { key = "health", global = "HEALTH", fallback = "Health", color = "49d36b" },
@@ -35,38 +34,33 @@ local GAINS = {
 local GainLines = {}
 
 local lines = {}
-local arrow
+local green -- "|cffRRGGBB" from GREEN_FONT_COLOR, set on first fill
 
-local function to255(c)
-  return floor(c * COLOR_SCALE + 0.5)
-end
-
-local function gainText(record, gain)
-  local amount = record.gains[gain.key]
-  if not amount or amount == 0 then
-    return nil
-  end
+-- Text for one non-zero gain: `Name old ARROW new (+N)` with old gray, or
+-- `Name (+N)` for talents and a missing before.
+local function gainText(record, gain, amount)
   local coloredName = "|cff" .. gain.color .. (_G[gain.global] or Text(gain.fallback)) .. "|r"
+  local plus = green .. format(Text("(+%d)"), amount) .. "|r"
   local before = record.before and record.before[gain.key]
   if gain.key == "talents" or not before then
-    return format(Text("%s %s %s"), arrow, format(Text("+%d"), amount), coloredName)
+    return format(Text("%s %s"), coloredName, plus)
   end
-  return format(Text("%s %s %s %s"), coloredName, tostring(before), arrow, tostring(before + amount))
+  local old = OLD_VALUE_COLOR .. tostring(before) .. "|r"
+  return format(Text("%s %s %s %s %s"), coloredName, old, Format.ARROW, tostring(before + amount), plus)
 end
 
 -- Sets and lays out one line per non-zero gain; returns how many were used.
 function GainLines.Fill(content, record)
-  if not arrow then
-    local r, g, b = _G.GREEN_FONT_COLOR:GetRGB()
-    arrow = format(ARROW_FORMAT, to255(r), to255(g), to255(b))
+  if not green then
+    green = Format.ColorCode(_G.GREEN_FONT_COLOR)
   end
   local used = 0
   for _, gain in ipairs(GAINS) do
-    local text = gainText(record, gain)
-    if text then
+    local amount = record.gains[gain.key]
+    if amount and amount ~= 0 then
       used = used + 1
       lines[used] = lines[used] or content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-      lines[used]:SetText(text)
+      lines[used]:SetText(gainText(record, gain, amount))
       Layout.Add(lines[used], content, TEXT_LEFT, LINE_HEIGHT)
     end
   end

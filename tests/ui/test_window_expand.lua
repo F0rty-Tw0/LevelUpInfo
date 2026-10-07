@@ -11,6 +11,7 @@ local MISSED_LEVEL = 5
 local MISSED_BASE = 1000
 local WEAPON_BASE = 2000
 local ROW_HEIGHT = 47
+local SOURCE_ROW_HEIGHT = 59
 local BOX_HEIGHT = 235
 local CAP = 5
 local RANK_1 = 589
@@ -261,7 +262,7 @@ local function test_both_groups_expand_independently()
   Assert.equal(#rowsIn(missedChild), 8)
   Assert.equal(#rowsIn(weaponChild), 7)
   Assert.equal(missedChild:GetHeight(), 8 * ROW_HEIGHT)
-  Assert.equal(weaponChild:GetHeight(), 7 * ROW_HEIGHT)
+  Assert.equal(weaponChild:GetHeight(), 7 * SOURCE_ROW_HEIGHT)
   click(missed)
   Assert.equal(#rowsIn(content()), CAP)
   Assert.equal(missed.label:GetText(), "+3 more not yet learned")

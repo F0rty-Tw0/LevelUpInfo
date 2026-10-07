@@ -87,6 +87,42 @@ function Trainer.Install(W, opts)
   rawset(_G, "Enum", enum)
 end
 
+-- Fake Classic Era / TBC Anniversary trainer: no C_TooltipInfo.GetTrainerService,
+-- an empty C_Trainer, the Classic GetTrainerServiceInfo order, and GameTooltip
+-- frames whose SetTrainerService / GetSpell read the services. Trainer.tooltipRows
+-- lists every row index passed to SetTrainerService.
+function Trainer.InstallClassic(W, opts)
+  Trainer.Install(W, opts)
+  Trainer.tooltipRows = {}
+  rawset(_G, "C_TooltipInfo", {})
+  rawset(_G, "C_Trainer", {})
+  W.def("GetTrainerServiceInfo", function(i)
+    local s = service(i)
+    return s.name, s.rank, s.type, (not s.collapsed) and 1 or nil
+  end)
+  W.def("IsTrainerServiceLearnSpell", function(i)
+    local s = service(i)
+    return s.learnSpell and 1 or nil, s.petLearn and 1 or nil
+  end)
+  local createFrame = _G.CreateFrame
+  W.def("CreateFrame", function(frameType, ...)
+    local frame = createFrame(frameType, ...)
+    if frameType == "GameTooltip" then
+      local row
+      function frame:SetOwner() end
+      function frame:SetTrainerService(i)
+        assert(service(i).type ~= "header", "SetTrainerService on header row " .. i)
+        Trainer.tooltipRows[#Trainer.tooltipRows + 1] = i
+        row = service(i)
+      end
+      function frame:GetSpell()
+        return row.name, row.spellID
+      end
+    end
+    return frame
+  end)
+end
+
 -- Makes GetTrainerServiceInfo(i) error; nil clears it.
 function Trainer.failOn(i)
   state.failOn = i

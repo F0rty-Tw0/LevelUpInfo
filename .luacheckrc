@@ -41,10 +41,12 @@ read_globals = {
   "GetTrainerServiceLevelReq",
   "GetTrainerServiceTypeFilter",
   "IsTradeskillTrainer",
+  "IsTrainerServiceLearnSpell",
   "SetTrainerServiceTypeFilter",
   "UnitClass",
   "UnitRace",
   "UnitFactionGroup",
+  "WorldFrame",
   "debugstack",
   "geterrorhandler",
   -- Skill list
@@ -53,6 +55,7 @@ read_globals = {
   "GetSpellBaseCooldown",
   "RAGE",
   "IsPlayerSpell",
+  "C_SpellBook",
   -- Auto-hide
   "C_Timer",
   -- Window and skill rows
@@ -82,6 +85,7 @@ read_globals = {
   -- Level-up records
   "InCombatLockdown",
   "UnitHealthMax",
+  "issecretvalue",
   "UnitLevel",
   "UnitPowerMax",
   "UnitStat",

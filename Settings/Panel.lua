@@ -12,7 +12,7 @@ local ipairs = ipairs
 
 local Text = Localization.Text
 
-local CATEGORY_NAME = "LevelUpInfo"
+local CATEGORY_NAME = "Level Up Info"
 local LEFT = 16
 local TOP = -16
 local TITLE_HEIGHT = 36
@@ -110,9 +110,10 @@ local function build(frame, db, actions)
   addButton(frame, Text("Clear skill data"), LEFT + BUTTON_WIDTH + BUTTON_GAP, y - BUTTON_GAP, function()
     _G.wipe(db.trainers)
   end)
-  -- The options window draws above ours, so it closes before the preview shows.
+  -- The options window draws above ours, so it closes before the preview
+  -- shows. Not in combat: closing it from addon code is blocked there.
   addButton(frame, Text("Test"), LEFT + 2 * (BUTTON_WIDTH + BUTTON_GAP), y - BUTTON_GAP, function()
-    if _G.SettingsPanel then
+    if _G.SettingsPanel and not _G.InCombatLockdown() then
       _G.HideUIPanel(_G.SettingsPanel)
     end
     actions.onTest()
@@ -137,6 +138,9 @@ end
 function Panel.Register(db, actions)
   controls = {}
   local frame = _G.CreateFrame("Frame")
+  -- New frames start shown, and the options window only calls Show(); without
+  -- this, the first open is no hidden -> shown change and OnShow never runs.
+  frame:Hide()
   local built = false
   frame:SetScript("OnShow", function(self)
     if not built then

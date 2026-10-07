@@ -158,6 +158,29 @@ local function test_weapon_skills_cap_at_five_with_more_line()
   Assert.equal(lines("GameFontDisableSmall"), "+1 more weapon skills")
 end
 
+-- Trainer spells at the new level 10: "<prefix> 1" .. "<prefix> n" with `rank`.
+local function addNew(count, base, prefix, rank)
+  for index = 1, count do
+    trainerSpell(base + index, 10, prefix .. " " .. index, rank)
+  end
+end
+
+local function test_new_skills_cap_at_five_with_more_line()
+  setup()
+  addNew(6, 3000, "Skill", "Rank 1")
+  Window.Show(record())
+  Assert.equal(rowNames(), "Skill 1|Skill 2|Skill 3|Skill 4|Skill 5")
+  Assert.equal(lines("GameFontDisableSmall"), "+1 more new skills")
+end
+
+local function test_new_ranks_cap_at_five_with_more_line()
+  setup()
+  addNew(7, 4000, "Ranked", "Rank 2")
+  Window.Show(record())
+  Assert.equal(rowNames(), "Ranked 1|Ranked 2|Ranked 3|Ranked 4|Ranked 5")
+  Assert.equal(lines("GameFontDisableSmall"), "+2 more new ranks")
+end
+
 local function test_no_more_line_at_exactly_five()
   setupWeapons(5)
   addMissed(5)
@@ -201,6 +224,8 @@ return function()
   test_groups_render_in_order_with_headings()
   test_not_yet_learned_caps_at_five_with_more_line()
   test_weapon_skills_cap_at_five_with_more_line()
+  test_new_skills_cap_at_five_with_more_line()
+  test_new_ranks_cap_at_five_with_more_line()
   test_no_more_line_at_exactly_five()
   test_reshow_with_fewer_missed_hides_more_line_and_creates_no_frames()
   test_hint_row_follows_weapon_skills()

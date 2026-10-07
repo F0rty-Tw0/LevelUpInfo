@@ -41,8 +41,14 @@ local function setup()
   canvas = W.settings.category.frame
 end
 
+-- The options window shows the canvas when its category is picked and hides it
+-- when another one is; OnShow runs only on a real hidden -> shown change.
 local function open()
-  W.fireScript(canvas, "OnShow")
+  canvas:Show()
+end
+
+local function close()
+  canvas:Hide()
 end
 
 local function withTemplate(template)
@@ -79,7 +85,7 @@ end
 local function test_register_creates_only_the_empty_canvas_in_the_addons_list()
   setup()
   Assert.equal(#W.frames - framesBefore, 1)
-  Assert.equal(W.settings.category.name, "LevelUpInfo")
+  Assert.equal(W.settings.category.name, "Level Up Info")
   Assert.equal(W.settings.category.registered, true)
 end
 
@@ -102,6 +108,7 @@ local function test_second_show_builds_nothing_new()
   setup()
   open()
   local count = #W.frames
+  close()
   open()
   Assert.equal(#W.frames, count)
 end
@@ -187,6 +194,14 @@ local function test_test_button_closes_options_then_previews()
   Assert.equal(hiddenFrame, _G.SettingsPanel)
 end
 
+local function test_test_button_in_combat_previews_without_closing_options()
+  setup()
+  W.inCombat = true
+  open()
+  W.fireScript(button("Test"), "OnClick")
+  Assert.equal(table.concat(log, ","), "test")
+end
+
 local function test_test_button_without_settings_panel_still_previews()
   setup()
   _G.SettingsPanel = nil
@@ -230,6 +245,7 @@ end
 local function test_show_refreshes_controls_from_saved_values()
   setup()
   open()
+  close()
   db.reducedMotion = true
   db.duration = 5
   open()
@@ -256,6 +272,7 @@ return function()
   test_clear_skill_data_empties_trainers_in_place()
   test_test_button_shown_after_first_open()
   test_test_button_closes_options_then_previews()
+  test_test_button_in_combat_previews_without_closing_options()
   test_test_button_without_settings_panel_still_previews()
   test_default_button_restores_every_default_and_applies_scale()
   test_default_button_before_first_show_builds_nothing()

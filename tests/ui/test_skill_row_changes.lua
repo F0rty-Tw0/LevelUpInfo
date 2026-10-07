@@ -6,7 +6,7 @@ local SkillRow
 local parent
 
 local ENTRY = { spellID = 2053, name = "Lesser Heal", icon = 135929, rank = "Rank 2", cost = 100 }
-local THREE_LINES = { "Healing: 47-58 → 76-91", "Mana cost: 30 → 45", "Cast time: 1.5 sec → 2 sec" }
+local THREE_LINES = { "Healing: 47-58 -> 76-91", "Mana cost: 30 -> 45", "Cast time: 1.5 sec -> 2 sec" }
 
 local function setup()
   W = Wow.Install()
@@ -64,12 +64,12 @@ local function test_fewer_lines_reuses_strings()
   local row = newRow()
   SkillRow.SetChanges(row, THREE_LINES)
   local widgets = #W.frames
-  local height = SkillRow.SetChanges(row, { "Mana cost: 30 → 45" })
+  local height = SkillRow.SetChanges(row, { "Mana cost: 30 -> 45" })
   Assert.equal(#W.frames, widgets)
   Assert.equal(height, 47)
   Assert.equal(row:GetHeight(), 47)
   Assert.equal(row.changeLines[1]:IsShown(), true)
-  Assert.equal(row.changeLines[1]:GetText(), "Mana cost: 30 → 45")
+  Assert.equal(row.changeLines[1]:GetText(), "Mana cost: 30 -> 45")
   Assert.equal(row.changeLines[2]:IsShown(), false)
   Assert.equal(row.changeLines[3]:IsShown(), false)
 end

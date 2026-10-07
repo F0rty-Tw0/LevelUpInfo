@@ -39,8 +39,8 @@ local NO_LINES = {}
 -- Skill groups in display order; a capped group shows its first `cap` rows
 -- and a `+N more` toggle, or, expanded, all rows in a scroll box.
 local GROUPS = {
-  { group = "skill", title = "New skills" },
-  { group = "rank", title = "New ranks" },
+  { group = "skill", title = "New skills", cap = GROUP_CAP, more = "+%d more new skills" },
+  { group = "rank", title = "New ranks", cap = GROUP_CAP, more = "+%d more new ranks" },
   { group = "missed", title = "Not yet learned", cap = GROUP_CAP, more = "+%d more not yet learned" },
   { group = "weapon", title = "Weapon skills", cap = GROUP_CAP, more = "+%d more weapon skills" },
 }

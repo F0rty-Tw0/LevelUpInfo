@@ -39,17 +39,30 @@ local function test_toc_lists_bootstrap_last()
   assert(files[#files] == "Bootstrap.lua", tostring(files[#files]))
 end
 
-local function test_toc_icon_is_a_blizzard_icon()
-  -- IconTexture must exist and point at a Blizzard icon (no shipped .tga yet).
+local function test_toc_icon_points_at_the_shipped_tga()
+  -- The game adds the extension; the path is relative to the AddOns folder.
   local iconPath
   for line in io.lines("LevelUpInfo.toc") do
     iconPath = iconPath or string.match(line, "^## IconTexture: (.+)$")
   end
-  assert(iconPath == "Interface\\Icons\\INV_Misc_Book_09", tostring(iconPath))
+  local prefix = "Interface\\AddOns\\LevelUpInfo\\"
+  assert(iconPath and string.sub(iconPath, 1, #prefix) == prefix, tostring(iconPath))
+  local file = string.gsub(string.sub(iconPath, #prefix + 1), "\\", "/") .. ".tga"
+  assert(io.open(file, "rb"), "missing " .. file)
+end
+
+-- Slot order Era, Forever, TBC; release.sh rewrites the numbers, so only the shape is fixed.
+local function test_toc_interface_lists_era_forever_and_tbc()
+  local interface
+  for line in io.lines("LevelUpInfo.toc") do
+    interface = interface or string.match(line, "^## Interface: (.+)$")
+  end
+  assert(string.match(interface or "", "^1%d%d%d%d, 1%d%d%d%d, 2%d%d%d%d$"), tostring(interface))
 end
 
 return function()
   test_every_toc_file_loads_in_order_without_require()
   test_toc_lists_bootstrap_last()
-  test_toc_icon_is_a_blizzard_icon()
+  test_toc_icon_points_at_the_shipped_tga()
+  test_toc_interface_lists_era_forever_and_tbc()
 end
