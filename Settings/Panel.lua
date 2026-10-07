@@ -41,7 +41,7 @@ local function addText(frame, font, text, x, y)
 end
 
 -- Each add* returns a function that shows the saved value in its control.
-local function addCheckbox(frame, setting, y, db)
+local function addCheckbox(frame, setting, y, db, actions)
   local box = _G.CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
   box:SetSize(BOX_SIZE, BOX_SIZE)
   box:SetPoint("TOPLEFT", frame, "TOPLEFT", LEFT, y)
@@ -50,6 +50,9 @@ local function addCheckbox(frame, setting, y, db)
   local key = setting.key
   box:SetScript("OnClick", function(self)
     db[key] = self:GetChecked() and true or false
+    if key == "minimapButton" then
+      actions.onMinimapButton()
+    end
   end)
   return function()
     box:SetChecked(db[key])
@@ -102,7 +105,7 @@ local function build(frame, db, actions)
     if setting.kind == "slider" then
       controls[#controls + 1] = addSlider(frame, setting, y, db, actions)
     else
-      controls[#controls + 1] = addCheckbox(frame, setting, y, db)
+      controls[#controls + 1] = addCheckbox(frame, setting, y, db, actions)
     end
     y = y - ROW_HEIGHT
   end
@@ -132,9 +135,11 @@ local function restoreDefaults(db, actions)
   end
   refresh()
   actions.onScale()
+  actions.onMinimapButton()
 end
 
--- actions = { onScale = fn, onResetPosition = fn, onTest = fn }; returns the settings category.
+-- actions = { onScale = fn, onResetPosition = fn, onTest = fn, onMinimapButton = fn };
+-- returns the settings category.
 function Panel.Register(db, actions)
   controls = {}
   local frame = _G.CreateFrame("Frame")

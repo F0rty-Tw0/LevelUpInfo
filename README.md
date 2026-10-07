@@ -2,6 +2,9 @@
 
 <p align="center"><b>When you level up, a small window in Blizzard's own trainer style shows what you gained and which class skills you can now buy, with their price.</b></p>
 
+<p align="center"><img src=".github/assets/window-preview.png" alt="The Level Up Info window at level 14: health, mana and stamina gains, new skills with prices, and missed ranks with what changed" width="360">
+<img src=".github/assets/window-preview-classic.png" alt="The Level Up Info window at level 5 with the Classic look: gains, skills not yet learned, and weapon skills with their weapon master and city" width="360"></p>
+
 ## Why players install it
 
 - **See your gains at a glance.** Health, mana, talent points and stats you got from the new level.
@@ -31,6 +34,7 @@ Open them with `/lui` or under Options, AddOns, Level Up Info.
 | Wait for combat to end | Hold the window until you leave combat | On |
 | Scale | Window size (0.5 to 1.5) | 1.0 |
 | Reduced motion | Close the window at once instead of fading | Off |
+| Show minimap button | Show the minimap button (left-click: preview, right-click: options; drag it around the minimap) | On |
 | Reset position | Put the window back at its default spot | |
 | Clear skill data | Forget the skills learned from trainers | |
 | Test | Close the options and show a preview of the window | |

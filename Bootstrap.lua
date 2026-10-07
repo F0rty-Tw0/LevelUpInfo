@@ -8,6 +8,7 @@ local SavedState = ns.SavedState or require("LevelUpInfo.Settings.SavedState")
 local TrainerScan = ns.TrainerScan or require("LevelUpInfo.Data.TrainerScan")
 local SpellFacts = ns.SpellFacts or require("LevelUpInfo.Data.SpellFacts")
 local Window = ns.Window or require("LevelUpInfo.UI.Window")
+local MinimapButton = ns.MinimapButton or require("LevelUpInfo.UI.MinimapButton")
 local LevelUp = ns.LevelUp or require("LevelUpInfo.Core.LevelUp")
 local Panel = ns.SettingsPanel or require("LevelUpInfo.Settings.Panel")
 local SlashCommand = ns.SlashCommand or require("LevelUpInfo.Core.SlashCommand")
@@ -26,8 +27,11 @@ function Bootstrap.Initialize(saved)
     onScale = Window.ApplyScale,
     onResetPosition = Window.ResetPosition,
     onTest = LevelUp.ShowTest,
+    onMinimapButton = MinimapButton.Apply,
   })
   SlashCommand.Register(Panel.Open, LevelUp.ShowTest)
+  -- Last: the button is optional, so a failure building it leaves /lui and the options working.
+  MinimapButton.Install(db, { onPreview = LevelUp.ShowTest, onOptions = Panel.Open })
   return db
 end
 

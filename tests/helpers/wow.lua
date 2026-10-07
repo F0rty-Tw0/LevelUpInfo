@@ -166,6 +166,27 @@ local function newWidget(W, frameType, name, parent, template)
   function widget:GetHeight()
     return stub.height or 0
   end
+  function widget:GetWidth()
+    return stub.width or 0
+  end
+  -- The test sets stub.center = { x, y }; nil until then.
+  function widget:GetCenter()
+    if stub.center then
+      return unpack(stub.center)
+    end
+  end
+  function widget:SetFrameLevel(level)
+    stub.frameLevel = level
+  end
+  function widget:RegisterForClicks(...)
+    stub.clickButtons = { ... }
+  end
+  function widget:SetUserPlaced(userPlaced)
+    stub.userPlaced = userPlaced and true or false
+  end
+  function widget:SetHighlightTexture(texture)
+    stub.highlightTexture = texture
+  end
   function widget:SetFrameStrata(strata)
     stub.strata = strata
   end
@@ -656,11 +677,11 @@ function Wow.Install()
   for i, stat in ipairs({ "Strength", "Agility", "Stamina", "Intellect", "Spirit" }) do
     rawset(_G, "SPELL_STAT" .. i .. "_NAME", stat)
   end
-  -- GameTooltip: the four methods the addon may call, logged in W.tooltip
+  -- GameTooltip: the methods the addon may call, logged in W.tooltip
   -- as { methodName, args... }.
   W.tooltip = {}
   local gameTooltip = {}
-  for _, method in ipairs({ "SetOwner", "SetSpellByID", "Show", "Hide" }) do
+  for _, method in ipairs({ "SetOwner", "SetSpellByID", "Show", "Hide", "SetText", "AddLine" }) do
     gameTooltip[method] = function(_, ...)
       W.tooltip[#W.tooltip + 1] = { method, ... }
     end
@@ -668,6 +689,10 @@ function Wow.Install()
   rawset(_G, "GameTooltip", gameTooltip)
 
   newWidget(W, "Frame", "UIParent")
+  -- The round minimap: 140 wide, centered at (500, 400).
+  local minimap = newWidget(W, "Frame", "Minimap", _G.UIParent)
+  minimap._stub.width = 140
+  minimap._stub.center = { 500, 400 }
   -- The options window; W.calls.HideUIPanel counts closes.
   newWidget(W, "Frame", "SettingsPanel")
   def("HideUIPanel", function() end)
