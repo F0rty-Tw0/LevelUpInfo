@@ -1,5 +1,7 @@
 <p align="center"><img src=".github/assets/logo.png" alt="Level Up Info logo" width="128"></p>
 
+[![BuyMeACoffee](https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-donate-yellow.svg)](https://buymeacoffee.com/f0rty_tw0)
+
 <h1 align="center">Level Up Info</h1>
 
 <p align="center"><b>When you level up, a small window in Blizzard's own trainer style shows what you gained and which class skills you can now buy, with their price.</b></p>
