@@ -180,6 +180,7 @@ local function test_talent_line_sits_above_stats_with_a_divider_between()
   local divider = shownTextures()
   Assert.equal(#divider, 1)
   Assert.equal(topOf(divider[1]), -23)
+  Assert.equal(select(4, divider[1]:GetPoint(1)), 4)
   Assert.equal(topOf(headingNamed("Stats")), -30)
   Assert.equal(topOf(children("FontString", "GameFontHighlight")[2]), -54)
 end
@@ -192,6 +193,22 @@ local function test_talent_line_alone_has_no_divider_or_stats_heading()
   Assert.equal(#shownTextures(), 0)
   Assert.equal(headingNamed("Stats"):IsShown(), false)
   Assert.equal(topOf(headingNamed("New skills")), -30)
+end
+
+local function test_fill_error_hides_the_divider()
+  setup()
+  Window.Show(record({ gains = { health = 15, talents = 1 } }))
+  W.def("geterrorhandler", function()
+    return function() end
+  end)
+  W.def("debugstack", function()
+    return ""
+  end)
+  W.def("GetMoney", function()
+    error("boom")
+  end)
+  Window.Show(record({ gains = { health = 15, talents = 1 } }))
+  Assert.equal(#shownTextures(), 0)
 end
 
 local function test_gain_lines_sit_under_a_stats_heading()
@@ -227,6 +244,7 @@ return function()
   test_headings_have_no_divider_lines()
   test_talent_line_sits_above_stats_with_a_divider_between()
   test_talent_line_alone_has_no_divider_or_stats_heading()
+  test_fill_error_hides_the_divider()
   test_gain_lines_sit_under_a_stats_heading()
   test_no_stats_heading_without_gains()
   test_fallback_gain_name_keeps_its_color()
