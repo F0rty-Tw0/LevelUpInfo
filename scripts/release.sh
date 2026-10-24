@@ -76,9 +76,7 @@ for line in text.splitlines():
 
 echo "Fetching live TOC interface numbers from Blizzard CDN..."
 # Soft-fail per client: a failed fetch keeps that slot's current value.
-# WoW: Forever's beta lives under 'wow_classic_beta'; the launch product key
-# is unknown until 2026-11-04.
-PRODUCTS=(wow_classic_era wow_classic_beta wow_anniversary)
+PRODUCTS=(wow_classic_era wowf wow_anniversary)
 LABELS=(era forever tbc)
 for i in 0 1 2; do
   fetched=$(fetch_toc "${PRODUCTS[$i]}") || true

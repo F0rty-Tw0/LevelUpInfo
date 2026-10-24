@@ -169,7 +169,7 @@ local function test_talents_and_missing_before_use_plus_format()
   }))
   Assert.equal(
     table.concat(lines("GameFontHighlight"), "|"),
-    "|cff49d36bHealth|r " .. GREEN .. "(+15)|r|" .. "|cffc084fcTalent points|r " .. GREEN .. "(+1)|r"
+    "|cffc084fcTalent points|r " .. GREEN .. "(+1)|r|" .. "|cff49d36bHealth|r " .. GREEN .. "(+15)|r"
   )
 end
 
