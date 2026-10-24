@@ -190,7 +190,7 @@ local function test_test_preview_ignores_enabled_and_combat()
   Assert.equal(record.isTest, true)
   Assert.equal(record.fromLevel, 19)
   Assert.equal(record.toLevel, 20)
-  Assert.equal(table.concat({ record.gains.health, record.gains.power, record.gains.stamina, record.gains.talents }, ","), "15,20,1,0")
+  Assert.equal(table.concat({ record.gains.health, record.gains.power, record.gains.stamina, record.gains.talents }, ","), "15,20,1,1")
   Assert.equal(shownLevels(), "19 to 20")
   Assert.equal(regenRegistered(), false)
 end
@@ -345,6 +345,14 @@ local function test_test_preview_at_a_given_level_previews_that_ding()
   Assert.equal(shownLevels(), "39 to 40")
 end
 
+local function test_test_preview_gives_a_talent_point_from_level_10()
+  setup()
+  LevelUp.ShowTest(9)
+  Assert.equal(Window.Current().gains.talents, 0)
+  LevelUp.ShowTest(10)
+  Assert.equal(Window.Current().gains.talents, 1)
+end
+
 local function test_test_preview_level_outside_2_to_60_uses_current_level()
   setup()
   W.level = 11
@@ -369,7 +377,10 @@ local function test_test_preview_shows_no_mana_line_for_a_class_without_mana()
   local green, gray = "|cff1aff1a", "|cff808080"
   Assert.equal(
     shownGainTexts(),
-    "|cff49d36bHealth|r "
+    "|cffc084fcTalent points|r "
+      .. green
+      .. "(+1)|r|"
+      .. "|cff49d36bHealth|r "
       .. gray
       .. "85|r "
       .. ARROW
@@ -409,6 +420,7 @@ return function()
   test_window_in_combat_with_readable_stats_registers_nothing()
   test_pending_ding_over_awaiting_preview_shows_the_ding()
   test_test_preview_at_a_given_level_previews_that_ding()
+  test_test_preview_gives_a_talent_point_from_level_10()
   test_test_preview_level_outside_2_to_60_uses_current_level()
   test_test_preview_before_is_live_minus_sample()
   test_test_preview_shows_no_mana_line_for_a_class_without_mana()

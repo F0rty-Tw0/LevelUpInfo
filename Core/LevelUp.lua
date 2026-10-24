@@ -21,7 +21,9 @@ local STAT_COUNT = 5
 local MIN_PREVIEW_LEVEL = 2
 local MAX_PREVIEW_LEVEL = 60
 local STAT_KEYS = { "strength", "agility", "stamina", "intellect", "spirit" }
-local SAMPLE_GAINS = { health = 15, power = 20, talents = 0, strength = 0, agility = 0, stamina = 1, intellect = 0, spirit = 0 }
+local SAMPLE_GAINS = { health = 15, power = 20, strength = 0, agility = 0, stamina = 1, intellect = 0, spirit = 0 }
+-- Every ding from this level on gives one talent point.
+local FIRST_TALENT_LEVEL = 10
 
 -- In combat, Forever returns secret numbers that addon code may not do math
 -- on; a secret value is dropped, so its gain line shows `+N` only.
@@ -163,6 +165,9 @@ function LevelUp.ShowTest(level)
         record.before[key] = live - amount
       end
     end
+  end
+  if level >= FIRST_TALENT_LEVEL then
+    record.gains.talents = 1
   end
   show(record)
 end

@@ -7,6 +7,7 @@ All releases: **0.1.x (current)**
 ## [Unreleased]
 
 - Talent points now show first in the level-up window, with a thin line separating them from your other stats.
+- `/lui test` now includes the talent point you get from level 10 on, so the preview matches a real level-up.
 
 ## [0.1.0] - 2026-10-08
 
