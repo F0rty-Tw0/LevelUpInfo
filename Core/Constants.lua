@@ -5,7 +5,7 @@ end
 
 local Constants = {
   ADDON_NAME = "LevelUpInfo",
-  VERSION = "v0.1.0",
+  VERSION = "v0.1.1",
 }
 
 ns.Constants = Constants
