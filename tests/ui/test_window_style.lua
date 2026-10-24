@@ -98,9 +98,9 @@ local GRAY = "|cff808080"
 
 -- Every gain key with its stub name and expected stat color, in display order.
 local GAIN_COLORS = {
+  { key = "talents", name = "Talent points", hex = "c084fc" },
   { key = "health", name = "Health", hex = "49d36b" },
   { key = "power", name = "Mana", hex = "4d8dff" },
-  { key = "talents", name = "Talent points", hex = "c084fc" },
   { key = "strength", name = "Strength", hex = "ff5c5c" },
   { key = "agility", name = "Agility", hex = "ffa340" },
   { key = "stamina", name = "Stamina", hex = "d9b38c" },
@@ -149,15 +149,49 @@ local function test_every_gain_has_distinct_hex_color()
   end
 end
 
+local function shownTextures()
+  local shown = {}
+  for _, texture in ipairs(children("Texture")) do
+    if texture:IsShown() then
+      shown[#shown + 1] = texture
+    end
+  end
+  return shown
+end
+
 local function test_headings_have_no_divider_lines()
   setup()
+  Window.Show(record({ gains = { talents = 1, health = 15 } }))
   Window.Show(record())
   Assert.equal(headingNamed("New skills"):IsShown(), true)
-  Assert.equal(#children("Texture"), 0)
+  Assert.equal(#shownTextures(), 0)
 end
 
 local function topOf(region)
   return select(5, region:GetPoint(1))
+end
+
+local function test_talent_line_sits_above_stats_with_a_divider_between()
+  setup()
+  Window.Show(record({ gains = { health = 15, talents = 1 } }))
+  local talent = children("FontString", "GameFontHighlight")[1]
+  Assert.equal(talent:GetText(), "|cffc084fcTalent points|r " .. GREEN .. "(+1)|r")
+  Assert.equal(topOf(talent), 0)
+  local divider = shownTextures()
+  Assert.equal(#divider, 1)
+  Assert.equal(topOf(divider[1]), -23)
+  Assert.equal(topOf(headingNamed("Stats")), -30)
+  Assert.equal(topOf(children("FontString", "GameFontHighlight")[2]), -54)
+end
+
+local function test_talent_line_alone_has_no_divider_or_stats_heading()
+  setup()
+  Window.Show(record({ gains = { health = 15, talents = 1 } }))
+  Window.Show(record({ gains = { talents = 1 } }))
+  Assert.equal(gainLines()[1], "|cffc084fcTalent points|r " .. GREEN .. "(+1)|r")
+  Assert.equal(#shownTextures(), 0)
+  Assert.equal(headingNamed("Stats"):IsShown(), false)
+  Assert.equal(topOf(headingNamed("New skills")), -30)
 end
 
 local function test_gain_lines_sit_under_a_stats_heading()
@@ -191,6 +225,8 @@ return function()
   test_talent_line_uses_short_form()
   test_every_gain_has_distinct_hex_color()
   test_headings_have_no_divider_lines()
+  test_talent_line_sits_above_stats_with_a_divider_between()
+  test_talent_line_alone_has_no_divider_or_stats_heading()
   test_gain_lines_sit_under_a_stats_heading()
   test_no_stats_heading_without_gains()
   test_fallback_gain_name_keeps_its_color()
