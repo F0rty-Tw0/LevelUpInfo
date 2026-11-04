@@ -135,6 +135,38 @@ local QuestSpells = {
       },
     },
   },
+  -- Classic Era: Rank 1 of each priest racial comes only from these quests.
+  -- Sources: https://www.wowhead.com/classic/spell=<spellID> ("Reward from"), quest pages 5627-5680.
+  era = {
+    PRIEST = {
+      {
+        spellID = 13908,
+        level = 10,
+        kind = "quest",
+        race = "Human",
+        npc = "High Priestess Laurena",
+        place = "Stormwind",
+        quest = "Desperate Prayer",
+      },
+      { spellID = 13896, level = 20, kind = "quest", race = "Human", npc = "High Priestess Laurena", place = "Stormwind", quest = "Arcane Feedback" },
+      {
+        spellID = 13908,
+        level = 10,
+        kind = "quest",
+        race = "Dwarf",
+        npc = "High Priestess Laurena",
+        place = "Stormwind",
+        quest = "Desperate Prayer",
+      },
+      { spellID = 6346, level = 20, kind = "quest", race = "Dwarf", npc = "High Priest Rohan", place = "Ironforge", quest = "A Lack of Fear" },
+      { spellID = 10797, level = 10, kind = "quest", race = "NightElf", npc = "Priestess Alathea", place = "Darnassus", quest = "Stars of Elune" },
+      { spellID = 2651, level = 20, kind = "quest", race = "NightElf", npc = "Priestess Alathea", place = "Darnassus", quest = "Elune's Grace" },
+      { spellID = 2652, level = 10, kind = "quest", race = "Scourge", npc = "Aelthalyste", place = "Undercity", quest = "Touch of Weakness" },
+      { spellID = 2944, level = 20, kind = "quest", race = "Scourge", npc = "Aelthalyste", place = "Undercity", quest = "Devouring Plague" },
+      { spellID = 9035, level = 10, kind = "quest", race = "Troll", npc = "Ur'kyo", place = "Orgrimmar", quest = "Hex of Weakness" },
+      { spellID = 18137, level = 20, kind = "quest", race = "Troll", npc = "Ur'kyo", place = "Orgrimmar", quest = "Shadowguard" },
+    },
+  },
 }
 
 ns.QuestSpells = QuestSpells

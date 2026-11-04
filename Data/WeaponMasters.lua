@@ -34,6 +34,30 @@ WeaponMasters.MASTERS = {
   { npc = "Ansekhwa", place = "Thunder Bluff", faction = "Horde", skills = { 198, 199, 227, 266 } },
   -- https://www.wowhead.com/forever/npc=11870/archibald
   { npc = "Archibald", place = "Undercity", faction = "Horde", skills = { 200, 201, 202, 1180, 5011 } },
+  -- https://www.wowhead.com/tbc/npc=16773/handiir
+  {
+    npc = "Handiir",
+    place = "The Exodar",
+    faction = "Alliance",
+    skills = { 198, 199, 201, 202, 1180, 5011 },
+    clients = { tbc = true },
+  },
+  -- https://www.wowhead.com/tbc/npc=16621/ileda
+  {
+    npc = "Ileda",
+    place = "Silvermoon City",
+    faction = "Horde",
+    skills = { 200, 201, 202, 264, 1180, 2567 },
+    clients = { tbc = true },
+  },
+  -- https://www.wowhead.com/tbc/npc=17005 (Falconwing Square)
+  {
+    npc = "Duelist Larenis",
+    place = "Eversong Woods",
+    faction = "Horde",
+    skills = { 200, 201, 202, 264, 1180, 2567 },
+    clients = { tbc = true },
+  },
 }
 
 -- Classes per weapon skill on Classic Era and TBC (Wowhead TBC spell pages, "reqclass").
@@ -79,8 +103,11 @@ local function classSkills(extraSkills)
   return byClass
 end
 
+-- Era: no druid Polearms (Wowhead classic data still lists druids; unconfirmed in game).
 WeaponMasters.CLASS_SKILLS = {
   forever = classSkills(FOREVER_EXTRA_SKILLS),
+  era = classSkills({}),
+  tbc = classSkills({}),
 }
 
 -- Every skill is level 1 for 10 silver, except Polearms: level 20 for 1 gold
