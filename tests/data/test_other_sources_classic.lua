@@ -110,6 +110,10 @@ local function test_tbc_druid_has_no_polearms()
   Assert.equal(hasSkill(Helper.buildFor("tbc").DRUID, 200), false)
 end
 
+local function test_tbc_rogue_has_no_one_handed_axes()
+  Assert.equal(hasSkill(Helper.buildFor("tbc").ROGUE, 196), false)
+end
+
 local function test_every_client_has_all_nine_class_tokens()
   for _, client in ipairs(Helper.CLIENTS) do
     local built = Helper.buildFor(client)
@@ -143,6 +147,7 @@ return function()
   test_tbc_paladin_has_ileda_and_larenis_rows()
   test_tbc_shaman_has_alliance_rows_from_buliwyf_and_handiir()
   test_tbc_druid_has_no_polearms()
+  test_tbc_rogue_has_no_one_handed_axes()
   test_every_client_has_all_nine_class_tokens()
   test_tbc_rows_published_at_load_with_real_client()
 end
