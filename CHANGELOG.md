@@ -6,8 +6,8 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
-- TBC Anniversary: weapon masters in The Exodar, Silvermoon City and Eversong Woods, and weapon skills for Blood Elf paladins and Draenei shamans.
-- Classic Era and TBC Anniversary: priest racial spells and weapon skills now match your game version.
+- TBC Anniversary: weapon masters in The Exodar, Silvermoon City and Eversong Woods.
+- Classic Era and TBC Anniversary: priest racial spells and weapon skills now match your game version (TBC priests buy their racials from the class trainer, so no quest is suggested).
 - `/lui test 70` works on TBC Anniversary.
 - Fixed: Polearms now show at level 20 for 1 gold, when weapon masters teach them.
 
