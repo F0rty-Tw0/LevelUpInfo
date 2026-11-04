@@ -37,6 +37,7 @@ read_globals = {
   "Enum",
   "GetNumTrainerServices",
   "GetTrainerServiceCost",
+  "GetClassicExpansionLevel",
   "GetTrainerServiceInfo",
   "GetTrainerServiceLevelReq",
   "GetTrainerServiceTypeFilter",

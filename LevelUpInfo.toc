@@ -8,6 +8,7 @@
 ## X-Curse-Project-ID: 1732593
 
 Core/Constants.lua
+Core/Client.lua
 Core/Localization.lua
 Core/Format.lua
 Core/Events.lua
