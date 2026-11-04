@@ -1,4 +1,5 @@
 local Assert = require("tests.helpers.assert")
+local Helper = require("tests.helpers.other_sources")
 
 local CLASSES = {
   WARRIOR = true,
@@ -25,9 +26,7 @@ local FACTIONS = { Horde = true, Alliance = true }
 local KINDS = { quest = true, weapon = true }
 
 local function loadModule()
-  local ns = {}
-  local module = assert(loadfile("Data/OtherSources.lua"))("LevelUpInfo", ns)
-  return module, ns
+  return Helper.buildFor("forever")
 end
 
 local function isPositiveInteger(value)

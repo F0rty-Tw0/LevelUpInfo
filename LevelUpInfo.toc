@@ -16,6 +16,8 @@ Settings/Defaults.lua
 Settings/SavedState.lua
 Data/TrainerCache.lua
 Data/TrainerScan.lua
+Data/WeaponMasters.lua
+Data/QuestSpells.lua
 Data/OtherSources.lua
 Data/WeaponIcons.lua
 Data/SkillList.lua
