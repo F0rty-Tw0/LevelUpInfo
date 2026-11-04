@@ -24,7 +24,8 @@ local function headerText()
 end
 
 -- Fresh fake client, modules and db per test; the player is level 10.
-local function setup()
+-- `client` ("forever", "era", "tbc") stubs Client.Get; nil uses the real Client.
+local function setup(client)
   W = Wow.Install()
   W.level = 10
   db = {
@@ -36,6 +37,13 @@ local function setup()
     trainers = {},
   }
   local ns = { OtherSources = {} }
+  if client then
+    ns.Client = {
+      Get = function()
+        return client
+      end,
+    }
+  end
   for _, file in ipairs({
     "Core/Localization.lua",
     "Core/Format.lua",
@@ -362,6 +370,21 @@ local function test_test_preview_level_outside_2_to_60_uses_current_level()
   Assert.equal(Window.Current().toLevel, 11)
 end
 
+local function test_test_preview_reaches_level_70_on_tbc()
+  setup("tbc")
+  LevelUp.ShowTest(70)
+  local record = Window.Current()
+  Assert.equal(record.fromLevel, 69)
+  Assert.equal(record.toLevel, 70)
+end
+
+local function test_test_preview_above_60_uses_current_level_off_tbc()
+  setup("era")
+  W.level = 12
+  LevelUp.ShowTest(70)
+  Assert.equal(Window.Current().toLevel, 12)
+end
+
 local function test_test_preview_before_is_live_minus_sample()
   setup()
   W.healthMax, W.manaMax, W.stats[3] = 115, 70, 26
@@ -422,6 +445,8 @@ return function()
   test_test_preview_at_a_given_level_previews_that_ding()
   test_test_preview_gives_a_talent_point_from_level_10()
   test_test_preview_level_outside_2_to_60_uses_current_level()
+  test_test_preview_reaches_level_70_on_tbc()
+  test_test_preview_above_60_uses_current_level_off_tbc()
   test_test_preview_before_is_live_minus_sample()
   test_test_preview_shows_no_mana_line_for_a_class_without_mana()
 end
