@@ -6,6 +6,11 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
+- TBC Anniversary: weapon masters in The Exodar, Silvermoon City and Eversong Woods, and weapon skills for Blood Elf paladins and Draenei shamans.
+- Classic Era and TBC Anniversary: priest racial spells and weapon skills now match your game version.
+- `/lui test 70` works on TBC Anniversary.
+- Fixed: Polearms now show at level 20 for 1 gold, when weapon masters teach them.
+
 ## [0.1.1] - 2026-10-24
 
 - Talent points now show first in the level-up window, with a thin line separating them from your other stats.
