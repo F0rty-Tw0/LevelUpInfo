@@ -3,6 +3,7 @@ if type(ns) ~= "table" then
   ns = {}
 end
 
+local Client = ns.Client or require("LevelUpInfo.Core.Client")
 local Events = ns.Events or require("LevelUpInfo.Core.Events")
 local Window = ns.Window or require("LevelUpInfo.UI.Window")
 
@@ -20,6 +21,7 @@ local awaitingStats
 local STAT_COUNT = 5
 local MIN_PREVIEW_LEVEL = 2
 local MAX_PREVIEW_LEVEL = 60
+local MAX_PREVIEW_LEVEL_TBC = 70
 local STAT_KEYS = { "strength", "agility", "stamina", "intellect", "spirit" }
 local SAMPLE_GAINS = { health = 15, power = 20, strength = 0, agility = 0, stamina = 1, intellect = 0, spirit = 0 }
 -- Every ding from this level on gives one talent point.
@@ -152,7 +154,8 @@ end
 -- with sample gains; ignores Enabled and Wait for combat.
 -- A gain whose live value is 0 (no mana on a Warrior) stays 0, so its line hides.
 function LevelUp.ShowTest(level)
-  if not level or level < MIN_PREVIEW_LEVEL or level > MAX_PREVIEW_LEVEL then
+  local maxLevel = Client.Get() == "tbc" and MAX_PREVIEW_LEVEL_TBC or MAX_PREVIEW_LEVEL
+  if not level or level < MIN_PREVIEW_LEVEL or level > maxLevel then
     level = _G.UnitLevel("player")
   end
   local record = newRecord(level - 1, level)
