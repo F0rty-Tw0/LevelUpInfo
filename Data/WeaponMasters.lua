@@ -11,9 +11,10 @@ end
 local WeaponMasters = {}
 
 -- Preference order: when several masters teach a skill, the window shows the
--- first one of your faction, so capitals come first. `clients` nil = all clients.
--- `race` set = only that race is sent here; those masters come first so a
--- Blood Elf or Draenei is sent to their home city, everyone else to the capitals.
+-- first one of your faction, so capitals come first, after the race-only masters.
+-- `clients` nil = all clients. `race` set = only that race is sent here; those
+-- masters come first so a Blood Elf or Draenei is sent to their home city for the
+-- skills it teaches, everyone else to the old capitals.
 WeaponMasters.MASTERS = {
   -- https://www.wowhead.com/tbc/npc=16773/handiir
   {
@@ -33,7 +34,8 @@ WeaponMasters.MASTERS = {
     skills = { 200, 201, 202, 264, 1180, 2567 },
     clients = { tbc = true },
   },
-  -- https://www.wowhead.com/tbc/npc=17005 (Falconwing Square)
+  -- https://www.wowhead.com/tbc/npc=17005 (Falconwing Square). Never shown while
+  -- Ileda comes first: same race, faction and skills (kept as data, user 2026-11-04).
   {
     npc = "Duelist Larenis",
     place = "Eversong Woods",

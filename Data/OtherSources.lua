@@ -14,7 +14,8 @@ local pairs = pairs
 -- Quest row:  { spellID, level, kind = "quest", race?, faction?, npc, place, quest }
 -- Weapon row: { spellID, level, kind = "weapon", race?, faction, npc, place, cost }
 -- level is the lowest character level that can learn it (1 when none); cost is copper.
--- Several weapon masters for one skill: one row each, preferred master (capital) first.
+-- Several weapon masters for one skill: one row each, preferred master first
+-- (a race's home-city master, then the capitals).
 -- Built once at load for the running client, from Data/QuestSpells.lua and
 -- Data/WeaponMasters.lua; every key stays a class token.
 local DEFAULT_LEVEL = 1
