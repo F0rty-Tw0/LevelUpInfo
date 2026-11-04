@@ -33,6 +33,7 @@ local function addWeaponRows(rows, client, skills)
             spellID = skill,
             level = WeaponMasters.SKILL_LEVEL[skill] or DEFAULT_LEVEL,
             kind = "weapon",
+            race = master.race,
             faction = master.faction,
             npc = master.npc,
             place = master.place,

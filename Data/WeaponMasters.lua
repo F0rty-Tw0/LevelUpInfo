@@ -12,7 +12,36 @@ local WeaponMasters = {}
 
 -- Preference order: when several masters teach a skill, the window shows the
 -- first one of your faction, so capitals come first. `clients` nil = all clients.
+-- `race` set = only that race is sent here; those masters come first so a
+-- Blood Elf or Draenei is sent to their home city, everyone else to the capitals.
 WeaponMasters.MASTERS = {
+  -- https://www.wowhead.com/tbc/npc=16773/handiir
+  {
+    npc = "Handiir",
+    place = "The Exodar",
+    race = "Draenei",
+    faction = "Alliance",
+    skills = { 198, 199, 201, 202, 1180, 5011 },
+    clients = { tbc = true },
+  },
+  -- https://www.wowhead.com/tbc/npc=16621/ileda
+  {
+    npc = "Ileda",
+    place = "Silvermoon City",
+    race = "BloodElf",
+    faction = "Horde",
+    skills = { 200, 201, 202, 264, 1180, 2567 },
+    clients = { tbc = true },
+  },
+  -- https://www.wowhead.com/tbc/npc=17005 (Falconwing Square)
+  {
+    npc = "Duelist Larenis",
+    place = "Eversong Woods",
+    race = "BloodElf",
+    faction = "Horde",
+    skills = { 200, 201, 202, 264, 1180, 2567 },
+    clients = { tbc = true },
+  },
   -- https://www.wowhead.com/forever/npc=11867/woo-ping
   { npc = "Woo Ping", place = "Stormwind", faction = "Alliance", skills = { 200, 201, 202, 227, 1180, 5011 } },
   -- https://www.wowhead.com/forever/npc=13084/bixi-wobblebonk
@@ -34,30 +63,6 @@ WeaponMasters.MASTERS = {
   { npc = "Ansekhwa", place = "Thunder Bluff", faction = "Horde", skills = { 198, 199, 227, 266 } },
   -- https://www.wowhead.com/forever/npc=11870/archibald
   { npc = "Archibald", place = "Undercity", faction = "Horde", skills = { 200, 201, 202, 1180, 5011 } },
-  -- https://www.wowhead.com/tbc/npc=16773/handiir
-  {
-    npc = "Handiir",
-    place = "The Exodar",
-    faction = "Alliance",
-    skills = { 198, 199, 201, 202, 1180, 5011 },
-    clients = { tbc = true },
-  },
-  -- https://www.wowhead.com/tbc/npc=16621/ileda
-  {
-    npc = "Ileda",
-    place = "Silvermoon City",
-    faction = "Horde",
-    skills = { 200, 201, 202, 264, 1180, 2567 },
-    clients = { tbc = true },
-  },
-  -- https://www.wowhead.com/tbc/npc=17005 (Falconwing Square)
-  {
-    npc = "Duelist Larenis",
-    place = "Eversong Woods",
-    faction = "Horde",
-    skills = { 200, 201, 202, 264, 1180, 2567 },
-    clients = { tbc = true },
-  },
 }
 
 -- Classes per weapon skill on Classic Era and TBC (Wowhead TBC spell pages, "reqclass").
