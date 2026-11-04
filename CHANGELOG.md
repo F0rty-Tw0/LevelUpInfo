@@ -6,7 +6,7 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
-- TBC Anniversary: Draenei are sent to the weapon master in The Exodar and Blood Elves to the one in Silvermoon City.
+- TBC Anniversary: Draenei are sent to the weapon master in The Exodar and Blood Elves to the one in Silvermoon City, for the weapons those masters teach.
 - Classic Era and TBC Anniversary: priest racial spells and weapon skills now match your game version (TBC priests buy their racials from the class trainer, so no quest is suggested).
 - `/lui test 70` works on TBC Anniversary.
 - Fixed: Polearms now show at level 20 for 1 gold, when weapon masters teach them.
