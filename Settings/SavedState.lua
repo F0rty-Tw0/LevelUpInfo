@@ -79,14 +79,15 @@ local function normalizeAngle(angle)
   return angle % FULL_CIRCLE
 end
 
-local function cleanRaces(races)
-  if type(races) ~= "table" then
+-- String keys whose value is exactly true; nil when none are left.
+local function cleanFlags(flags)
+  if type(flags) ~= "table" then
     return nil
   end
   local clean = {}
-  for race, seen in pairs(races) do
-    if type(race) == "string" and seen == true then
-      clean[race] = true
+  for key, value in pairs(flags) do
+    if type(key) == "string" and value == true then
+      clean[key] = true
     end
   end
   return next(clean) and clean or nil
@@ -96,7 +97,7 @@ local function cleanEntry(entry)
   if type(entry) ~= "table" or not isNumber(entry.cost) or type(entry.rank) ~= "string" then
     return nil
   end
-  local races = cleanRaces(entry.races)
+  local races = cleanFlags(entry.races)
   if not races then
     return nil
   end
@@ -161,6 +162,7 @@ function SavedState.Initialize(saved)
     position = normalizePosition(saved.position),
     minimapAngle = normalizeAngle(saved.minimapAngle),
     trainers = cleanTrainers(saved.trainers),
+    foldedGroups = cleanFlags(saved.foldedGroups) or {},
   }
   for _, setting in ipairs(Defaults.list) do
     db[setting.key] = normalizeSetting(saved[setting.key], setting)
