@@ -24,6 +24,8 @@ local MAX_PREVIEW_LEVEL = 60
 local MAX_PREVIEW_LEVEL_TBC = 70
 local STAT_KEYS = { "strength", "agility", "stamina", "intellect", "spirit" }
 local SAMPLE_GAINS = { health = 15, power = 20, strength = 1, agility = 1, stamina = 1, intellect = 1, spirit = 1 }
+-- UnitPowerMax can be secret in combat, so the class is what says "no mana" there.
+local NO_MANA_CLASSES = { WARRIOR = true, ROGUE = true }
 -- Every ding from this level on gives one talent point.
 local FIRST_TALENT_LEVEL = 10
 
@@ -162,7 +164,8 @@ function LevelUp.ShowTest(level)
   record.isTest = true
   for key, amount in pairs(SAMPLE_GAINS) do
     local live = record.before[key]
-    if live ~= 0 then
+    local noMana = key == "power" and NO_MANA_CLASSES[select(2, _G.UnitClass("player"))]
+    if live ~= 0 and not noMana then
       record.gains[key] = amount
       if live then
         record.before[key] = live - amount

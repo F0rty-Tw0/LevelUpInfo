@@ -449,6 +449,21 @@ local function test_test_preview_shows_no_mana_line_for_a_class_without_mana()
   )
 end
 
+local function test_test_preview_in_combat_shows_no_mana_line_for_a_class_without_mana()
+  for _, class in ipairs({ "WARRIOR", "ROGUE" }) do
+    setup()
+    _G.UnitClass = function()
+      return class, class
+    end
+    W.inCombat = true
+    W.manaMax = W.secret
+    LevelUp.ShowTest()
+    Assert.equal(Window.Current().gains.power, 0)
+    Assert.notContains(shownGainTexts(), "Mana")
+    Assert.equal(regenRegistered(), false)
+  end
+end
+
 -- One gain line with a +1 gain: colored name, gray old value, arrow, new, green gain.
 local function statLine(hex, name, old, new)
   return "|cff" .. hex .. name .. "|r |cff808080" .. old .. "|r " .. ARROW .. " " .. new .. " |cff1aff1a(+1)|r"
@@ -534,6 +549,7 @@ return function()
   test_test_preview_above_60_uses_current_level_off_tbc()
   test_test_preview_before_is_live_minus_sample()
   test_test_preview_shows_no_mana_line_for_a_class_without_mana()
+  test_test_preview_in_combat_shows_no_mana_line_for_a_class_without_mana()
   test_test_preview_shows_a_line_for_every_primary_stat()
   test_test_preview_with_all_stats_secret_refreshes_each_after_combat()
 end
