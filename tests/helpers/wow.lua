@@ -141,6 +141,7 @@ local function newWidget(W, frameType, name, parent, template)
 
   function widget:SetPoint(...)
     table.insert(stub.points, { ... })
+    stub.cleared = nil
   end
   function widget:GetPoint(index)
     local point = stub.points[index or 1]
@@ -153,6 +154,7 @@ local function newWidget(W, frameType, name, parent, template)
   end
   function widget:ClearAllPoints()
     stub.points = {}
+    stub.cleared = true
   end
   function widget:SetSize(width, height)
     stub.width, stub.height = width, height
@@ -324,10 +326,17 @@ local function newWidget(W, frameType, name, parent, template)
   function widget:GetScale()
     return stub.scale or 1
   end
+  -- A frame just cleared of its points has no rect until it is anchored again.
   function widget:GetLeft()
+    if stub.cleared then
+      return nil
+    end
     return stub.left or 0
   end
   function widget:GetTop()
+    if stub.cleared then
+      return nil
+    end
     return stub.top or 0
   end
   function widget:SetMovable(movable)
