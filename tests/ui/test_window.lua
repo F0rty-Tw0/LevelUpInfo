@@ -22,6 +22,7 @@ local function setup()
     duration = 10,
     reducedMotion = false,
     scale = 1.0,
+    foldedGroups = {},
     trainers = {
       PRIEST = {
         covered = { Scourge = 10 },

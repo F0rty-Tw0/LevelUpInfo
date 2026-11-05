@@ -34,6 +34,7 @@ local function setup(client)
     duration = 10,
     reducedMotion = false,
     scale = 1.0,
+    foldedGroups = {},
     trainers = {},
   }
   local ns = { OtherSources = {} }

@@ -6,6 +6,8 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
+- Click the Not yet learned or Weapon skills heading to fold that group. It stays folded on later level-ups, for all your characters, and shows how many entries it holds.
+
 ## [0.1.2] - 2026-11-04
 
 - TBC Anniversary: Draenei are sent to the weapon master in The Exodar and Blood Elves to the one in Silvermoon City, for the weapons those masters teach.

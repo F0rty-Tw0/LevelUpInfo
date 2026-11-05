@@ -43,12 +43,13 @@ local HEADER_WIDTH = 262
 local NO_LINES = {}
 
 -- Skill groups in display order; a capped group shows its first `cap` rows
--- and a `+N more` toggle, or, expanded, all rows in a scroll box.
+-- and a `+N more` toggle, or, expanded, all rows in a scroll box. A `fold`
+-- group has a button that hides its rows behind a count in the heading.
 local GROUPS = {
   { group = "skill", title = "New skills", cap = GROUP_CAP, more = "+%d more new skills" },
   { group = "rank", title = "New ranks", cap = GROUP_CAP, more = "+%d more new ranks" },
-  { group = "missed", title = "Not yet learned", cap = GROUP_CAP, more = "+%d more not yet learned" },
-  { group = "weapon", title = "Weapon skills", cap = GROUP_CAP, more = "+%d more weapon skills" },
+  { group = "missed", title = "Not yet learned", cap = GROUP_CAP, fold = true, more = "+%d more not yet learned" },
+  { group = "weapon", title = "Weapon skills", cap = GROUP_CAP, fold = true, more = "+%d more weapon skills" },
 }
 
 local Window = {}
@@ -76,6 +77,23 @@ local fill
 -- A toggle click refills the shown record with the group's new state.
 local function onToggle()
   if current and not filling then
+    fill(current)
+  end
+end
+
+-- A fold click changes the window's height: keep the top-left corner where it
+-- is, so the window does not jump. The anchor is not saved: the next show
+-- applies the saved position again.
+local function pinTop()
+  local left, top = frame:GetLeft(), frame:GetTop() -- read before ClearAllPoints
+  frame:ClearAllPoints()
+  frame:SetPoint("TOPLEFT", _G.UIParent, "TOPLEFT", left, top - _G.UIParent:GetTop() / frame:GetScale())
+end
+
+local function onFold(group)
+  if current and not filling then
+    SkillGroup.Flip(group)
+    pinTop()
     fill(current)
   end
 end
@@ -133,7 +151,7 @@ local function build()
   for _, spec in ipairs(GROUPS) do
     headings[spec.group] = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
   end
-  SkillGroup.Build(content, GROUPS, onToggle)
+  SkillGroup.Build(content, GROUPS, onToggle, db.foldedGroups, onFold)
 end
 
 -- A reused row that sat in another container (content or a box) moves over.
@@ -181,27 +199,41 @@ local function fillToggle(spec, count)
   end
 end
 
--- `gap` goes above the heading when the group has rows; returns the row count.
+-- Heading (and, for a foldable group, its button on the same line) with `gap`
+-- above; returns the row parent: content, or the box of an expanded group.
+local function addHeading(spec, gap, expanded)
+  local group = spec.group
+  local heading = headings[group]
+  heading:SetText(Text(spec.title))
+  Layout.AddGap(content, gap)
+  if spec.fold then
+    Layout.Add(SkillGroup.FoldButton(group), content, 0, 0)
+  end
+  Layout.Add(heading, content, TEXT_LEFT, HEADING_HEIGHT)
+  if not expanded then
+    return content
+  end
+  local box, child = SkillGroup.Box(group)
+  boxFirstRow[group] = rowsUsed + 1
+  Layout.Add(box, content, 0, nil)
+  return child
+end
+
+-- `gap` goes above the heading when the group has rows; returns the row count
+-- (a folded group counts its hidden rows, so the next block's gap stays).
 local function fillGroup(spec, entries, money, gap)
-  local heading = headings[spec.group]
-  local expanded = SkillGroup.IsExpanded(spec.group)
+  local group = spec.group
+  local expanded = SkillGroup.IsExpanded(group)
+  local folded = SkillGroup.IsFolded(group)
   local parent = content
   local count = 0
   for _, entry in ipairs(entries) do
-    if entry.group == spec.group then
+    if entry.group == group then
       count = count + 1
       if count == 1 then
-        heading:SetText(Text(spec.title))
-        Layout.AddGap(content, gap)
-        Layout.Add(heading, content, TEXT_LEFT, HEADING_HEIGHT)
-        if expanded then
-          local box
-          box, parent = SkillGroup.Box(spec.group)
-          boxFirstRow[spec.group] = rowsUsed + 1
-          Layout.Add(box, content, 0, nil)
-        end
+        parent = addHeading(spec, gap, expanded)
       end
-      if expanded or not spec.cap or count <= spec.cap then
+      if not folded and (expanded or not spec.cap or count <= spec.cap) then
         if count > 1 then
           Layout.AddGap(parent, ROW_GAP)
         end
@@ -210,10 +242,13 @@ local function fillGroup(spec, entries, money, gap)
     end
   end
   if count == 0 then
-    heading:Hide()
+    headings[group]:Hide()
+    SkillGroup.HideFoldButton(group)
+  elseif folded then
+    headings[group]:SetText(format(Text("%s (%d)"), Text(spec.title), count))
   end
   if spec.cap then
-    fillToggle(spec, count)
+    fillToggle(spec, folded and 0 or count)
   end
   return count
 end

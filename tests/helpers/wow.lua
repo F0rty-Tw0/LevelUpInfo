@@ -324,6 +324,12 @@ local function newWidget(W, frameType, name, parent, template)
   function widget:GetScale()
     return stub.scale or 1
   end
+  function widget:GetLeft()
+    return stub.left or 0
+  end
+  function widget:GetTop()
+    return stub.top or 0
+  end
   function widget:SetMovable(movable)
     stub.movable = movable and true or false
   end
