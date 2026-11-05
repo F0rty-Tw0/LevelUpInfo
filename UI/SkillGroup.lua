@@ -22,15 +22,21 @@ local TEXT_LEFT = 4
 local THUMB_FILE = "Interface\\Buttons\\UI-ScrollBar-Knob"
 local FONT_REST = "GameFontDisableSmall"
 local FONT_HOVER = "GameFontHighlightSmall"
+local FOLD_HEIGHT = 24 -- the window's heading line height
+local FOLD_ICON_SIZE = 16
+local ICON_OPEN = "Interface\\Buttons\\UI-MinusButton-Up"
+local ICON_FOLDED = "Interface\\Buttons\\UI-PlusButton-Up"
 
--- The "+N more" / "Show less" toggle and the scroll box of each capped
--- group, with its expanded flag and scroll position. It never places
--- anything: the window's layout does. Toggles are built with the window,
--- a group's box, child and bar on its first Box call.
+-- Per group: the "+N more" / "Show less" toggle and scroll box of a capped
+-- one (with its expanded flag and scroll position), and the fold button of a
+-- foldable one. It never places anything: the window's layout does. Toggles
+-- and fold buttons are built with the window, a group's box, child and bar on
+-- its first Box call.
 local SkillGroup = {}
 
 local parent
 local groups = {}
+local foldedByGroup -- the saved fold flags: group → true
 
 local function pause()
   AutoHide.Pause()
@@ -46,6 +52,11 @@ local function scrollTo(state, value)
     state.bar:SetValue(value)
     state.box:SetVerticalScroll(value)
   end
+end
+
+local function collapse(state)
+  state.expanded = false
+  scrollTo(state, 0)
 end
 
 local function newToggle(group, onToggle)
@@ -73,6 +84,22 @@ local function newToggle(group, onToggle)
   end)
   toggle:Hide()
   return toggle
+end
+
+local function newFoldButton(group, onFold)
+  local button = _G.CreateFrame("Button", nil, parent)
+  button:SetSize(CONTENT_WIDTH, FOLD_HEIGHT)
+  local icon = button:CreateTexture(nil, "ARTWORK")
+  icon:SetSize(FOLD_ICON_SIZE, FOLD_ICON_SIZE)
+  icon:SetPoint("TOPRIGHT", button, "TOPRIGHT", 0, 0)
+  button.foldIcon = icon
+  button:SetScript("OnClick", function()
+    onFold(group)
+  end)
+  button:SetScript("OnEnter", pause)
+  button:SetScript("OnLeave", resume)
+  button:Hide()
+  return button
 end
 
 local function newBar(box, state)
@@ -117,13 +144,37 @@ local function newBox(state)
   state.box, state.child, state.bar = box, child, bar
 end
 
-function SkillGroup.Build(content, specs, onToggle)
+function SkillGroup.Build(content, specs, onToggle, foldedGroups, onFold)
   parent = content
+  foldedByGroup = foldedGroups
   for _, spec in ipairs(specs) do
     if spec.cap then
       groups[spec.group] = { expanded = false, scroll = 0 }
       groups[spec.group].toggle = newToggle(spec.group, onToggle)
     end
+    if spec.fold then
+      groups[spec.group].foldButton = newFoldButton(spec.group, onFold)
+    end
+  end
+end
+
+-- Only a group with a fold button can be folded.
+function SkillGroup.IsFolded(group)
+  local state = groups[group]
+  return state ~= nil and state.foldButton ~= nil and foldedByGroup[group] == true
+end
+
+-- The group's fold button with the icon for its current state.
+function SkillGroup.FoldButton(group)
+  local button = groups[group].foldButton
+  button.foldIcon:SetTexture(SkillGroup.IsFolded(group) and ICON_FOLDED or ICON_OPEN)
+  return button
+end
+
+function SkillGroup.HideFoldButton(group)
+  local state = groups[group]
+  if state and state.foldButton then
+    state.foldButton:Hide()
   end
 end
 
@@ -134,9 +185,14 @@ end
 
 function SkillGroup.Collapse()
   for _, state in pairs(groups) do
-    state.expanded = false
-    scrollTo(state, 0)
+    collapse(state)
   end
+end
+
+-- Flips the group's saved fold flag and drops its expansion and scroll.
+function SkillGroup.Flip(group)
+  foldedByGroup[group] = not foldedByGroup[group] or nil
+  collapse(groups[group])
 end
 
 function SkillGroup.Toggle(group, text)
@@ -171,6 +227,7 @@ function SkillGroup.HideAll()
   for group in pairs(groups) do
     SkillGroup.HideToggle(group)
     SkillGroup.HideBox(group)
+    SkillGroup.HideFoldButton(group)
   end
 end
 

@@ -19,6 +19,7 @@ local function setup(otherSources)
     duration = 10,
     reducedMotion = false,
     scale = 1.0,
+    foldedGroups = {},
     trainers = { PRIEST = { covered = { Scourge = 10 }, levels = {} } },
   }
   local ns = { OtherSources = { PRIEST = otherSources or {} } }

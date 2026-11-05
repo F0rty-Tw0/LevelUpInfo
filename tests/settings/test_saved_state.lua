@@ -120,6 +120,21 @@ local function test_unknown_keys_are_dropped_at_every_level()
   Assert.equal(db.trainers.PRIEST.levels[10][8092].cost, 300)
 end
 
+local function test_folded_groups_default_to_empty()
+  Assert.equal(next(SavedState.Initialize(nil).foldedGroups), nil)
+  Assert.equal(next(SavedState.Initialize({ foldedGroups = "weapon" }).foldedGroups), nil)
+end
+
+local function test_folded_groups_keep_only_true_string_keys()
+  local folded = SavedState.Initialize({
+    foldedGroups = { weapon = true, missed = 1, skill = false, [3] = true },
+  }).foldedGroups
+  Assert.equal(folded.weapon, true)
+  Assert.equal(folded.missed, nil)
+  Assert.equal(folded.skill, nil)
+  Assert.equal(folded[3], nil)
+end
+
 return function()
   test_fresh_install_gets_every_default()
   test_number_settings_round_to_step_and_clamp()
@@ -134,4 +149,6 @@ return function()
   test_malformed_trainer_entries_are_dropped()
   test_entry_without_any_valid_race_is_dropped()
   test_unknown_keys_are_dropped_at_every_level()
+  test_folded_groups_default_to_empty()
+  test_folded_groups_keep_only_true_string_keys()
 end

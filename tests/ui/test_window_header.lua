@@ -7,7 +7,7 @@ local Window
 -- Fresh fake client, modules and an empty trainer cache per test.
 local function setup()
   W = Wow.Install()
-  local db = { duration = 10, reducedMotion = false, scale = 1.0, trainers = {} }
+  local db = { duration = 10, reducedMotion = false, scale = 1.0, foldedGroups = {}, trainers = {} }
   local ns = { OtherSources = {} }
   for _, file in ipairs({
     "Core/Localization.lua",

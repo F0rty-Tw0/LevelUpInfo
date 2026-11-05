@@ -289,7 +289,37 @@ local function test_load_result_refreshes_window()
   Assert.equal(changeLines("Shadow Word: Pain"), 1)
 end
 
+local function test_saved_fold_flags_reach_the_db_and_garbage_gives_an_empty_table()
+  setup({ foldedGroups = { weapon = true } })
+  Assert.equal(_G.LevelUpInfoDB.foldedGroups.weapon, true)
+  setup({ foldedGroups = "weapon" })
+  Assert.equal(next(_G.LevelUpInfoDB.foldedGroups), nil)
+end
+
+-- The shown fold button (a button with a fold icon).
+local function foldButton()
+  for _, frame in ipairs(W.frames) do
+    if frame.foldIcon and frame:IsShown() then
+      return frame
+    end
+  end
+end
+
+local function test_window_clicks_flip_the_saved_fold_table_in_place()
+  local missed = { cost = 50, rank = "Rank 1", races = { Scourge = true } }
+  setup({
+    foldedGroups = { missed = true },
+    trainers = { PRIEST = { covered = { Scourge = 10 }, levels = { [5] = { [139] = missed } } } },
+  })
+  slashTest()
+  Assert.equal(_G.LevelUpInfoDB.foldedGroups.missed, true)
+  W.fireScript(foldButton(), "OnClick")
+  Assert.equal(_G.LevelUpInfoDB.foldedGroups.missed, nil)
+end
+
 return function()
+  test_saved_fold_flags_reach_the_db_and_garbage_gives_an_empty_table()
+  test_window_clicks_flip_the_saved_fold_table_in_place()
   test_only_the_event_frame_exists_before_addon_loaded()
   test_other_addons_loading_are_ignored()
   test_addon_loaded_normalizes_db_and_unregisters_itself()
