@@ -450,10 +450,10 @@ local function test_test_preview_shows_no_mana_line_for_a_class_without_mana()
 end
 
 local function test_test_preview_in_combat_shows_no_mana_line_for_a_class_without_mana()
-  for _, class in ipairs({ "WARRIOR", "ROGUE" }) do
+  for _, class in ipairs({ { "Warrior", "WARRIOR" }, { "Rogue", "ROGUE" } }) do
     setup()
     _G.UnitClass = function()
-      return class, class
+      return class[1], class[2]
     end
     W.inCombat = true
     W.manaMax = W.secret
