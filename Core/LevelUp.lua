@@ -23,7 +23,7 @@ local MIN_PREVIEW_LEVEL = 2
 local MAX_PREVIEW_LEVEL = 60
 local MAX_PREVIEW_LEVEL_TBC = 70
 local STAT_KEYS = { "strength", "agility", "stamina", "intellect", "spirit" }
-local SAMPLE_GAINS = { health = 15, power = 20, strength = 0, agility = 0, stamina = 1, intellect = 0, spirit = 0 }
+local SAMPLE_GAINS = { health = 15, power = 20, strength = 1, agility = 1, stamina = 1, intellect = 1, spirit = 1 }
 -- Every ding from this level on gives one talent point.
 local FIRST_TALENT_LEVEL = 10
 

@@ -411,7 +411,35 @@ local function test_test_preview_shows_no_mana_line_for_a_class_without_mana()
       .. " 100 "
       .. green
       .. "(+15)|r|"
+      .. "|cffff5c5cStrength|r "
+      .. gray
+      .. "9|r "
+      .. ARROW
+      .. " 10 "
+      .. green
+      .. "(+1)|r|"
+      .. "|cffffa340Agility|r "
+      .. gray
+      .. "9|r "
+      .. ARROW
+      .. " 10 "
+      .. green
+      .. "(+1)|r|"
       .. "|cffd9b38cStamina|r "
+      .. gray
+      .. "9|r "
+      .. ARROW
+      .. " 10 "
+      .. green
+      .. "(+1)|r|"
+      .. "|cff4fd1e8Intellect|r "
+      .. gray
+      .. "9|r "
+      .. ARROW
+      .. " 10 "
+      .. green
+      .. "(+1)|r|"
+      .. "|cfff5a3d0Spirit|r "
       .. gray
       .. "9|r "
       .. ARROW
@@ -419,6 +447,62 @@ local function test_test_preview_shows_no_mana_line_for_a_class_without_mana()
       .. green
       .. "(+1)|r"
   )
+end
+
+-- One gain line with a +1 gain: colored name, gray old value, arrow, new, green gain.
+local function statLine(hex, name, old, new)
+  return "|cff" .. hex .. name .. "|r |cff808080" .. old .. "|r " .. ARROW .. " " .. new .. " |cff1aff1a(+1)|r"
+end
+
+local function test_test_preview_shows_a_line_for_every_primary_stat()
+  setup()
+  W.stats = { 21, 31, 41, 51, 61 }
+  LevelUp.ShowTest()
+  local green, gray = "|cff1aff1a", "|cff808080"
+  Assert.equal(
+    shownGainTexts(),
+    table.concat({
+      "|cffc084fcTalent points|r " .. green .. "(+1)|r",
+      "|cff49d36bHealth|r " .. gray .. "85|r " .. ARROW .. " 100 " .. green .. "(+15)|r",
+      "|cff4d8dffMana|r " .. gray .. "30|r " .. ARROW .. " 50 " .. green .. "(+20)|r",
+      statLine("ff5c5c", "Strength", 20, 21),
+      statLine("ffa340", "Agility", 30, 31),
+      statLine("d9b38c", "Stamina", 40, 41),
+      statLine("4fd1e8", "Intellect", 50, 51),
+      statLine("f5a3d0", "Spirit", 60, 61),
+    }, "|")
+  )
+end
+
+local function test_test_preview_with_all_stats_secret_refreshes_each_after_combat()
+  setup()
+  W.inCombat = true
+  W.stats = { W.secret, W.secret, W.secret, W.secret, W.secret }
+  LevelUp.ShowTest()
+  local during = shownGainTexts()
+  for _, plain in ipairs({
+    "|cffff5c5cStrength|r ",
+    "|cffffa340Agility|r ",
+    "|cffd9b38cStamina|r ",
+    "|cff4fd1e8Intellect|r ",
+    "|cfff5a3d0Spirit|r ",
+  }) do
+    Assert.contains(during, plain .. "|cff1aff1a(+1)|r")
+  end
+  Assert.equal(regenRegistered(), true)
+  W.stats = { 21, 31, 41, 51, 61 }
+  endCombat()
+  local after = shownGainTexts()
+  for _, line in ipairs({
+    statLine("ff5c5c", "Strength", 20, 21),
+    statLine("ffa340", "Agility", 30, 31),
+    statLine("d9b38c", "Stamina", 40, 41),
+    statLine("4fd1e8", "Intellect", 50, 51),
+    statLine("f5a3d0", "Spirit", 60, 61),
+  }) do
+    Assert.contains(after, line)
+  end
+  Assert.equal(regenRegistered(), false)
 end
 
 return function()
@@ -450,4 +534,6 @@ return function()
   test_test_preview_above_60_uses_current_level_off_tbc()
   test_test_preview_before_is_live_minus_sample()
   test_test_preview_shows_no_mana_line_for_a_class_without_mana()
+  test_test_preview_shows_a_line_for_every_primary_stat()
+  test_test_preview_with_all_stats_secret_refreshes_each_after_combat()
 end
