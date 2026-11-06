@@ -238,7 +238,7 @@ local function test_options_test_button_shows_preview()
   Assert.equal(shownLevels(), "9 to 10")
 end
 
-local function test_escape_list_and_tooltip_are_never_written()
+local function test_escape_list_gets_only_our_window_and_tooltip_is_never_written()
   local saved = {
     trainers = {
       PRIEST = { covered = { Scourge = 10 }, levels = { [10] = { [139] = { cost = 100, rank = "Rank 1", races = { Scourge = true } } } } },
@@ -246,7 +246,6 @@ local function test_escape_list_and_tooltip_are_never_written()
   }
   setup(saved)
   _G.UISpecialFrames = { "GameMenuFrame" }
-  local specialFrames = W.snapshot(_G.UISpecialFrames)
   local tooltipFields = W.snapshot(_G.GameTooltip)
   ding()
   for _, frame in ipairs(W.frames) do
@@ -255,7 +254,7 @@ local function test_escape_list_and_tooltip_are_never_written()
   end
   W.fireScript(_G.LevelUpInfoFrame.CloseButton, "OnClick")
   Assert.equal(#W.tooltip > 0, true)
-  Assert.equal(W.changedKeys(_G.UISpecialFrames, specialFrames), "")
+  Assert.equal(table.concat(_G.UISpecialFrames, ","), "GameMenuFrame,LevelUpInfoFrame")
   Assert.equal(W.changedKeys(_G.GameTooltip, tooltipFields), "")
 end
 
@@ -335,6 +334,6 @@ return function()
   test_scale_slider_rescales_the_visible_window()
   test_reset_position_button_moves_the_visible_window()
   test_options_test_button_shows_preview()
-  test_escape_list_and_tooltip_are_never_written()
+  test_escape_list_gets_only_our_window_and_tooltip_is_never_written()
   test_load_result_refreshes_window()
 end

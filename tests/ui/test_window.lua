@@ -272,6 +272,23 @@ local function test_close_x_hides_and_cancels_countdown()
   Assert.equal(W.liveTimers, 0)
 end
 
+-- Escape runs Blizzard's CloseSpecialWindows, which hides every frame named in
+-- UISpecialFrames; the name is added once, when the window is first built.
+local function test_escape_list_gets_the_window_once_on_first_show()
+  setup()
+  _G.UISpecialFrames = { "GameMenuFrame" }
+  Window.Show(record())
+  Window.Show(record())
+  Assert.equal(table.concat(_G.UISpecialFrames, ","), "GameMenuFrame,LevelUpInfoFrame")
+end
+
+local function test_escape_hide_cancels_countdown()
+  setup()
+  Window.Show(record())
+  frame():Hide()
+  Assert.equal(W.liveTimers, 0)
+end
+
 local function test_hovering_a_row_pauses_the_countdown()
   setup()
   Window.Show(record())
@@ -372,6 +389,8 @@ return function()
   test_show_starts_the_countdown()
   test_show_and_reshow_keep_exactly_one_live_timer()
   test_close_x_hides_and_cancels_countdown()
+  test_escape_list_gets_the_window_once_on_first_show()
+  test_escape_hide_cancels_countdown()
   test_hovering_a_row_pauses_the_countdown()
   test_reshow_while_hovered_keeps_window_and_starts_no_countdown()
   test_default_anchor_and_saved_position()

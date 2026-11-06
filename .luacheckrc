@@ -78,6 +78,7 @@ read_globals = {
   "SPELL_STAT4_NAME",
   "SPELL_STAT5_NAME",
   "TALENT_POINTS",
+  "UISpecialFrames",
   -- Options panel
   "CreateMinimalSliderFormatter",
   "HideUIPanel",

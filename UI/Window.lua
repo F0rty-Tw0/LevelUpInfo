@@ -17,11 +17,13 @@ local ipairs = ipairs
 local min = math.min
 local pairs = pairs
 local select = select
+local tinsert = table.insert
 local tostring = tostring
 local xpcall = xpcall
 
 local Text = Localization.Text
 
+local FRAME_NAME = "LevelUpInfoFrame"
 local FRAME_WIDTH = 338
 local CONTENT_WIDTH = 298
 local CONTENT_LEFT = 19
@@ -128,8 +130,10 @@ local function buildHeader()
 end
 
 local function build()
-  frame = _G.CreateFrame("Frame", "LevelUpInfoFrame", _G.UIParent, "ButtonFrameTemplate")
+  frame = _G.CreateFrame("Frame", FRAME_NAME, _G.UIParent, "ButtonFrameTemplate")
   frame:Hide()
+  -- Escape closes it: Blizzard's CloseSpecialWindows hides every frame named here.
+  tinsert(_G.UISpecialFrames, FRAME_NAME)
   _G.ButtonFrameTemplate_HideButtonBar(frame)
   frame:SetPortraitToUnit("player")
   frame:EnableMouse(true)

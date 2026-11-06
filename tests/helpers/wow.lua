@@ -717,6 +717,8 @@ function Wow.Install()
     end
   end
   rawset(_G, "GameTooltip", gameTooltip)
+  -- Frame names Escape closes (Blizzard's CloseSpecialWindows list).
+  rawset(_G, "UISpecialFrames", {})
 
   newWidget(W, "Frame", "UIParent")
   -- The round minimap: 140 wide, centered at (500, 400).

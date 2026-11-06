@@ -6,6 +6,8 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
+- Press Escape to close the level-up window, like any other game window.
+
 ## [0.1.3] - 2026-11-05
 
 - Click the Not yet learned or Weapon skills heading to fold that group. It stays folded on later level-ups, for all your characters, and shows how many entries it holds.
