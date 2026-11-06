@@ -6,6 +6,8 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-11-06
+
 - Press Escape to close the level-up window, like any other game window.
 
 ## [0.1.3] - 2026-11-05
