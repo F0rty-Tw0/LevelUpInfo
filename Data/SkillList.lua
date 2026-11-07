@@ -16,6 +16,8 @@ local tonumber = tonumber
 
 local SkillList = {}
 
+local MIN_PRICED_FOR_TOTAL = 2
+
 -- Classic Era and TBC drop IsPlayerSpell unless a deprecation CVar is on.
 local function isKnown(spellID)
   if _G.IsPlayerSpell then
@@ -212,6 +214,23 @@ function SkillList.Build(trainers, class, race, faction, fromLevel, toLevel)
   addPreviousRanks(entries, data, toLevel)
   sort(entries, byGroupThenLevelThenName)
   return entries, TrainerCache.Covered(trainers, class, race) < toLevel
+end
+
+-- Summed price of one group's priced entries; nil under two (quest rows have no cost).
+function SkillList.GroupTotal(entries, group)
+  local total = 0
+  local priced = 0
+  for _, entry in ipairs(entries) do
+    if entry.group == group and entry.cost ~= nil then
+      total = total + entry.cost
+      priced = priced + 1
+    end
+  end
+  if priced < MIN_PRICED_FOR_TOTAL then
+    return nil
+  end
+
+  return total
 end
 
 ns.SkillList = SkillList
