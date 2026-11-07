@@ -132,26 +132,47 @@ local function groupOf(level, fromLevel, newRank)
   return newRank and "rank" or "skill"
 end
 
-local function addLevel(bySpell, data, race, level, fromLevel)
+local function addTrainerEntry(bySpell, spellID, entry, level, fromLevel)
+  local info = _G.C_Spell.GetSpellInfo(spellID)
+  if info then
+    local rank = rankOf(spellID, entry)
+    local newRank = isNewRank(rank)
+    bySpell[spellID] = {
+      spellID = spellID,
+      level = level,
+      name = info.name,
+      icon = info.iconID,
+      rank = rank,
+      cost = entry.cost,
+      newRank = newRank,
+      group = groupOf(level, fromLevel, newRank),
+    }
+  end
+end
+
+-- Highest known rank number per spell name.
+local function recordKnownRank(knownRanks, spellID, entry)
+  local number = rankNumber(rankOf(spellID, entry))
+  local info = number and _G.C_Spell.GetSpellInfo(spellID)
+  if info and number > (knownRanks[info.name] or 0) then
+    knownRanks[info.name] = number
+  end
+end
+
+local function addLevel(bySpell, knownRanks, data, race, level, fromLevel)
   for spellID, entry in pairs(data.levels[level] or {}) do
-    if isVisible(data.covered, race, level, entry) and not isKnown(spellID) then
-      local info = _G.C_Spell.GetSpellInfo(spellID)
-      if info then
-        local rank = rankOf(spellID, entry)
-        local newRank = isNewRank(rank)
-        bySpell[spellID] = {
-          spellID = spellID,
-          level = level,
-          name = info.name,
-          icon = info.iconID,
-          rank = rank,
-          cost = entry.cost,
-          newRank = newRank,
-          group = groupOf(level, fromLevel, newRank),
-        }
-      end
+    if isKnown(spellID) then
+      recordKnownRank(knownRanks, spellID, entry)
+    elseif isVisible(data.covered, race, level, entry) then
+      addTrainerEntry(bySpell, spellID, entry, level, fromLevel)
     end
   end
+end
+
+-- Some clients report a lower rank unknown once a higher one is learned.
+-- Entries without a rank number (quest rows) count as Rank 1.
+local function isSuperseded(entry, knownRanks)
+  return entry.group ~= "weapon" and (rankNumber(entry.rank) or 1) < (knownRanks[entry.name] or 0)
 end
 
 local function rowApplies(row, race, faction, toLevel)
@@ -196,10 +217,11 @@ end
 -- fromLevel, then weapon skills; plus whether to show the hint row.
 function SkillList.Build(trainers, class, race, faction, fromLevel, toLevel)
   local bySpell = {}
+  local knownRanks = {}
   local data = trainers[class]
   if data then
     for level = 1, toLevel do
-      addLevel(bySpell, data, race, level, fromLevel)
+      addLevel(bySpell, knownRanks, data, race, level, fromLevel)
     end
   end
   for _, row in ipairs(OtherSources[class] or {}) do
@@ -209,7 +231,9 @@ function SkillList.Build(trainers, class, race, faction, fromLevel, toLevel)
   end
   local entries = {}
   for _, entry in pairs(bySpell) do
-    entries[#entries + 1] = entry
+    if not isSuperseded(entry, knownRanks) then
+      entries[#entries + 1] = entry
+    end
   end
   addPreviousRanks(entries, data, toLevel)
   sort(entries, byGroupThenLevelThenName)

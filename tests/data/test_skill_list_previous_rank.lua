@@ -192,9 +192,8 @@ end
 
 local function test_no_rank_entry_builds_no_index()
   setup()
-  W.known[RANK_3] = true
   local trainers = priest({
-    [4] = { [RANK_1] = spell("Rank 1"), [RANK_3] = spell("Rank 3") },
+    [4] = { [RANK_1] = spell("Rank 1") },
     [10] = { [OTHER_RANK_1] = spell("Rank 1") },
   })
   local entries = build(trainers, 9, 10)
