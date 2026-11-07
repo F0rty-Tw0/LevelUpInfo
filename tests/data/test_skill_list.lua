@@ -214,6 +214,36 @@ local function test_missing_class_gives_empty_list_and_hint()
   Assert.equal(showHint, true)
 end
 
+local function test_group_total_sums_the_group()
+  setup()
+  local entries = {
+    { group = "skill", cost = 100 },
+    { group = "skill", cost = 250 },
+    { group = "rank", cost = 999 },
+  }
+  Assert.equal(SkillList.GroupTotal(entries, "skill"), 350)
+end
+
+local function test_group_total_needs_two_priced_entries()
+  setup()
+  local entries = { { group = "missed", cost = 100 }, { group = "missed" } }
+  Assert.equal(SkillList.GroupTotal(entries, "missed"), nil)
+end
+
+local function test_group_total_counts_entries_past_the_cap()
+  setup()
+  local entries = {}
+  for i = 1, 7 do
+    entries[i] = { group = "weapon", cost = 1000 }
+  end
+  Assert.equal(SkillList.GroupTotal(entries, "weapon"), 7000)
+end
+
+local function test_group_total_of_empty_group_is_nil()
+  setup()
+  Assert.equal(SkillList.GroupTotal({}, "skill"), nil)
+end
+
 return function()
   test_levels_above_to_level_are_excluded()
   test_skipped_trainer_spell_is_not_yet_learned()
@@ -234,4 +264,8 @@ return function()
   test_rank_two_or_more_is_a_new_rank()
   test_rank_one_empty_or_no_number_is_a_new_skill()
   test_new_skills_sort_before_new_ranks()
+  test_group_total_sums_the_group()
+  test_group_total_needs_two_priced_entries()
+  test_group_total_counts_entries_past_the_cap()
+  test_group_total_of_empty_group_is_nil()
 end

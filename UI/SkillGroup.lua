@@ -26,6 +26,12 @@ local FOLD_HEIGHT = 24 -- the window's heading line height
 local FOLD_ICON_SIZE = 16
 local ICON_OPEN = "Interface\\Buttons\\UI-MinusButton-Up"
 local ICON_FOLDED = "Interface\\Buttons\\UI-PlusButton-Up"
+local TOTAL_HEIGHT = 16
+local PRICE_PAD = 6 -- SkillRow's PAD: the rows' price edge
+local TOTAL_FOLD_GAP = 4
+local TOTAL_WIDTH = CONTENT_WIDTH - PRICE_PAD
+local TOTAL_FOLD_WIDTH = CONTENT_WIDTH - FOLD_ICON_SIZE - TOTAL_FOLD_GAP -- stops before the fold icon
+local TOTAL_FONT = "GameFontHighlightSmall"
 
 -- Per group: the "+N more" / "Show less" toggle and scroll box of a capped
 -- one (with its expanded flag and scroll position), and the fold button of a
@@ -144,6 +150,16 @@ local function newBox(state)
   state.box, state.child, state.bar = box, child, bar
 end
 
+local function newTotal(width)
+  local total = parent:CreateFontString(nil, "ARTWORK", TOTAL_FONT)
+  total:SetSize(width, TOTAL_HEIGHT)
+  total:SetJustifyH("RIGHT")
+  total:SetWordWrap(false)
+  total:Hide()
+
+  return total
+end
+
 function SkillGroup.Build(content, specs, onToggle, foldedGroups, onFold)
   parent = content
   foldedByGroup = foldedGroups
@@ -151,6 +167,7 @@ function SkillGroup.Build(content, specs, onToggle, foldedGroups, onFold)
     if spec.cap then
       groups[spec.group] = { expanded = false, scroll = 0 }
       groups[spec.group].toggle = newToggle(spec.group, onToggle)
+      groups[spec.group].total = newTotal(spec.fold and TOTAL_FOLD_WIDTH or TOTAL_WIDTH)
     end
     if spec.fold then
       groups[spec.group].foldButton = newFoldButton(spec.group, onFold)
@@ -223,8 +240,27 @@ function SkillGroup.HideBox(group)
   end
 end
 
+-- The group's price total: white when the player can pay it, else red. The
+-- caller places it; Layout shows it.
+function SkillGroup.Total(group, copper, money)
+  local total = groups[group].total
+  total:SetText(_G.GetMoneyString(copper))
+  local color = money >= copper and _G.HIGHLIGHT_FONT_COLOR or _G.RED_FONT_COLOR
+  total:SetTextColor(color:GetRGB())
+
+  return total
+end
+
+function SkillGroup.HideTotal(group)
+  local state = groups[group]
+  if state then
+    state.total:Hide()
+  end
+end
+
 function SkillGroup.HideAll()
   for group in pairs(groups) do
+    SkillGroup.HideTotal(group)
     SkillGroup.HideToggle(group)
     SkillGroup.HideBox(group)
     SkillGroup.HideFoldButton(group)

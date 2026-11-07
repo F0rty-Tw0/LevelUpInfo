@@ -6,6 +6,8 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
+- Each skill group shows what training all of it costs, in red when you can't afford it.
+
 ## [0.1.4] - 2026-11-06
 
 - Press Escape to close the level-up window, like any other game window.
