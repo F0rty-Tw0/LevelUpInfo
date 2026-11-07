@@ -6,6 +6,8 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-11-07
+
 - Each skill group shows what training all of it costs, in red when you can't afford it.
 
 ## [0.1.4] - 2026-11-06
