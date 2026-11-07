@@ -205,13 +205,16 @@ end
 
 -- Heading (and, for a foldable group, its button on the same line) with `gap`
 -- above; returns the row parent: content, or the box of an expanded group.
-local function addHeading(spec, gap, expanded)
+local function addHeading(spec, gap, expanded, total, money)
   local group = spec.group
   local heading = headings[group]
   heading:SetText(Text(spec.title))
   Layout.AddGap(content, gap)
   if spec.fold then
     Layout.Add(SkillGroup.FoldButton(group), content, 0, 0)
+  end
+  if total then
+    Layout.Add(SkillGroup.Total(group, total, money), content, 0, 0)
   end
   Layout.Add(heading, content, TEXT_LEFT, HEADING_HEIGHT)
   if not expanded then
@@ -231,11 +234,12 @@ local function fillGroup(spec, entries, money, gap)
   local folded = SkillGroup.IsFolded(group)
   local parent = content
   local count = 0
+  local total = SkillList.GroupTotal(entries, group)
   for _, entry in ipairs(entries) do
     if entry.group == group then
       count = count + 1
       if count == 1 then
-        parent = addHeading(spec, gap, expanded)
+        parent = addHeading(spec, gap, expanded, total, money)
       end
       if not folded and (expanded or not spec.cap or count <= spec.cap) then
         if count > 1 then
@@ -244,6 +248,9 @@ local function fillGroup(spec, entries, money, gap)
         addRow(entry, money, parent)
       end
     end
+  end
+  if not total then
+    SkillGroup.HideTotal(group)
   end
   if count == 0 then
     headings[group]:Hide()
