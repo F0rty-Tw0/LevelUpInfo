@@ -69,7 +69,9 @@ end
 
 local function test_quest_rank_one_is_hidden_once_trainer_rank_two_is_known()
   setup({
-    { spellID = WEAKNESS_1, level = 10, kind = "quest", race = "Scourge", npc = "Quest Giver", place = "Undercity", quest = "A Quest" },
+    PRIEST = {
+      { spellID = WEAKNESS_1, level = 10, kind = "quest", race = "Scourge", npc = "Quest Giver", place = "Undercity", quest = "A Quest" },
+    },
   })
   W.known[WEAKNESS_2] = true
   local rank2 = { cost = 100, rank = "Rank 2", races = { Scourge = true } }
@@ -77,9 +79,20 @@ local function test_quest_rank_one_is_hidden_once_trainer_rank_two_is_known()
   Assert.equal(ids(SkillList.Build(trainers, "PRIEST", "Scourge", "Horde", 20, 21)), "")
 end
 
+-- Trainers leave rank text empty above your level; without a number the entry stays.
+local function test_trainer_entry_without_rank_text_still_lists()
+  setup()
+  W.known[REND_2] = true
+  W.known[HEROIC_STRIKE_2] = true
+  local trainers = rendRanks()
+  trainers.WARRIOR.levels[20][REND_3] = spell("")
+  Assert.equal(ids(SkillList.Build(trainers, "WARRIOR", "Orc", "Horde", 19, 20)), "6547:skill")
+end
+
 return function()
   test_rank_one_is_hidden_once_rank_two_is_known()
   test_rank_above_the_known_rank_still_lists()
   test_a_known_rank_of_another_spell_hides_nothing()
   test_quest_rank_one_is_hidden_once_trainer_rank_two_is_known()
+  test_trainer_entry_without_rank_text_still_lists()
 end

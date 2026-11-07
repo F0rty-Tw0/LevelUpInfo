@@ -170,9 +170,13 @@ local function addLevel(bySpell, knownRanks, data, race, level, fromLevel)
 end
 
 -- Some clients report a lower rank unknown once a higher one is learned.
--- Entries without a rank number (quest rows) count as Rank 1.
+-- Quest rows count as Rank 1; a trainer entry without a rank number is kept.
 local function isSuperseded(entry, knownRanks)
-  return entry.group ~= "weapon" and (rankNumber(entry.rank) or 1) < (knownRanks[entry.name] or 0)
+  if entry.group == "weapon" then
+    return false
+  end
+  local number = rankNumber(entry.rank) or (entry.source and 1)
+  return number ~= nil and number < (knownRanks[entry.name] or 0)
 end
 
 local function rowApplies(row, race, faction, toLevel)
