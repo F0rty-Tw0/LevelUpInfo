@@ -6,18 +6,22 @@ local W
 local Window
 local db
 
+local KNOWN_PAIN_1 = 100589
+
 local function spell(cost, rank)
   return { cost = cost, rank = rank, races = { Scourge = true } }
 end
 
 -- Fresh fake client, modules and db per test. Priest cache at level 10:
--- Mind Blast (skill), Renew (skill), Shadow Word: Pain Rank 2 (rank).
+-- Mind Blast (skill), Renew (skill), Shadow Word: Pain Rank 2 (rank; Rank 1 known).
 local function setup()
   W = Wow.Install()
   W.money = 1000
   W.spells[8092] = { name = "Mind Blast", iconID = 136224 }
   W.spells[139] = { name = "Renew", iconID = 135953 }
   W.spells[589] = { name = "Shadow Word: Pain", iconID = 136207 }
+  W.spells[KNOWN_PAIN_1] = { name = "Shadow Word: Pain", iconID = 136207 }
+  W.known[KNOWN_PAIN_1] = true
   db = {
     duration = 10,
     reducedMotion = false,

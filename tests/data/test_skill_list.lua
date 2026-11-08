@@ -4,12 +4,20 @@ local Wow = require("tests.helpers.wow")
 local W
 local SkillList
 
+local KNOWN_RANK_OFFSET = 100000
+
 -- Fresh fake client and module per test; every spell used here has spell info.
+-- Renew, Mind Blast and Devouring Plague each have a known spellbook rank (not
+-- in the cache), so their higher ranks can be bought.
 local function setup(otherSources)
   W = Wow.Install()
   W.spells[139] = { name = "Renew", iconID = 135953 }
   W.spells[8092] = { name = "Mind Blast", iconID = 136224 }
   W.spells[2944] = { name = "Devouring Plague", iconID = 136188 }
+  for _, spellID in ipairs({ 139, 8092, 2944 }) do
+    W.spells[spellID + KNOWN_RANK_OFFSET] = { name = W.spells[spellID].name, iconID = W.spells[spellID].iconID }
+    W.known[spellID + KNOWN_RANK_OFFSET] = true
+  end
   W.spells[2652] = { name = "Touch of Weakness", iconID = 136143 }
   W.spells[588] = { name = "Inner Fire", iconID = 135926 }
   local ns = { OtherSources = otherSources or {} }
@@ -143,13 +151,13 @@ end
 
 local function test_entry_carries_spell_info_and_cache_fields()
   setup()
-  local trainers = priest({ Scourge = 12 }, { [10] = { [8092] = spell({ Scourge = true }, 300, "Rank 2") } })
+  local trainers = priest({ Scourge = 12 }, { [10] = { [8092] = spell({ Scourge = true }, 300, "Rank 1") } })
   local entry = SkillList.Build(trainers, "PRIEST", "Scourge", "Horde", 9, 10)[1]
   Assert.equal(entry.spellID, 8092)
   Assert.equal(entry.level, 10)
   Assert.equal(entry.name, "Mind Blast")
   Assert.equal(entry.icon, 136224)
-  Assert.equal(entry.rank, "Rank 2")
+  Assert.equal(entry.rank, "Rank 1")
   Assert.equal(entry.cost, 300)
 end
 

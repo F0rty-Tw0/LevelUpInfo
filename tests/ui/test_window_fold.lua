@@ -9,6 +9,7 @@ local db
 local MISSED_LEVEL = 5
 local MISSED_BASE = 1000
 local WEAPON_BASE = 2000
+local KNOWN_RANK_OFFSET = 100000
 local SOURCE_ROW_HEIGHT = 59
 local ROW_GAP = 4
 local TOGGLE_HEIGHT = 16
@@ -53,8 +54,13 @@ local function setup(otherSources)
   ns.SpellFacts.Install(Window.Refresh)
 end
 
+-- A Rank 2 or higher also gives the player a known earlier rank (spellbook only).
 local function trainerSpell(spellID, level, name, rank)
   W.spells[spellID] = W.spells[spellID] or { name = name, iconID = spellID }
+  if (tonumber(rank:match("%d+")) or 0) >= 2 then
+    W.spells[spellID + KNOWN_RANK_OFFSET] = { name = name, iconID = spellID }
+    W.known[spellID + KNOWN_RANK_OFFSET] = true
+  end
   db.trainers.PRIEST.levels[level] = db.trainers.PRIEST.levels[level] or {}
   db.trainers.PRIEST.levels[level][spellID] = { cost = 100, rank = rank, races = { Scourge = true } }
 end

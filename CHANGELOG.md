@@ -6,6 +6,8 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
+- Fixed: higher ranks of a talent you haven't taken (like Mind Flay Rank 2 without the talent) no longer show up as skills to buy.
+
 ## [0.1.6] - 2026-11-08
 
 - Fixed: after training a higher rank of a skill (like Rend Rank 2), its lower ranks no longer show up as not yet learned.

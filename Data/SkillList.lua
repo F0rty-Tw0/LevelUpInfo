@@ -9,6 +9,7 @@ local WeaponIcons = ns.WeaponIcons or require("LevelUpInfo.Data.WeaponIcons")
 
 local ipairs = ipairs
 local match = string.match
+local next = next
 local pairs = pairs
 local pcall = pcall
 local sort = table.sort
@@ -17,7 +18,6 @@ local tonumber = tonumber
 local SkillList = {}
 
 local MIN_PRICED_FOR_TOTAL = 2
-
 -- Classic Era and TBC drop IsPlayerSpell unless a deprecation CVar is on.
 local function isKnown(spellID)
   if _G.IsPlayerSpell then
@@ -179,6 +179,76 @@ local function isSuperseded(entry, knownRanks)
   return number ~= nil and number < (knownRanks[entry.name] or 0)
 end
 
+local UNNUMBERED = 0
+
+-- Rank numbers per remaining entry, by name; quest rows count as Rank 1, and
+-- trainer entries with empty rank text as UNNUMBERED.
+local function listedRanks(entries)
+  local listed = {}
+  for _, entry in ipairs(entries) do
+    local isQuest = entry.source ~= nil and entry.source.kind == "quest"
+    local number = rankNumber(entry.rank) or (isQuest and 1) or (entry.source == nil and UNNUMBERED)
+    if number then
+      listed[entry.name] = listed[entry.name] or {}
+      listed[entry.name][number] = true
+    end
+  end
+  return listed
+end
+
+-- Whether this client finds known spells by name, tried once on a known cached
+-- spell. No known cached spell, an error or nil: it can't tell.
+local function findsByName(knownRanks)
+  local name = next(knownRanks)
+  if name == nil then
+    return false
+  end
+  local ok, known = pcall(_G.C_Spell.GetSpellInfo, name)
+  return ok and known ~= nil
+end
+
+-- The cache holds every rank a trainer sells, so a missing earlier rank is a
+-- starting spell or a talent: any known spell of the name means you have it.
+-- A client that can't look spells up by name keeps the rank.
+local function isKnownByName(name, reach)
+  if reach.findsByName == nil then
+    reach.findsByName = findsByName(reach.known)
+  end
+  if not reach.findsByName then
+    return true
+  end
+  local ok, known = pcall(_G.C_Spell.GetSpellInfo, name)
+  return not ok or (known ~= nil and isKnown(known.spellID))
+end
+
+-- Rank N can be bought when Rank N - 1 is known, or listed and itself buyable;
+-- a listed entry of the name without a rank number vouches for any rank.
+-- The spellbook is asked once per name, only when the cache can't tell.
+local function isBuyable(name, number, reach)
+  if number <= 1 or (reach.known[name] or 0) >= number - 1 or reach.listed[name][UNNUMBERED] then
+    return true
+  end
+  if reach.listed[name][number - 1] then
+    return isBuyable(name, number - 1, reach)
+  end
+  if reach.byName[name] == nil then
+    reach.byName[name] = isKnownByName(name, reach)
+  end
+  return reach.byName[name]
+end
+
+-- Drops new ranks whose earlier rank you can't get here (an untaken talent).
+local function dropUnbuyable(entries, knownRanks)
+  local reach = { known = knownRanks, listed = listedRanks(entries), byName = {} }
+  local kept = {}
+  for _, entry in ipairs(entries) do
+    if not entry.newRank or isBuyable(entry.name, rankNumber(entry.rank), reach) then
+      kept[#kept + 1] = entry
+    end
+  end
+  return kept
+end
+
 local function rowApplies(row, race, faction, toLevel)
   return row.level <= toLevel
     and (row.race == nil or row.race == race)
@@ -239,6 +309,7 @@ function SkillList.Build(trainers, class, race, faction, fromLevel, toLevel)
       entries[#entries + 1] = entry
     end
   end
+  entries = dropUnbuyable(entries, knownRanks)
   addPreviousRanks(entries, data, toLevel)
   sort(entries, byGroupThenLevelThenName)
   return entries, TrainerCache.Covered(trainers, class, race) < toLevel

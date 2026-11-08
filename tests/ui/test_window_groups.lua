@@ -9,6 +9,7 @@ local HINT = "Visit your class trainer to see all new skills."
 local MISSED_LEVEL = 5
 local MISSED_BASE = 1000
 local WEAPON_BASE = 2000
+local KNOWN_RANK_OFFSET = 100000
 
 -- Fresh fake client, modules and db per test. The priest cache starts empty and
 -- covers level 10 (no hint row); ns.OtherSources is this test's fixture.
@@ -42,8 +43,13 @@ local function setup(otherSources)
   Window.Install(db)
 end
 
+-- A Rank 2 or higher also gives the player a known earlier rank (spellbook only).
 local function trainerSpell(spellID, level, name, rank)
   W.spells[spellID] = { name = name, iconID = spellID }
+  if (tonumber(rank:match("%d+")) or 0) >= 2 then
+    W.spells[spellID + KNOWN_RANK_OFFSET] = { name = name, iconID = spellID }
+    W.known[spellID + KNOWN_RANK_OFFSET] = true
+  end
   db.trainers.PRIEST.levels[level] = db.trainers.PRIEST.levels[level] or {}
   db.trainers.PRIEST.levels[level][spellID] = { cost = 100, rank = rank, races = { Scourge = true } }
 end

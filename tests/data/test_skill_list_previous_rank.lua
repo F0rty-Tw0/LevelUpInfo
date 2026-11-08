@@ -12,10 +12,15 @@ local APPRENTICE = 7777
 local NO_INFO = 5555
 local QUEST_SPELL = 2652
 local STAVES = 227
+local KNOWN_UNRANKED = 100000
 
 -- Fresh fake client and module per test; Lesser Heal ranks have spell info.
+-- A known Lesser Heal without rank text keeps unmatched ranks listed (they can
+-- be bought) without giving them a previous rank.
 local function setup(otherSources)
   W = Wow.Install()
+  W.spells[KNOWN_UNRANKED] = { name = "Lesser Heal", iconID = 135929 }
+  W.known[KNOWN_UNRANKED] = true
   W.spells[RANK_1] = { name = "Lesser Heal", iconID = 135929 }
   W.spells[RANK_2] = { name = "Lesser Heal", iconID = 135929 }
   W.spells[RANK_3] = { name = "Lesser Heal", iconID = 135929 }

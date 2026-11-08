@@ -7,11 +7,16 @@ local SkillList
 local UNMAPPED_WEAPON = 99999
 
 -- Fresh fake client and module per test, with the given other-sources table.
+local KNOWN_PLAGUE_1 = 102944
+
+-- Devouring Plague Rank 1 is known (spellbook only), so its Rank 2 can be bought.
 local function setup(otherSources)
   W = Wow.Install()
   W.spells[139] = { name = "Renew", iconID = 135953 }
   W.spells[8092] = { name = "Mind Blast", iconID = 136224 }
   W.spells[2944] = { name = "Devouring Plague", iconID = 136188 }
+  W.spells[KNOWN_PLAGUE_1] = { name = "Devouring Plague", iconID = 136188 }
+  W.known[KNOWN_PLAGUE_1] = true
   W.spells[2652] = { name = "Touch of Weakness", iconID = 136143 }
   W.spells[227] = { name = "Staves", iconID = 135138 }
   W.spells[1180] = { name = "Daggers", iconID = 135641 }
