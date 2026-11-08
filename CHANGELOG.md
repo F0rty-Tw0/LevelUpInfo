@@ -6,10 +6,11 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
+- Fixed: after training a higher rank of a skill (like Rend Rank 2), its lower ranks no longer show up as not yet learned.
+
 ## [0.1.5] - 2026-11-07
 
 - Each skill group shows what training all of it costs, in red when you can't afford it.
-- Fixed: after training a higher rank of a skill (like Rend Rank 2), its lower ranks no longer show up as not yet learned.
 
 ## [0.1.4] - 2026-11-06
 
