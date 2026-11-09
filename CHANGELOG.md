@@ -6,7 +6,7 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
-- When a class trainer visit teaches Level Up Info new skills, a chat line says up to which level it now knows them.
+- After a class trainer visit, a chat line tells you when Level Up Info now knows your class skills up to a higher level, and which level.
 
 ## [0.1.7] - 2026-11-09
 
