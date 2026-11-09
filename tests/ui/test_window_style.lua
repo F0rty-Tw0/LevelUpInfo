@@ -68,8 +68,8 @@ end
 
 local function content()
   for _, widget in ipairs(W.frames) do
-    if widget:GetParent() == Window.Frame() and W.state(widget).frameType == "Frame" then
-      return widget
+    if widget:GetParent() == Window.Frame() and W.state(widget).frameType == "ScrollFrame" then
+      return widget:GetScrollChild()
     end
   end
 end

@@ -6,6 +6,7 @@ end
 local Localization = ns.Localization or require("LevelUpInfo.Core.Localization")
 local SkillList = ns.SkillList or require("LevelUpInfo.Data.SkillList")
 local AutoHide = ns.AutoHide or require("LevelUpInfo.UI.AutoHide")
+local ScrollBox = ns.ScrollBox or require("LevelUpInfo.UI.ScrollBox")
 local SkillRow = ns.SkillRow or require("LevelUpInfo.UI.SkillRow")
 local SkillGroup = ns.SkillGroup or require("LevelUpInfo.UI.SkillGroup")
 local SpellFacts = ns.SpellFacts or require("LevelUpInfo.Data.SpellFacts")
@@ -29,6 +30,12 @@ local CONTENT_WIDTH = 298
 local CONTENT_LEFT = 19
 local HEADER_HEIGHT = 68
 local FOOTER_HEIGHT = 12
+-- The view is wide enough for a group box's bar (box right + 4, 8 wide); a
+-- view bar adds a column of the same size to the frame.
+local VIEW_WIDTH = CONTENT_WIDTH + 12
+local VIEW_BAR_COLUMN = 12
+-- Room kept between the window and the top and bottom of the screen.
+local SCREEN_MARGIN = 16
 local LINE_HEIGHT = 16
 local HEADING_HEIGHT = 24
 -- Spacing hierarchy: rows of a group sit closest, a heading sits right on its
@@ -58,6 +65,9 @@ local Window = {}
 
 local db
 local frame
+local view -- ScrollFrame around `content`; scrolls only when content is taller than the screen allows
+local viewBar
+local viewScroll = 0
 local content
 local reachedLine
 local current
@@ -129,6 +139,21 @@ local function buildHeader()
   reachedLine:SetPoint("TOPLEFT", frame, "TOPLEFT", HEADER_LEFT, HEADER_TOP)
 end
 
+-- The mouse stays off so a drag on a gap or heading still moves the window;
+-- the wheel is turned on only while the content overflows.
+local function buildView()
+  view = _G.CreateFrame("ScrollFrame", nil, frame)
+  view:SetWidth(VIEW_WIDTH)
+  view:SetPoint("TOPLEFT", frame, "TOPLEFT", CONTENT_LEFT, -HEADER_HEIGHT)
+  view:EnableMouseWheel(false)
+  content = _G.CreateFrame("Frame", nil, view)
+  content:SetSize(CONTENT_WIDTH, 1)
+  view:SetScrollChild(content)
+  viewBar = ScrollBox.Attach(view, 1, function(value)
+    viewScroll = value
+  end)
+end
+
 local function build()
   frame = _G.CreateFrame("Frame", FRAME_NAME, _G.UIParent, "ButtonFrameTemplate")
   frame:Hide()
@@ -138,6 +163,7 @@ local function build()
   frame:SetPortraitToUnit("player")
   frame:EnableMouse(true)
   frame:SetMovable(true)
+  frame:SetClampedToScreen(true)
   frame:RegisterForDrag("LeftButton")
   frame:SetScript("OnDragStart", frame.StartMoving)
   frame:SetScript("OnDragStop", savePosition)
@@ -148,9 +174,7 @@ local function build()
   AutoHide.Attach(frame, db)
   frame.CloseButton:SetScript("OnClick", AutoHide.Close)
   buildHeader()
-  content = _G.CreateFrame("Frame", nil, frame)
-  content:SetSize(CONTENT_WIDTH, 1)
-  content:SetPoint("TOPLEFT", frame, "TOPLEFT", CONTENT_LEFT, -HEADER_HEIGHT)
+  buildView()
   GainLines.Build(content)
   for _, spec in ipairs(GROUPS) do
     headings[spec.group] = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -324,7 +348,16 @@ local function applyLayout()
   local height, cursors = Layout.Run(content)
   sizeBoxes(cursors)
   content:SetHeight(height)
-  frame:SetSize(FRAME_WIDTH, HEADER_HEIGHT + height + FOOTER_HEIGHT)
+  -- The screen height in frame units, less the margins and the frame's chrome.
+  local maxView = _G.UIParent:GetHeight() / frame:GetScale() - 2 * SCREEN_MARGIN - HEADER_HEIGHT - FOOTER_HEIGHT
+  local viewHeight = min(height, maxView)
+  view:SetHeight(viewHeight)
+  viewBar:SetHeight(viewHeight)
+  viewScroll = ScrollBox.SetRange(viewBar, viewHeight, height, viewScroll)
+  view:SetVerticalScroll(viewScroll)
+  local overflow = height > viewHeight
+  view:EnableMouseWheel(overflow)
+  frame:SetSize(FRAME_WIDTH + (overflow and VIEW_BAR_COLUMN or 0), HEADER_HEIGHT + viewHeight + FOOTER_HEIGHT)
 end
 
 -- Runs `work` under the `filling` guard; an error hides everything, marks
@@ -337,6 +370,7 @@ local function guarded(work)
     Layout.Reset()
     GainLines.HideAll()
     SkillGroup.HideAll()
+    viewBar:Hide()
     for _, pool in ipairs(POOLS) do
       for _, region in pairs(pool) do
         region:Hide()
@@ -385,9 +419,15 @@ function Window.Frame()
   return frame
 end
 
+-- A shown window is placed again: the height cap depends on the scale. Not
+-- while stale (the layout list was reset) or inside a fill.
 function Window.ApplyScale()
-  if frame then
-    frame:SetScale(db.scale)
+  if not frame then
+    return
+  end
+  frame:SetScale(db.scale)
+  if frame:IsShown() and not stale and not filling then
+    guarded(applyLayout)
   end
 end
 
@@ -408,8 +448,10 @@ function Window.Show(record)
   current = record
   skillEntries = nil
   SkillGroup.Collapse()
+  -- Scale first: the fill caps the height with it.
+  frame:SetScale(db.scale)
+  viewScroll = 0
   fill(record)
-  Window.ApplyScale()
   applyAnchor()
   frame:Show()
   AutoHide.Resume()

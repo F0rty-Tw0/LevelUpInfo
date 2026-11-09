@@ -86,8 +86,8 @@ end
 
 local function content()
   for _, widget in ipairs(W.frames) do
-    if widget:GetParent() == frame() and W.state(widget).frameType == "Frame" then
-      return widget
+    if widget:GetParent() == frame() and W.state(widget).frameType == "ScrollFrame" then
+      return widget:GetScrollChild()
     end
   end
 end
@@ -151,7 +151,8 @@ end
 local function shownBoxes()
   local count = 0
   for _, widget in ipairs(W.frames) do
-    if W.state(widget).frameType == "ScrollFrame" and widget:IsShown() then
+    -- The window's own view (a child of the frame) is always shown; skip it.
+    if W.state(widget).frameType == "ScrollFrame" and widget:IsShown() and widget:GetParent() ~= frame() then
       count = count + 1
     end
   end
