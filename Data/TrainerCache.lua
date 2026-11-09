@@ -36,10 +36,13 @@ function TrainerCache.Covered(trainers, class, race)
   return data and data.covered[race] or 0
 end
 
+-- Returns true when it raised the stored coverage.
 function TrainerCache.Cover(trainers, class, race, seen)
   if seen > TrainerCache.Covered(trainers, class, race) then
     classData(trainers, class).covered[race] = seen
+    return true
   end
+  return false
 end
 
 ns.TrainerCache = TrainerCache
