@@ -6,6 +6,8 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-11-09
+
 - Fixed: higher ranks of a talent you haven't taken (like Mind Flay Rank 2 without the talent) no longer show up as skills to buy.
 
 ## [0.1.6] - 2026-11-08
