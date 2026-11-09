@@ -6,6 +6,8 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
+- When a class trainer visit teaches Level Up Info new skills, a chat line says up to which level it now knows them.
+
 ## [0.1.10] - 2026-11-16
 
 - The level-up window now ends with a folded "Next at N" group listing the skills and prices the trainer teaches at your next level that has something new.
