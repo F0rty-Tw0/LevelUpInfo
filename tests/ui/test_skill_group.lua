@@ -8,7 +8,7 @@ local KNOB = "Interface\\Buttons\\UI-ScrollBar-Knob"
 local function setup()
   local W = Wow.Install()
   local ns = {}
-  for _, path in ipairs({ "Core/Localization.lua", "Core/Events.lua", "UI/AutoHide.lua" }) do
+  for _, path in ipairs({ "Core/Localization.lua", "Core/Events.lua", "UI/AutoHide.lua", "UI/ScrollBox.lua" }) do
     assert(loadfile(path))("LevelUpInfo", ns)
   end
   local t = { W = W, spy = { pause = 0, resume = 0 }, toggled = {} }

@@ -7,7 +7,7 @@ local SPECS = { { group = "skill", cap = 5 }, { group = "weapon", cap = 5, fold 
 local function setup()
   local W = Wow.Install()
   local ns = {}
-  for _, path in ipairs({ "Core/Localization.lua", "Core/Events.lua", "UI/AutoHide.lua" }) do
+  for _, path in ipairs({ "Core/Localization.lua", "Core/Events.lua", "UI/AutoHide.lua", "UI/ScrollBox.lua" }) do
     assert(loadfile(path))("LevelUpInfo", ns)
   end
   local t = { W = W }

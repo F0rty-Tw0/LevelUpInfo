@@ -32,6 +32,7 @@ local function setup(otherSources)
     "Data/RankChanges.lua",
     "Data/SpellFacts.lua",
     "UI/AutoHide.lua",
+    "UI/ScrollBox.lua",
     "UI/SkillRow.lua",
     "UI/SkillGroup.lua",
     "UI/Layout.lua",
