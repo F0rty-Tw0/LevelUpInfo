@@ -1,8 +1,9 @@
 local Assert = require("tests.helpers.assert")
 local Wow = require("tests.helpers.wow")
 local Trainer = require("tests.helpers.trainer")
+local capturePrint = require("tests.helpers.print")
 
-local FILES = { "Core/Events.lua", "Data/TrainerCache.lua", "Data/TrainerScan.lua" }
+local FILES = { "Core/Localization.lua", "Core/Events.lua", "Data/TrainerCache.lua", "Data/TrainerScan.lua" }
 
 -- Classic lists a header per school, between the spells.
 local function classicServices()
@@ -25,7 +26,7 @@ local function setup(opts)
   for _, file in ipairs(FILES) do
     assert(loadfile(file))("LevelUpInfo", ns)
   end
-  local db = { trainers = {} }
+  local db = { trainers = {}, enabled = opts.enabled }
   ns.TrainerScan.Install(db)
   return W, db, ns.Events.frame
 end
@@ -123,6 +124,25 @@ local function test_classic_collapsed_header_records_rows_but_keeps_coverage()
   Assert.equal(covered(db), nil)
 end
 
+local function test_classic_scan_that_raises_coverage_prints_one_line()
+  local W, _, frame = setup({ enabled = true })
+  local lines = capturePrint(function()
+    showTrainer(W, frame)
+  end)
+  Assert.equal(#lines, 1)
+  Assert.equal(lines[1], "Level Up Info: saved trainer skills up to level 10.")
+end
+
+local function test_classic_collapsed_header_prints_nothing()
+  local services = classicServices()
+  services[3].collapsed = true
+  local W, _, frame = setup({ services = services, enabled = true })
+  local lines = capturePrint(function()
+    showTrainer(W, frame)
+  end)
+  Assert.equal(#lines, 0)
+end
+
 return function()
   test_classic_scan_records_spell_level_cost_and_rank()
   test_classic_scan_never_sets_a_header_row()
@@ -133,4 +153,6 @@ return function()
   test_classic_pet_learn_row_is_not_recorded_and_does_not_raise_coverage()
   test_classic_scan_with_all_headers_expanded_raises_coverage()
   test_classic_collapsed_header_records_rows_but_keeps_coverage()
+  test_classic_scan_that_raises_coverage_prints_one_line()
+  test_classic_collapsed_header_prints_nothing()
 end
