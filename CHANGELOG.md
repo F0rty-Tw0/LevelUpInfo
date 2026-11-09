@@ -6,6 +6,7 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
+- Fixed: The level-up window no longer runs off the screen when it has many skills; it scrolls instead.
 - Fixed: higher ranks of a talent you haven't taken (like Mind Flay Rank 2 without the talent) no longer show up as skills to buy.
 
 ## [0.1.6] - 2026-11-08
