@@ -1,8 +1,10 @@
 local Assert = require("tests.helpers.assert")
 local Wow = require("tests.helpers.wow")
 local Trainer = require("tests.helpers.trainer")
+local capturePrint = require("tests.helpers.print")
 
-local FILES = { "Core/Events.lua", "Data/TrainerCache.lua", "Data/TrainerScan.lua" }
+local FILES = { "Core/Localization.lua", "Core/Events.lua", "Data/TrainerCache.lua", "Data/TrainerScan.lua" }
+local SAVED_TO_10 = "Level Up Info: saved trainer skills up to level 10."
 
 local function priestServices()
   return {
@@ -27,7 +29,7 @@ local function setup(opts)
   for _, file in ipairs(FILES) do
     assert(loadfile(file))("LevelUpInfo", ns)
   end
-  local db = { trainers = {} }
+  local db = { trainers = {}, enabled = opts.enabled }
   ns.TrainerScan.Install(db)
   return W, db, ns.Events.frame
 end
@@ -35,7 +37,6 @@ end
 local function showTrainer(W, frame)
   W.fireEvent(frame, "TRAINER_SHOW")
 end
-
 local function levels(db)
   return db.trainers.PRIEST and db.trainers.PRIEST.levels or {}
 end
@@ -198,6 +199,72 @@ local function test_scan_writes_no_trainer_frame_fields()
   Assert.equal(W.changedKeys(trainerFrame, before), "")
 end
 
+local function test_scan_that_raises_coverage_prints_one_line()
+  local W, _, frame = setup({ enabled = true })
+  local lines = capturePrint(function()
+    showTrainer(W, frame)
+  end)
+  Assert.equal(#lines, 1)
+  Assert.equal(lines[1], SAVED_TO_10)
+end
+
+local function test_second_scan_without_new_coverage_prints_nothing()
+  local W, _, frame = setup({ enabled = true })
+  local lines = capturePrint(function()
+    showTrainer(W, frame)
+    W.fireEvent(frame, "TRAINER_UPDATE")
+  end)
+  Assert.equal(#lines, 1)
+end
+
+local function test_rescan_with_higher_level_prints_new_level()
+  local services = priestServices()
+  local W, _, frame = setup({ services = services, enabled = true })
+  local lines = capturePrint(function()
+    showTrainer(W, frame)
+    services[#services + 1] = { name = "Fade", type = "unavailable", level = 12, cost = 400, spellID = 586, rank = "Rank 1" }
+    W.fireEvent(frame, "TRAINER_UPDATE")
+  end)
+  Assert.equal(#lines, 2)
+  Assert.equal(lines[2], "Level Up Info: saved trainer skills up to level 12.")
+end
+
+local function test_scan_with_addon_disabled_raises_coverage_silently()
+  local W, db, frame = setup({ enabled = false })
+  local lines = capturePrint(function()
+    showTrainer(W, frame)
+  end)
+  Assert.equal(#lines, 0)
+  Assert.equal(covered(db), 10)
+end
+
+local function test_refused_filter_change_prints_nothing()
+  local W, _, frame = setup({ enabled = true })
+  Trainer.refuse("used")
+  local lines = capturePrint(function()
+    showTrainer(W, frame)
+  end)
+  Assert.equal(#lines, 0)
+end
+
+local function test_failed_scan_prints_nothing()
+  local W, _, frame = setup({ enabled = true })
+  Trainer.failOn(2)
+  local lines = capturePrint(function()
+    showTrainer(W, frame)
+  end)
+  Assert.equal(#lines, 0)
+  Assert.equal(#W.errors, 1)
+end
+
+local function test_scan_with_no_kept_rows_prints_nothing()
+  local W, _, frame = setup({ services = { { name = "Holy", type = "header" } }, enabled = true })
+  local lines = capturePrint(function()
+    showTrainer(W, frame)
+  end)
+  Assert.equal(#lines, 0)
+end
+
 return function()
   test_scan_records_all_three_types_with_filters_off()
   test_player_filters_end_as_they_were()
@@ -214,4 +281,11 @@ return function()
   test_blizzard_update_after_buying_rescans()
   test_trainer_closed_unregisters_update_and_closed()
   test_scan_writes_no_trainer_frame_fields()
+  test_scan_that_raises_coverage_prints_one_line()
+  test_second_scan_without_new_coverage_prints_nothing()
+  test_rescan_with_higher_level_prints_new_level()
+  test_scan_with_addon_disabled_raises_coverage_silently()
+  test_refused_filter_change_prints_nothing()
+  test_failed_scan_prints_nothing()
+  test_scan_with_no_kept_rows_prints_nothing()
 end

@@ -6,6 +6,8 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
+- After a class trainer visit, a chat line tells you when Level Up Info now knows your class skills up to a higher level, and which level.
+
 ## [0.1.7] - 2026-11-09
 
 - Fixed: higher ranks of a talent you haven't taken (like Mind Flay Rank 2 without the talent) no longer show up as skills to buy.
