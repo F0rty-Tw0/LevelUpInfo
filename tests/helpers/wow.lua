@@ -348,6 +348,13 @@ local function newWidget(W, frameType, name, parent, template)
   function widget:IsClampedToScreen()
     return stub.clamped == true
   end
+  function widget:SetClampRectInsets(left, right, top, bottom)
+    stub.clampInsets = { left, right, top, bottom }
+  end
+  function widget:GetClampRectInsets()
+    local insets = stub.clampInsets or { 0, 0, 0, 0 }
+    return insets[1], insets[2], insets[3], insets[4]
+  end
   function widget:RegisterForDrag(...)
     stub.dragButtons = { ... }
   end

@@ -122,6 +122,18 @@ local function test_window_is_clamped_to_screen()
   Assert.equal(frame():IsClampedToScreen(), true)
 end
 
+-- The clamp rect reaches 16 above and below the frame, so the clamp keeps
+-- that margin to the screen edges too.
+local function test_clamp_keeps_the_screen_margin()
+  setup()
+  Window.Show(record())
+  local left, right, top, bottom = frame():GetClampRectInsets()
+  Assert.equal(left, 0)
+  Assert.equal(right, 0)
+  Assert.equal(top, 16)
+  Assert.equal(bottom, -16)
+end
+
 local function test_view_holds_content()
   setup()
   Window.Show(record())
@@ -146,6 +158,7 @@ local function test_tall_content_caps_the_frame()
   Assert.equal(frame():GetHeight(), 300 - MARGINS)
   Assert.equal(width(), 350)
   Assert.equal(viewBar():IsShown(), true)
+  Assert.equal(viewBar():GetHeight(), 300 - MARGINS - CHROME)
   Assert.equal(view():IsMouseWheelEnabled(), true)
   Assert.equal(maxValue(), contentHeight() - (300 - MARGINS - CHROME))
 end
@@ -238,10 +251,12 @@ local function test_fill_error_hides_the_view_bar()
   breakFill()
   Window.Show(record())
   Assert.equal(viewBar():IsShown(), false)
+  Assert.equal(view():IsMouseWheelEnabled(), false)
 end
 
 return function()
   test_window_is_clamped_to_screen()
+  test_clamp_keeps_the_screen_margin()
   test_view_holds_content()
   test_short_content_keeps_today_size()
   test_tall_content_caps_the_frame()

@@ -34,7 +34,8 @@ local FOOTER_HEIGHT = 12
 -- view bar adds a column of the same size to the frame.
 local VIEW_WIDTH = CONTENT_WIDTH + 12
 local VIEW_BAR_COLUMN = 12
--- Room kept between the window and the top and bottom of the screen.
+-- Room kept between the window and the top and bottom of the screen: the
+-- height cap leaves it, and the clamp rect reaches this far past the frame.
 local SCREEN_MARGIN = 16
 local LINE_HEIGHT = 16
 local HEADING_HEIGHT = 24
@@ -94,7 +95,8 @@ local function onToggle()
 end
 
 -- A fold click changes the window's height: keep the top-left corner where it
--- is, so the window does not jump. The anchor is not saved: the next show
+-- is, so the window does not jump (unless the screen clamp has to move a
+-- taller window back on screen). The anchor is not saved: the next show
 -- applies the saved position again.
 local function pinTop()
   local left, top = frame:GetLeft(), frame:GetTop() -- read before ClearAllPoints
@@ -164,6 +166,7 @@ local function build()
   frame:EnableMouse(true)
   frame:SetMovable(true)
   frame:SetClampedToScreen(true)
+  frame:SetClampRectInsets(0, 0, SCREEN_MARGIN, -SCREEN_MARGIN)
   frame:RegisterForDrag("LeftButton")
   frame:SetScript("OnDragStart", frame.StartMoving)
   frame:SetScript("OnDragStop", savePosition)
@@ -371,6 +374,7 @@ local function guarded(work)
     GainLines.HideAll()
     SkillGroup.HideAll()
     viewBar:Hide()
+    view:EnableMouseWheel(false)
     for _, pool in ipairs(POOLS) do
       for _, region in pairs(pool) do
         region:Hide()
