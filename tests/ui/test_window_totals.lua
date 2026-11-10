@@ -29,6 +29,7 @@ local function setup(otherSources)
     "Data/RankChanges.lua",
     "Data/SpellFacts.lua",
     "UI/AutoHide.lua",
+    "UI/ScrollBox.lua",
     "UI/SkillRow.lua",
     "UI/SkillGroup.lua",
     "UI/Layout.lua",
@@ -82,9 +83,9 @@ end
 local function content()
   for _, widget in ipairs(W.frames) do
     local isChild = widget:GetParent() == frame()
-    local isFrame = W.state(widget).frameType == "Frame"
-    if isChild and isFrame then
-      return widget
+    local isView = W.state(widget).frameType == "ScrollFrame"
+    if isChild and isView then
+      return widget:GetScrollChild()
     end
   end
 end

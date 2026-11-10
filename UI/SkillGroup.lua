@@ -4,22 +4,15 @@ if type(ns) ~= "table" then
 end
 
 local AutoHide = ns.AutoHide or require("LevelUpInfo.UI.AutoHide")
+local ScrollBox = ns.ScrollBox or require("LevelUpInfo.UI.ScrollBox")
 
 local ipairs = ipairs
 local pairs = pairs
-local max = math.max
-local min = math.min
 
 local BOX_HEIGHT = 235
 local CONTENT_WIDTH = 298
 local TOGGLE_HEIGHT = 16
-local BAR_WIDTH = 8
-local BAR_GAP = 4
-local THUMB_HEIGHT = 24
-local WHEEL_STEP = 47
-local TRACK_ALPHA = 0.1
 local TEXT_LEFT = 4
-local THUMB_FILE = "Interface\\Buttons\\UI-ScrollBar-Knob"
 local FONT_REST = "GameFontDisableSmall"
 local FONT_HOVER = "GameFontHighlightSmall"
 local FOLD_HEIGHT = 24 -- the window's heading line height
@@ -108,31 +101,6 @@ local function newFoldButton(group, onFold)
   return button
 end
 
-local function newBar(box, state)
-  local bar = _G.CreateFrame("Slider", nil, box)
-  bar:SetOrientation("VERTICAL")
-  bar:SetSize(BAR_WIDTH, BOX_HEIGHT)
-  bar:SetPoint("TOPLEFT", box, "TOPRIGHT", BAR_GAP, 0)
-  local track = bar:CreateTexture(nil, "BACKGROUND")
-  track:SetAllPoints()
-  track:SetColorTexture(1, 1, 1, TRACK_ALPHA)
-  local thumb = bar:CreateTexture(nil, "ARTWORK")
-  thumb:SetSize(BAR_WIDTH, THUMB_HEIGHT)
-  thumb:SetTexture(THUMB_FILE)
-  bar:SetThumbTexture(thumb)
-  bar:SetValueStep(1)
-  bar:SetObeyStepOnDrag(true)
-  bar:EnableMouse(true)
-  bar:SetScript("OnValueChanged", function(_, value)
-    state.scroll = value
-    box:SetVerticalScroll(value)
-  end)
-  bar:SetScript("OnEnter", pause)
-  bar:SetScript("OnLeave", resume)
-  bar:Hide()
-  return bar
-end
-
 local function newBox(state)
   local box = _G.CreateFrame("ScrollFrame", nil, parent)
   box:SetSize(CONTENT_WIDTH, BOX_HEIGHT)
@@ -141,9 +109,8 @@ local function newBox(state)
   local child = _G.CreateFrame("Frame", nil, box)
   child:SetWidth(CONTENT_WIDTH)
   box:SetScrollChild(child)
-  local bar = newBar(box, state)
-  box:SetScript("OnMouseWheel", function(_, delta)
-    bar:SetValue(bar:GetValue() - delta * WHEEL_STEP)
+  local bar = ScrollBox.Attach(box, BOX_HEIGHT, function(value)
+    state.scroll = value
   end)
   box:SetScript("OnEnter", pause)
   box:SetScript("OnLeave", resume)
@@ -278,12 +245,8 @@ end
 -- The kept scroll position is clamped to the new range.
 function SkillGroup.SetContentHeight(group, height)
   local state = groups[group]
-  local range = max(0, height - (state.boxHeight or BOX_HEIGHT))
-  local scroll = min(state.scroll, range)
   state.child:SetHeight(height)
-  state.bar:SetMinMaxValues(0, range)
-  state.bar:SetShown(range > 0)
-  scrollTo(state, scroll)
+  scrollTo(state, ScrollBox.SetRange(state.bar, state.boxHeight or BOX_HEIGHT, height, state.scroll))
 end
 
 ns.SkillGroup = SkillGroup

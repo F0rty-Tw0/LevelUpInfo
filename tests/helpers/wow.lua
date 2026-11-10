@@ -342,6 +342,19 @@ local function newWidget(W, frameType, name, parent, template)
   function widget:SetMovable(movable)
     stub.movable = movable and true or false
   end
+  function widget:SetClampedToScreen(clamped)
+    stub.clamped = clamped and true or false
+  end
+  function widget:IsClampedToScreen()
+    return stub.clamped == true
+  end
+  function widget:SetClampRectInsets(left, right, top, bottom)
+    stub.clampInsets = { left, right, top, bottom }
+  end
+  function widget:GetClampRectInsets()
+    local insets = stub.clampInsets or { 0, 0, 0, 0 }
+    return insets[1], insets[2], insets[3], insets[4]
+  end
   function widget:RegisterForDrag(...)
     stub.dragButtons = { ... }
   end
@@ -720,7 +733,9 @@ function Wow.Install()
   -- Frame names Escape closes (Blizzard's CloseSpecialWindows list).
   rawset(_G, "UISpecialFrames", {})
 
-  newWidget(W, "Frame", "UIParent")
+  -- A 768-unit tall screen; the window caps its height to it.
+  local uiParent = newWidget(W, "Frame", "UIParent")
+  uiParent._stub.height = 768
   -- The round minimap: 140 wide, centered at (500, 400).
   local minimap = newWidget(W, "Frame", "Minimap", _G.UIParent)
   minimap._stub.width = 140
