@@ -56,6 +56,13 @@ local function rankOf(spellID, entry)
   return _G.C_Spell.GetSpellSubtext(spellID) or ""
 end
 
+-- No cached rank text and no subtext yet, and the caller still waits for it:
+-- the entry is left out until the text arrives (it may be an unbuyable rank).
+local function isRankPending(spellID, entry, isWaiting)
+  local getSubtext = _G.C_Spell.GetSpellSubtext
+  return isWaiting ~= nil and entry.rank == "" and getSubtext ~= nil and (getSubtext(spellID) or "") == "" and isWaiting(spellID)
+end
+
 local function isNewRank(rank)
   return (rankNumber(rank) or 0) >= FIRST_NEW_RANK
 end
@@ -159,11 +166,11 @@ local function recordKnownRank(knownRanks, spellID, entry)
   end
 end
 
-local function addLevel(bySpell, knownRanks, data, race, level, fromLevel)
+local function addLevel(bySpell, knownRanks, data, race, level, fromLevel, isWaiting)
   for spellID, entry in pairs(data.levels[level] or {}) do
     if isKnown(spellID) then
       recordKnownRank(knownRanks, spellID, entry)
-    elseif isVisible(data.covered, race, level, entry) then
+    elseif isVisible(data.covered, race, level, entry) and not isRankPending(spellID, entry, isWaiting) then
       addTrainerEntry(bySpell, spellID, entry, level, fromLevel)
     end
   end
@@ -289,13 +296,15 @@ end
 -- Unlearned trainer, quest and weapon-master skills up to toLevel: new skills
 -- and new ranks from (fromLevel, toLevel], then the ones skipped at or below
 -- fromLevel, then weapon skills; plus whether to show the hint row.
-function SkillList.Build(trainers, class, race, faction, fromLevel, toLevel)
+-- `isWaiting(spellID)` (optional): true leaves out a trainer entry whose rank
+-- text is not loaded yet.
+function SkillList.Build(trainers, class, race, faction, fromLevel, toLevel, isWaiting)
   local bySpell = {}
   local knownRanks = {}
   local data = trainers[class]
   if data then
     for level = 1, toLevel do
-      addLevel(bySpell, knownRanks, data, race, level, fromLevel)
+      addLevel(bySpell, knownRanks, data, race, level, fromLevel, isWaiting)
     end
   end
   for _, row in ipairs(OtherSources[class] or {}) do
