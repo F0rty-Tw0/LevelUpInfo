@@ -6,7 +6,7 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
-- Fixed: higher ranks of spells you can't learn yet (such as Binding Heal) no longer show for a moment the first time the window opens.
+- Fixed: higher ranks of spells you can't learn yet (such as Binding Heal) no longer show up the first time the window opens.
 
 ## [0.1.8] - 2026-11-10
 
