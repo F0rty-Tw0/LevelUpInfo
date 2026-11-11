@@ -80,8 +80,8 @@ local rowEntries = {} -- entry shown in rows[i], read only when rowLines[i]
 local rowLines = {} -- whether rows[i] shows change lines
 local boxFirstRow = {} -- group → index in `rows` of its expanded box's first row
 local skillEntries, skillHint -- skill list of `current`: built on Show, reused by Refresh
--- Spells left out of `skillEntries` until their rank text loads; the load
--- result builds the list again.
+-- Spells left out of `skillEntries` until their rank text loads; the last
+-- one's load result builds the list again.
 local waitingRanks = {}
 -- Set while a fill runs, so a load result fired inside it starts no second fill.
 local filling = false
@@ -475,16 +475,18 @@ function Window.Show(record)
 end
 
 -- Spell text for `spellID` arrived: updates only the rows using it (nil or
--- stale: a full refill; a spell left out for its rank text: the list is built
--- again). Keeps countdown, anchor, scale, expanded state and scroll position.
+-- stale: a full refill; the last spell left out for its rank text: the list is
+-- built again). Keeps countdown, anchor, scale, expanded state and scroll position.
 function Window.Refresh(spellID)
   if filling or not current or not frame or not frame:IsShown() then
     return
   end
   if spellID ~= nil and waitingRanks[spellID] then
     waitingRanks[spellID] = nil
-    skillEntries = nil
-    fill(current)
+    if next(waitingRanks) == nil then
+      skillEntries = nil
+      fill(current)
+    end
   elseif spellID == nil or stale then
     fill(current)
   else

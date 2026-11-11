@@ -12,6 +12,7 @@ local LOAD_EVENT = "SPELL_DATA_LOAD_RESULT"
 local SMITE_2 = 591
 local BINDING_2 = 32546
 local FADE = 586
+local SHACKLE = 9484
 
 local function setup()
   W = Wow.Install()
@@ -97,7 +98,21 @@ local function test_new_unranked_spell_shows_once_its_text_loads()
   Assert.equal(rowNamed("Fade") ~= nil, true)
 end
 
+-- One rebuild for the whole wait, not one per arriving spell.
+local function test_list_is_built_again_once_the_last_waiting_spell_loads()
+  local levels = setup()
+  cacheUnranked(levels, FADE, "Fade")
+  cacheUnranked(levels, SHACKLE, "Shackle Undead")
+  Window.Show(record())
+  load(FADE, nil)
+  Assert.equal(rowNamed("Fade"), nil)
+  load(SHACKLE, nil)
+  Assert.equal(rowNamed("Fade") ~= nil, true)
+  Assert.equal(rowNamed("Shackle Undead") ~= nil, true)
+end
+
 return function()
   test_unbuyable_rank_never_shows_while_its_rank_text_loads()
   test_new_unranked_spell_shows_once_its_text_loads()
+  test_list_is_built_again_once_the_last_waiting_spell_loads()
 end
