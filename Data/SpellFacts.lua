@@ -8,9 +8,10 @@ local RankChanges = ns.RankChanges or require("LevelUpInfo.Data.RankChanges")
 
 local next = next
 
--- Reads one spell's facts for the rank change lines. A spell whose text is
--- not loaded yet is requested once per window lifetime (until Stop); the
--- load event is registered only while a request is pending.
+-- Reads one spell's facts for the rank change lines, and tells the skill list
+-- whether a spell's rank text is still loading. A spell whose text is not
+-- loaded yet is requested once per window lifetime (until Stop); the load
+-- event is registered only while a request is pending.
 local SpellFacts = {}
 
 local LOAD_EVENT = "SPELL_DATA_LOAD_RESULT"
@@ -90,6 +91,20 @@ function SpellFacts.Read(spellID)
     description = readDescription(spellID)
   end
   return buildFacts(spellID, description)
+end
+
+-- Whether the spell's rank text may still arrive: true while its request is
+-- pending. A spell with neither subtext nor description is not loaded, so it
+-- is requested here once (until Stop), as Read does.
+function SpellFacts.Waiting(spellID)
+  if pending[spellID] then
+    return true
+  end
+  local subtext = call(_G.C_Spell.GetSpellSubtext, spellID) or ""
+  if subtext ~= "" or readDescription(spellID) ~= "" or not canRequest(spellID) then
+    return false
+  end
+  return request(spellID)
 end
 
 -- Reads both spells first, so one wait covers both.
