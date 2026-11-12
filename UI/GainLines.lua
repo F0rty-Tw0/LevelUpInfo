@@ -38,6 +38,11 @@ local GAINS = {
   { key = "spirit", global = "SPELL_STAT5_NAME", fallback = "Spirit", color = "f5a3d0" },
 }
 
+-- The five primary stats; when all gain the same amount they share one line at
+-- Strength's slot, and the other four are skipped.
+local STAT_KEYS = { "strength", "agility", "stamina", "intellect", "spirit" }
+local COLLAPSED_SKIP = { agility = true, stamina = true, intellect = true, spirit = true }
+
 -- The window's gain lines: the talent line, then a divider and the stat
 -- lines under a `Stats` heading. Pooled font strings on the content frame.
 local GainLines = {}
@@ -58,6 +63,30 @@ local function gainText(record, gain, amount)
   end
   local old = OLD_VALUE_COLOR .. tostring(before) .. "|r"
   return format(Text("%s %s %s %s %s"), coloredName, old, Format.ARROW, tostring(before + amount), plus)
+end
+
+-- The shared gain when all five primary stats gained the same amount above 0,
+-- else nil. A missing key counts as 0.
+local function allStatsGain(gains)
+  local amount = gains.strength
+  if type(amount) ~= "number" or amount <= 0 then
+    return nil
+  end
+  for _, key in ipairs(STAT_KEYS) do
+    if gains[key] ~= amount then
+      return nil
+    end
+  end
+  return amount
+end
+
+-- Text for one shown line: the `All stats (+N)` line in Strength's slot when
+-- the stats collapse, else the gain's own line.
+local function lineText(record, gain, amount, collapsed)
+  if collapsed and gain.key == "strength" then
+    return format(Text("%s %s"), Text("All stats"), green .. format(Text("(+%d)"), collapsed) .. "|r")
+  end
+  return gainText(record, gain, amount)
 end
 
 -- Makes the heading and divider; called once when the window is built.
@@ -88,8 +117,12 @@ function GainLines.Fill(content, record)
   end
   local used = 0
   local stats = 0
+  local collapsed = allStatsGain(record.gains)
   for _, gain in ipairs(GAINS) do
     local amount = record.gains[gain.key]
+    if collapsed and COLLAPSED_SKIP[gain.key] then
+      amount = nil
+    end
     if amount and amount ~= 0 then
       if gain.key ~= "talents" then
         if stats == 0 then
@@ -99,7 +132,7 @@ function GainLines.Fill(content, record)
       end
       used = used + 1
       lines[used] = lines[used] or content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-      lines[used]:SetText(gainText(record, gain, amount))
+      lines[used]:SetText(lineText(record, gain, amount, collapsed))
       Layout.Add(lines[used], content, TEXT_LEFT, LINE_HEIGHT)
     end
   end
