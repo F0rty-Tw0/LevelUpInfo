@@ -5,6 +5,7 @@ end
 
 local Localization = ns.Localization or require("LevelUpInfo.Core.Localization")
 local SkillList = ns.SkillList or require("LevelUpInfo.Data.SkillList")
+local NextLevel = ns.NextLevel or require("LevelUpInfo.Data.NextLevel")
 local AutoHide = ns.AutoHide or require("LevelUpInfo.UI.AutoHide")
 local ScrollBox = ns.ScrollBox or require("LevelUpInfo.UI.ScrollBox")
 local SkillRow = ns.SkillRow or require("LevelUpInfo.UI.SkillRow")
@@ -12,6 +13,7 @@ local SkillGroup = ns.SkillGroup or require("LevelUpInfo.UI.SkillGroup")
 local SpellFacts = ns.SpellFacts or require("LevelUpInfo.Data.SpellFacts")
 local Layout = ns.Layout or require("LevelUpInfo.UI.Layout")
 local GainLines = ns.GainLines or require("LevelUpInfo.UI.GainLines")
+local NextLevelLine = ns.NextLevelLine or require("LevelUpInfo.UI.NextLevelLine")
 
 local format = string.format
 local ipairs = ipairs
@@ -80,6 +82,7 @@ local rowEntries = {} -- entry shown in rows[i], read only when rowLines[i]
 local rowLines = {} -- whether rows[i] shows change lines
 local boxFirstRow = {} -- group → index in `rows` of its expanded box's first row
 local skillEntries, skillHint -- skill list of `current`: built on Show, reused by Refresh
+local nextLevel, nextEntries -- next level with trainer skills, built with skillEntries
 -- Spells left out of `skillEntries` until their rank text loads; the last
 -- one's load result builds the list again.
 local waitingRanks = {}
@@ -309,6 +312,7 @@ local function fillSkills(record, gainCount)
     local race = select(2, _G.UnitRace("player"))
     local faction = _G.UnitFactionGroup("player")
     skillEntries, skillHint = SkillList.Build(db.trainers, class, race, faction, record.fromLevel, record.toLevel, isRankWaiting)
+    nextLevel, nextEntries = NextLevel.Find(db.trainers, class, race, faction, record.toLevel)
   end
   local money = _G.GetMoney()
   rowsUsed = 0
@@ -325,6 +329,11 @@ local function fillSkills(record, gainCount)
     SkillRow.SetHint(row)
     rowLines[rowsUsed] = false
     Layout.Add(row, content, 0, ROW_HEIGHT)
+  end
+  local line = NextLevelLine.Set(content, nextLevel, nextEntries)
+  if line then
+    Layout.AddGap(content, skillHint and GROUP_GAP or gap)
+    Layout.Add(line, content, TEXT_LEFT, LINE_HEIGHT)
   end
   for index = rowsUsed + 1, #rows do
     rows[index]:Hide()
@@ -385,6 +394,7 @@ local function guarded(work)
     Layout.Reset()
     GainLines.HideAll()
     SkillGroup.HideAll()
+    NextLevelLine.Set(content, nil)
     viewBar:Hide()
     view:EnableMouseWheel(false)
     for _, pool in ipairs(POOLS) do
@@ -463,6 +473,7 @@ function Window.Show(record)
   AutoHide.Pause()
   current = record
   skillEntries = nil
+  nextLevel, nextEntries = nil, nil
   _G.wipe(waitingRanks)
   SkillGroup.Collapse()
   -- Scale first: the fill caps the height with it.
@@ -485,6 +496,7 @@ function Window.Refresh(spellID)
     waitingRanks[spellID] = nil
     if next(waitingRanks) == nil then
       skillEntries = nil
+      nextLevel, nextEntries = nil, nil
       fill(current)
     end
   elseif spellID == nil or stale then
