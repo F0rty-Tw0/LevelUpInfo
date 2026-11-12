@@ -2,6 +2,7 @@
 -- so every file's `ns.X or require(...)` fallback must never be reached:
 -- each dependency has to load earlier in the TOC.
 local Wow = require("tests.helpers.wow")
+local WindowHelper = require("tests.helpers.window")
 
 local function tocFiles()
   local files = {}
@@ -39,6 +40,22 @@ local function test_toc_lists_bootstrap_last()
   assert(files[#files] == "Bootstrap.lua", tostring(files[#files]))
 end
 
+-- The window tests load modules from one list; a module placed before one it
+-- imports would load a second copy through the fallback and split its state.
+local function test_window_test_files_follow_toc_order()
+  local tocIndex = {}
+  for index, file in ipairs(tocFiles()) do
+    tocIndex[file] = index
+  end
+  local previous = 0
+  for _, file in ipairs(WindowHelper.FILES) do
+    local index = tocIndex[file]
+    assert(index, file .. " is not in the TOC")
+    assert(index > previous, file .. " is out of TOC order")
+    previous = index
+  end
+end
+
 local function test_toc_icon_points_at_the_shipped_tga()
   -- The game adds the extension; the path is relative to the AddOns folder.
   local iconPath
@@ -63,6 +80,7 @@ end
 return function()
   test_every_toc_file_loads_in_order_without_require()
   test_toc_lists_bootstrap_last()
+  test_window_test_files_follow_toc_order()
   test_toc_icon_points_at_the_shipped_tga()
   test_toc_interface_lists_era_forever_and_tbc()
 end
