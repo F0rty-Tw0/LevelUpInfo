@@ -205,6 +205,16 @@ local function test_line_follows_the_hint_row()
   Assert.equal(offset(nextLine()) - offset(hint), hint:GetHeight() + GROUP_GAP)
 end
 
+-- No gains and no skill groups: only the hint sits above, so the gap comes from the hint alone.
+local function test_line_after_a_lone_hint_row_keeps_the_block_gap()
+  setup()
+  levels[10] = nil
+  db.trainers.PRIEST.covered.Scourge = 9
+  Window.Show({ fromLevel = 9, toLevel = 10, gains = {}, before = {} })
+  local hint = rowNamed(HINT)
+  Assert.equal(offset(nextLine()) - offset(hint), hint:GetHeight() + GROUP_GAP)
+end
+
 local function test_toggle_refill_keeps_the_line_without_a_new_build()
   setup()
   levels[MISSED_LEVEL] = {}
@@ -275,6 +285,7 @@ return function()
   test_line_alone_sits_at_the_top_with_no_gap()
   test_content_height_includes_the_line_and_its_gap()
   test_line_follows_the_hint_row()
+  test_line_after_a_lone_hint_row_keeps_the_block_gap()
   test_toggle_refill_keeps_the_line_without_a_new_build()
   test_repeat_show_recomputes_and_reuses_the_string()
   test_fill_error_hides_the_line()
