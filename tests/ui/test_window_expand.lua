@@ -13,8 +13,8 @@ local WEAPON_BASE = 2000
 local ROW_HEIGHT = 47
 local SOURCE_ROW_HEIGHT = 59
 local ROW_GAP = 4
-local BOX_HEIGHT = 235 + 4 * ROW_GAP
-local CAP = 5
+local BOX_HEIGHT = 4 * ROW_HEIGHT + 3 * ROW_GAP
+local CAP = 4
 local RANK_1 = 589
 local RANK_2 = 594
 
@@ -166,7 +166,7 @@ local function test_more_line_is_a_hidden_toggle_until_needed()
   Assert.equal(toggle("more"), nil)
   addMissed(8)
   Window.Show(record())
-  Assert.equal(toggle("more").label:GetText(), "+3 more not yet learned")
+  Assert.equal(toggle("more").label:GetText(), "+4 more not yet learned")
 end
 
 local function test_expand_moves_all_rows_into_box()
@@ -195,7 +195,7 @@ local function test_expand_keeps_group_height_with_tall_rows()
   Assert.equal(frame():GetHeight(), collapsed)
 end
 
-local function test_collapse_returns_five_rows_to_content()
+local function test_collapse_returns_four_rows_to_content()
   setup()
   addMissed(8)
   Window.Show(record())
@@ -206,7 +206,7 @@ local function test_collapse_returns_five_rows_to_content()
   Assert.equal(#rowsIn(content()), CAP)
   Assert.equal(box:IsShown(), false)
   Assert.equal(box:GetVerticalScroll(), 0)
-  Assert.equal(toggle("more").label:GetText(), "+3 more not yet learned")
+  Assert.equal(toggle("more").label:GetText(), "+4 more not yet learned")
 end
 
 local function loadText(spellID, text)
@@ -267,7 +267,7 @@ local function test_box_grows_when_a_visible_row_gets_lines()
   Assert.equal(box:GetHeight(), BOX_HEIGHT)
   loadText(RANK_1, "Deals 30 Shadow damage over 18 sec.")
   loadText(RANK_2, "Deals 66 Shadow damage over 18 sec.")
-  Assert.equal(box:GetHeight(), 4 * ROW_HEIGHT + SOURCE_ROW_HEIGHT + 4 * ROW_GAP)
+  Assert.equal(box:GetHeight(), 3 * ROW_HEIGHT + SOURCE_ROW_HEIGHT + 3 * ROW_GAP)
 end
 
 local function test_second_expand_creates_no_frames()
@@ -298,7 +298,7 @@ local function test_both_groups_expand_independently()
   Assert.equal(weaponChild:GetHeight(), 7 * SOURCE_ROW_HEIGHT + 6 * ROW_GAP)
   click(missed)
   Assert.equal(#rowsIn(content()), CAP)
-  Assert.equal(missed.label:GetText(), "+3 more not yet learned")
+  Assert.equal(missed.label:GetText(), "+4 more not yet learned")
   Assert.equal(weapon.label:GetText(), "Show less")
   Assert.equal(weaponBox:IsShown(), true)
   Assert.equal(#rowsIn(weaponChild), 7)
@@ -314,8 +314,8 @@ local function test_new_show_collapses_and_reparents_rows()
   Assert.equal(#rowsIn(content()), 2 * CAP)
   Assert.equal(#allRows(), 2 * CAP)
   Assert.equal(shownBoxes(), 0)
-  Assert.equal(toggle("not yet learned").label:GetText(), "+3 more not yet learned")
-  Assert.equal(toggle("weapon skills").label:GetText(), "+2 more weapon skills")
+  Assert.equal(toggle("not yet learned").label:GetText(), "+4 more not yet learned")
+  Assert.equal(toggle("weapon skills").label:GetText(), "+3 more weapon skills")
 end
 
 local function test_expanded_state_survives_refresh()
@@ -336,7 +336,7 @@ return function()
   test_more_line_is_a_hidden_toggle_until_needed()
   test_expand_moves_all_rows_into_box()
   test_expand_keeps_group_height_with_tall_rows()
-  test_collapse_returns_five_rows_to_content()
+  test_collapse_returns_four_rows_to_content()
   test_expanded_rows_past_cap_get_change_lines()
   test_box_grows_when_a_visible_row_gets_lines()
   test_second_expand_creates_no_frames()

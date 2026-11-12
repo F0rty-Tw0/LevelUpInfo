@@ -160,7 +160,7 @@ local function test_total_counts_rows_past_the_cap()
   setup()
   addMissed(7)
   Window.Show(record())
-  Assert.equal(#shownRows(), 5)
+  Assert.equal(#shownRows(), 4)
   Assert.equal(totalOf("Not yet learned"):GetText(), "700c")
 end
 

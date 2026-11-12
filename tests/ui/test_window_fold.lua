@@ -13,7 +13,7 @@ local KNOWN_RANK_OFFSET = 100000
 local SOURCE_ROW_HEIGHT = 59
 local ROW_GAP = 4
 local TOGGLE_HEIGHT = 16
-local CAP = 5
+local CAP = 4
 local RANK_1 = 589
 local RANK_2 = 594
 local HEADING_FONT = "GameFontNormalLarge"
@@ -224,7 +224,7 @@ local function test_new_show_keeps_fold_and_resets_expansion()
   Assert.equal(db.foldedGroups.weapon, true)
   Assert.equal(rowNamed("Weapon 1"), nil)
   Assert.equal(rowNamed("Missed 1"):GetParent(), content())
-  Assert.equal(toggle("more").label:GetText(), "+3 more not yet learned")
+  Assert.equal(toggle("more").label:GetText(), "+4 more not yet learned")
 end
 
 local function test_folded_state_from_saved_data_applies_on_first_show()

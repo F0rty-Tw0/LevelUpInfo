@@ -8,6 +8,7 @@ All releases: **0.1.x (current)**
 
 - When every primary stat goes up by the same amount, the window shows one "All stats" line instead of five.
 - Fixed: higher ranks of spells you can't learn yet (such as Binding Heal) no longer show up the first time the window opens.
+- The level-up window stays smaller: it shows four skills per group and stops growing at about 60% of the screen height, scrolling the rest.
 
 ## [0.1.8] - 2026-11-10
 
