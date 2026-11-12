@@ -23,6 +23,7 @@ Data/WeaponIcons.lua
 Data/ClassSpells/Forever.lua
 Data/ClassSpells/Era.lua
 Data/ClassSpells/Tbc.lua
+Data/BuiltinSpells.lua
 Data/SkillList.lua
 Data/NextLevel.lua
 Data/RankDiff.lua
