@@ -80,6 +80,9 @@ local rowEntries = {} -- entry shown in rows[i], read only when rowLines[i]
 local rowLines = {} -- whether rows[i] shows change lines
 local boxFirstRow = {} -- group → index in `rows` of its expanded box's first row
 local skillEntries, skillHint -- skill list of `current`: built on Show, reused by Refresh
+-- Spells left out of `skillEntries` until their rank text loads; the last
+-- one's load result builds the list again.
+local waitingRanks = {}
 -- Set while a fill runs, so a load result fired inside it starts no second fill.
 local filling = false
 -- Set by a failed fill or refresh: its layout list must not be replayed, so
@@ -173,6 +176,7 @@ local function build()
   frame:HookScript("OnHide", function()
     current = nil
     SpellFacts.Stop()
+    _G.wipe(waitingRanks)
   end)
   AutoHide.Attach(frame, db)
   frame.CloseButton:SetScript("OnClick", AutoHide.Close)
@@ -291,12 +295,20 @@ local function fillGroup(spec, entries, money, gap)
   return count
 end
 
+local function isRankWaiting(spellID)
+  local waiting = SpellFacts.Waiting(spellID)
+  if waiting then
+    waitingRanks[spellID] = true
+  end
+  return waiting
+end
+
 local function fillSkills(record, gainCount)
   if not skillEntries then
     local class = select(2, _G.UnitClass("player"))
     local race = select(2, _G.UnitRace("player"))
     local faction = _G.UnitFactionGroup("player")
-    skillEntries, skillHint = SkillList.Build(db.trainers, class, race, faction, record.fromLevel, record.toLevel)
+    skillEntries, skillHint = SkillList.Build(db.trainers, class, race, faction, record.fromLevel, record.toLevel, isRankWaiting)
   end
   local money = _G.GetMoney()
   rowsUsed = 0
@@ -451,6 +463,7 @@ function Window.Show(record)
   AutoHide.Pause()
   current = record
   skillEntries = nil
+  _G.wipe(waitingRanks)
   SkillGroup.Collapse()
   -- Scale first: the fill caps the height with it.
   frame:SetScale(db.scale)
@@ -462,13 +475,19 @@ function Window.Show(record)
 end
 
 -- Spell text for `spellID` arrived: updates only the rows using it (nil or
--- stale: a full refill). Keeps countdown, anchor, scale, expanded state and
--- scroll position.
+-- stale: a full refill; the last spell left out for its rank text: the list is
+-- built again). Keeps countdown, anchor, scale, expanded state and scroll position.
 function Window.Refresh(spellID)
   if filling or not current or not frame or not frame:IsShown() then
     return
   end
-  if spellID == nil or stale then
+  if spellID ~= nil and waitingRanks[spellID] then
+    waitingRanks[spellID] = nil
+    if next(waitingRanks) == nil then
+      skillEntries = nil
+      fill(current)
+    end
+  elseif spellID == nil or stale then
     fill(current)
   else
     guarded(function()

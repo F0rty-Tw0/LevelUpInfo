@@ -202,7 +202,68 @@ local function test_on_loaded_receives_spell_id()
   Assert.equal(received, LOADED_ID)
 end
 
+-- Waiting: rank text for the skill list. Unloaded = no subtext, no description.
+local function test_waiting_requests_once_while_pending()
+  local W, ns, SpellFacts = setup()
+  W.spells[NEW_ID] = { description = "" }
+  Assert.equal(SpellFacts.Waiting(NEW_ID), true)
+  Assert.equal(SpellFacts.Waiting(NEW_ID), true)
+  Assert.equal(W.calls.RequestLoadSpellData, 1)
+  Assert.equal(registered(ns), true)
+end
+
+local function test_waiting_ends_with_load_result()
+  local W, ns, SpellFacts = setup()
+  local counter = installCounting(SpellFacts)
+  W.spells[NEW_ID] = { description = "" }
+  SpellFacts.Waiting(NEW_ID)
+  W.broadcast(EVENT, NEW_ID, true)
+  Assert.equal(SpellFacts.Waiting(NEW_ID), false)
+  Assert.equal(counter.calls, 1)
+  Assert.equal(W.calls.RequestLoadSpellData, 1)
+  Assert.equal(registered(ns), false)
+end
+
+local function test_waiting_with_loaded_description_requests_nothing()
+  local W, ns, SpellFacts = setup()
+  W.spells[NEW_ID] = { description = "Heals for 47 to 58." }
+  Assert.equal(SpellFacts.Waiting(NEW_ID), false)
+  Assert.equal(W.calls.RequestLoadSpellData, nil)
+  Assert.equal(registered(ns), false)
+end
+
+local function test_waiting_with_loaded_subtext_requests_nothing()
+  local W, _, SpellFacts = setup()
+  W.spells[NEW_ID] = { description = "", subtext = "Rank 2" }
+  Assert.equal(SpellFacts.Waiting(NEW_ID), false)
+  Assert.equal(W.calls.RequestLoadSpellData, nil)
+end
+
+local function test_waiting_result_inside_request_is_not_waiting()
+  local W, ns, SpellFacts = setup()
+  W.spells[NEW_ID] = { description = "" }
+  W.onRequestLoad = function(spellID)
+    W.broadcast(EVENT, spellID, true)
+  end
+  Assert.equal(SpellFacts.Waiting(NEW_ID), false)
+  Assert.equal(registered(ns), false)
+end
+
+local function test_waiting_without_request_api_is_not_waiting()
+  local W, ns, SpellFacts = setup()
+  _G.C_Spell.RequestLoadSpellData = nil
+  W.spells[NEW_ID] = { description = "" }
+  Assert.equal(SpellFacts.Waiting(NEW_ID), false)
+  Assert.equal(registered(ns), false)
+end
+
 return function()
+  test_waiting_requests_once_while_pending()
+  test_waiting_ends_with_load_result()
+  test_waiting_with_loaded_description_requests_nothing()
+  test_waiting_with_loaded_subtext_requests_nothing()
+  test_waiting_result_inside_request_is_not_waiting()
+  test_waiting_without_request_api_is_not_waiting()
   test_loaded_returns_facts()
   test_on_loaded_receives_spell_id()
   test_unloaded_returns_nil_and_requests_once()
