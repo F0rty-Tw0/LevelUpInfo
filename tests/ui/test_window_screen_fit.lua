@@ -325,6 +325,49 @@ local function test_box_taller_than_the_full_cap_stops_at_the_full_cap()
   Assert.equal(frame():GetHeight(), 300 - MARGINS)
 end
 
+local RANK_BASE = 3000
+
+local function rankFacts(spellID, damage, cost)
+  W.spells[spellID].description = "Deals " .. damage .. " Shadow damage over 18 sec."
+  W.spells[spellID].costs = { { cost = cost, name = "MANA" } }
+end
+
+-- Five more Rank 2 spells at level 10 over a known Rank 1 at level 4. With
+-- Shadow Word: Pain the "New ranks" group has six rows, each with a text and
+-- a cost change line: 59 tall.
+local function addRanks()
+  rankFacts(KNOWN_PAIN_1, 30, 25)
+  rankFacts(589, 66, 50)
+  db.trainers.PRIEST.levels[4] = {}
+  for index = 1, 5 do
+    local name = "Ranked " .. index
+    local old, new = RANK_BASE + index, RANK_BASE + 100 + index
+    W.spells[old] = { name = name, iconID = old }
+    W.spells[new] = { name = name, iconID = new }
+    rankFacts(old, 30, 25)
+    rankFacts(new, 66, 50)
+    W.known[old] = true
+    db.trainers.PRIEST.levels[4][old] = spell(10, "Rank 1")
+    db.trainers.PRIEST.levels[10][new] = spell(10, "Rank 2")
+  end
+end
+
+-- Screen 600 at scale 1.5: shortCap 160, fullCap 288. The ranks box is
+-- 4 * 59 + 3 * 4 = 248, the later "Not yet learned" box 200: the taller one
+-- sets the floor, whichever box is fitted last.
+local function test_tallest_expanded_box_sets_the_floor()
+  setup()
+  screen(600)
+  db.scale = 1.5
+  addMissed()
+  addRanks()
+  Window.Show(record())
+  click("new ranks")
+  click("not yet learned")
+  Assert.equal(viewHeight(), 248)
+  Assert.equal(frame():GetHeight(), CHROME + 248)
+end
+
 local function test_fill_error_hides_the_view_bar()
   setup()
   screen(300)
@@ -353,5 +396,6 @@ return function()
   test_content_shorter_than_the_cap_has_no_view_bar()
   test_expanded_box_lifts_the_cap_and_collapsing_restores_it()
   test_box_taller_than_the_full_cap_stops_at_the_full_cap()
+  test_tallest_expanded_box_sets_the_floor()
   test_fill_error_hides_the_view_bar()
 end
