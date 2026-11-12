@@ -211,6 +211,27 @@ local function test_fill_error_hides_previous_rows()
   Assert.equal(#shownRows(), 0)
 end
 
+-- Shown large headings on the content (the stats heading and the group headings).
+local function shownHeadings()
+  local texts = {}
+  for _, widget in ipairs(W.frames) do
+    local stub = W.state(widget)
+    if stub.frameType == "FontString" and stub.template == "GameFontNormalLarge" and widget:GetParent() == WindowHelper.content() and stub.shown then
+      texts[#texts + 1] = widget:GetText()
+    end
+  end
+  return table.concat(texts, "|")
+end
+
+local function test_fill_error_hides_group_headings()
+  setup()
+  Window.Show(record())
+  Assert.equal(shownHeadings(), "Stats|New ranks")
+  WindowHelper.breakFill()
+  Window.Show(record(11, 12))
+  Assert.equal(shownHeadings(), "")
+end
+
 local function test_capped_rank_row_requests_nothing()
   setup()
   db.trainers.PRIEST.levels = {}
@@ -246,6 +267,7 @@ return function()
   test_refresh_during_fill_ignored()
   test_fill_error_reports_and_refresh_still_works()
   test_fill_error_hides_previous_rows()
+  test_fill_error_hides_group_headings()
   test_capped_rank_row_requests_nothing()
   test_hide_unregisters_event()
 end
