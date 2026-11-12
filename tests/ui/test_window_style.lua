@@ -135,8 +135,8 @@ end
 local function test_every_gain_has_distinct_hex_color()
   setup()
   local gains, before = {}, {}
-  for _, gain in ipairs(GAIN_COLORS) do
-    gains[gain.key] = 1
+  for index, gain in ipairs(GAIN_COLORS) do
+    gains[gain.key] = index -- distinct gains, so the stats do not share one line
     before[gain.key] = 10
   end
   Window.Show(record({ gains = gains, before = before }))
@@ -149,6 +149,57 @@ local function test_every_gain_has_distinct_hex_color()
     Assert.equal(seen[gain.hex], nil)
     seen[gain.hex] = true
   end
+end
+
+local ALL_STATS_1 = "All stats " .. GREEN .. "(+1)|r"
+local STAT_KEYS = { "strength", "agility", "stamina", "intellect", "spirit" }
+
+-- A gains or before table with all five primary stats at `value`, plus `extra`.
+local function statsAt(value, extra)
+  local result = {}
+  for _, key in ipairs(STAT_KEYS) do
+    result[key] = value
+  end
+  for key, extraValue in pairs(extra or {}) do
+    result[key] = extraValue
+  end
+  return result
+end
+
+local function test_equal_gains_on_all_five_stats_show_one_all_stats_line()
+  setup()
+  Window.Show(record({ gains = statsAt(1), before = statsAt(10) }))
+  Assert.equal(table.concat(gainLines(), "|"), ALL_STATS_1)
+end
+
+local function test_one_differing_stat_gain_shows_separate_lines()
+  setup()
+  Window.Show(record({ gains = statsAt(1, { spirit = 2 }), before = statsAt(10) }))
+  local function line(hex, name, new, gain)
+    return "|cff" .. hex .. name .. "|r " .. GRAY .. "10|r " .. ARROW .. " " .. new .. " " .. GREEN .. gain .. "|r"
+  end
+  Assert.equal(
+    table.concat(gainLines(), "|"),
+    table.concat({
+      line("ff5c5c", "Strength", 11, "(+1)"),
+      line("ffa340", "Agility", 11, "(+1)"),
+      line("d9b38c", "Stamina", 11, "(+1)"),
+      line("4fd1e8", "Intellect", 11, "(+1)"),
+      line("f5a3d0", "Spirit", 12, "(+2)"),
+    }, "|")
+  )
+end
+
+local function test_all_stats_line_ignores_missing_before()
+  setup()
+  Window.Show(record({ gains = statsAt(1), before = {} }))
+  Assert.equal(table.concat(gainLines(), "|"), ALL_STATS_1)
+end
+
+local function test_missing_stat_gain_keys_do_not_collapse()
+  setup()
+  Window.Show(record({ gains = { health = 15 }, before = { health = 100 } }))
+  Assert.equal(table.concat(gainLines(), "|"), "|cff49d36bHealth|r " .. GRAY .. "100|r " .. ARROW .. " 115 " .. GREEN .. "(+15)|r")
 end
 
 local function shownTextures()
@@ -242,6 +293,10 @@ end
 return function()
   test_gain_with_before_reads_gray_old_arrow_new_and_green_gain()
   test_talent_line_uses_short_form()
+  test_missing_stat_gain_keys_do_not_collapse()
+  test_one_differing_stat_gain_shows_separate_lines()
+  test_equal_gains_on_all_five_stats_show_one_all_stats_line()
+  test_all_stats_line_ignores_missing_before()
   test_every_gain_has_distinct_hex_color()
   test_headings_have_no_divider_lines()
   test_talent_line_sits_above_stats_with_a_divider_between()
