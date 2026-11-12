@@ -31,6 +31,7 @@ UI/SkillRow.lua
 UI/SkillGroup.lua
 UI/Layout.lua
 UI/GainLines.lua
+UI/NextLevelLine.lua
 UI/Window.lua
 UI/MinimapButton.lua
 Core/LevelUp.lua
