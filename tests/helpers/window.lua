@@ -7,8 +7,11 @@ local WindowHelper = {}
 
 local LOAD_EVENT = "SPELL_DATA_LOAD_RESULT"
 
--- Every module UI/Window.lua needs, in TOC order, then the window itself.
--- A module missing here would load through the require fallback instead.
+-- The modules the window tests load into one ns, in TOC order (checked by
+-- tests/integration/test_toc_load_order.lua), then the window itself.
+-- Data/BuiltinSpells, Data/RankDiff and Data/WeaponIcons (and what they import)
+-- are left out on purpose and come in through the require fallback; tests stub
+-- ns.OtherSources, and loading BuiltinSpells here would add built-in rows.
 WindowHelper.FILES = {
   "Core/Localization.lua",
   "Core/Format.lua",
