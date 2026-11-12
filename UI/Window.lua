@@ -15,6 +15,7 @@ local GainLines = ns.GainLines or require("LevelUpInfo.UI.GainLines")
 
 local format = string.format
 local ipairs = ipairs
+local max = math.max
 local min = math.min
 local pairs = pairs
 local select = select
@@ -35,8 +36,9 @@ local FOOTER_HEIGHT = 12
 local VIEW_WIDTH = CONTENT_WIDTH + 12
 local VIEW_BAR_COLUMN = 12
 -- Room kept between the window and the top and bottom of the screen: the
--- height cap leaves it, and the clamp rect reaches this far past the frame.
+-- full height cap leaves it, and the clamp rect reaches this far past the frame.
 local SCREEN_MARGIN = 16
+local SCREEN_FRACTION = 0.6 -- the window stops growing at this share of the screen
 local LINE_HEIGHT = 16
 local HEADING_HEIGHT = 24
 -- Spacing hierarchy: rows of a group sit closest, a heading sits right on its
@@ -45,7 +47,7 @@ local GROUP_GAP = 14
 local ROW_HEIGHT = 47
 local ROW_GAP = 4
 local TEXT_LEFT = 4
-local GROUP_CAP = 5
+local GROUP_CAP = 4
 -- Congratulation line in the header strip right of the portrait.
 local HEADER_LEFT = 62
 local HEADER_TOP = -35
@@ -343,8 +345,10 @@ end
 
 -- An expanded box is as tall as its group's first `cap` rows and the gaps
 -- between them, so expanding keeps the group's size and only adds the
--- scrollbar. Runs before placing: the layout reads the box's height.
+-- scrollbar. Runs before placing: the layout reads the box's height. Returns
+-- the tallest box height, 0 when none is expanded.
 local function fitBoxes()
+  local tallest = 0
   for _, spec in ipairs(GROUPS) do
     local first = boxFirstRow[spec.group]
     if spec.cap and first and SkillGroup.IsExpanded(spec.group) then
@@ -354,17 +358,23 @@ local function fitBoxes()
         height = height + rows[index]:GetHeight()
       end
       SkillGroup.SetBoxHeight(spec.group, height)
+      tallest = max(tallest, height)
     end
   end
+  return tallest
 end
 
 local function applyLayout()
-  fitBoxes()
+  local floor = fitBoxes()
   local height, cursors = Layout.Run(content)
   sizeBoxes(cursors)
   content:SetHeight(height)
-  -- The screen height in frame units, less the margins and the frame's chrome.
-  local maxView = _G.UIParent:GetHeight() / frame:GetScale() - 2 * SCREEN_MARGIN - HEADER_HEIGHT - FOOTER_HEIGHT
+  -- The view stops at SCREEN_FRACTION of the screen, or at the tallest
+  -- expanded box if that is more, but never past the screen less its margins.
+  local screen = _G.UIParent:GetHeight() / frame:GetScale()
+  local chrome = HEADER_HEIGHT + FOOTER_HEIGHT
+  local fullCap = screen - 2 * SCREEN_MARGIN - chrome
+  local maxView = min(fullCap, max(SCREEN_FRACTION * screen - chrome, floor))
   local viewHeight = min(height, maxView)
   view:SetHeight(viewHeight)
   viewBar:SetHeight(viewHeight)

@@ -6,7 +6,7 @@ local Window
 local db
 
 local KNOWN_PAIN_1 = 100589
--- Frame units: header 68 + footer 12 + 2 * 16 screen margin.
+-- Frame units: header 68 + footer 12, and 2 * 16 screen margin for the full cap.
 local CHROME = 68 + 12
 local MARGINS = 2 * 16
 
@@ -155,22 +155,22 @@ local function test_tall_content_caps_the_frame()
   setup()
   screen(300)
   Window.Show(record())
-  Assert.equal(frame():GetHeight(), 300 - MARGINS)
+  Assert.equal(frame():GetHeight(), 0.6 * 300)
   Assert.equal(width(), 350)
   Assert.equal(viewBar():IsShown(), true)
-  Assert.equal(viewBar():GetHeight(), 300 - MARGINS - CHROME)
+  Assert.equal(viewBar():GetHeight(), 0.6 * 300 - CHROME)
   Assert.equal(view():IsMouseWheelEnabled(), true)
-  Assert.equal(maxValue(), contentHeight() - (300 - MARGINS - CHROME))
+  Assert.equal(maxValue(), contentHeight() - (0.6 * 300 - CHROME))
 end
 
--- Content 277 overflows the 1.5 cap (188) but fits the 1.0 cap (338):
--- scaling after the fill would give 357.
+-- Content 277 overflows the 1.5 cap (100) and the 1.0 cap (190): scaling
+-- after the fill would give 270.
 local function test_first_show_uses_the_saved_scale()
   setup()
   screen(450)
   db.scale = 1.5
   Window.Show(record())
-  Assert.equal(frame():GetHeight(), 450 / 1.5 - MARGINS)
+  Assert.equal(frame():GetHeight(), 0.6 * 450 / 1.5)
 end
 
 local function test_show_scrolls_the_view_to_top()
@@ -209,10 +209,10 @@ local function test_apply_scale_replaces_with_new_cap()
   setup()
   screen(450)
   Window.Show(record())
-  Assert.equal(frame():GetHeight(), 357)
+  Assert.equal(frame():GetHeight(), 0.6 * 450)
   db.scale = 1.5
   Window.ApplyScale()
-  Assert.equal(frame():GetHeight(), 268)
+  Assert.equal(frame():GetHeight(), 0.6 * 450 / 1.5)
 end
 
 local function test_apply_scale_while_hidden_does_not_place()
@@ -221,26 +221,108 @@ local function test_apply_scale_while_hidden_does_not_place()
   Assert.equal(Window.Frame(), nil)
   screen(450)
   Window.Show(record())
-  Assert.equal(frame():GetHeight(), 357)
+  Assert.equal(frame():GetHeight(), 0.6 * 450)
   frame():Hide()
   db.scale = 1.5
   Window.ApplyScale()
   Assert.equal(frame():GetScale(), 1.5)
-  Assert.equal(frame():GetHeight(), 357)
+  Assert.equal(frame():GetHeight(), 0.6 * 450)
 end
 
 local function test_apply_scale_while_stale_does_not_place()
   setup()
   screen(450)
   Window.Show(record())
-  Assert.equal(frame():GetHeight(), 357)
+  Assert.equal(frame():GetHeight(), 0.6 * 450)
   breakFill()
   Window.Show(record())
   Assert.equal(frame():IsShown(), true)
   db.scale = 1.5
   Window.ApplyScale()
   Assert.equal(frame():GetScale(), 1.5)
-  Assert.equal(frame():GetHeight(), 357)
+  Assert.equal(frame():GetHeight(), 0.6 * 450)
+end
+
+-- Content 277 is taller than the 60% cap (screen 450 / scale 1.5 = 300 frame
+-- units: 0.6 * 300 = 180 less the chrome): the frame stops at 180.
+local function test_tall_content_stops_at_sixty_percent_of_the_screen()
+  setup()
+  screen(450)
+  db.scale = 1.5
+  Window.Show(record())
+  Assert.equal(frame():GetHeight(), 0.6 * 450 / 1.5)
+  Assert.equal(viewBar():IsShown(), true)
+  Assert.equal(view():IsMouseWheelEnabled(), true)
+end
+
+-- Screen 600 at scale 1: the 60% cap is 360 - 80 = 280 of view; content 277 fits.
+local function test_content_shorter_than_the_cap_has_no_view_bar()
+  setup()
+  screen(600)
+  Window.Show(record())
+  Assert.equal(contentHeight(), 277)
+  Assert.equal(viewBar():IsShown(), false)
+  Assert.equal(width(), 338)
+  Assert.equal(frame():GetHeight(), CHROME + 277)
+end
+
+local MISSED_BASE = 1000
+
+-- Eight rank-1 spells at level 5 fill the "Not yet learned" group (content 531).
+local function addMissed()
+  for index = 1, 8 do
+    W.spells[MISSED_BASE + index] = { name = "Missed " .. index, iconID = MISSED_BASE + index }
+    db.trainers.PRIEST.levels[5] = db.trainers.PRIEST.levels[5] or {}
+    db.trainers.PRIEST.levels[5][MISSED_BASE + index] = spell(10, "Rank 1")
+  end
+end
+
+local function toggle(text)
+  for _, widget in ipairs(W.frames) do
+    local label = widget.label
+    if W.state(widget).frameType == "Button" and not widget.name and label and widget:IsShown() then
+      if string.find(label:GetText() or "", text, 1, true) then
+        return widget
+      end
+    end
+  end
+end
+
+local function click(text)
+  W.fireScript(toggle(text), "OnClick")
+end
+
+local function viewHeight()
+  return view():GetHeight()
+end
+
+-- Screen 600 at scale 1.5 is 400 frame units: shortCap 160, fullCap 288. An
+-- expanded box of plain rows is 4 * 47 + 3 * 4 = 200 tall and lifts the cap to it.
+local function test_expanded_box_lifts_the_cap_and_collapsing_restores_it()
+  setup()
+  screen(600)
+  db.scale = 1.5
+  addMissed()
+  Window.Show(record())
+  Assert.equal(contentHeight(), 531)
+  Assert.equal(viewHeight(), 160)
+  click("not yet learned")
+  Assert.equal(viewHeight(), 200)
+  Assert.equal(frame():GetHeight(), CHROME + 200)
+  click("Show less")
+  Assert.equal(viewHeight(), 160)
+  Assert.equal(frame():GetHeight(), CHROME + 160)
+end
+
+-- Screen 300 at scale 1: fullCap 188 is below the 200 box, so it wins.
+local function test_box_taller_than_the_full_cap_stops_at_the_full_cap()
+  setup()
+  screen(300)
+  addMissed()
+  Window.Show(record())
+  click("not yet learned")
+  Assert.equal(viewHeight(), 188)
+  Assert.equal(frame():GetHeight(), 300 - MARGINS)
 end
 
 local function test_fill_error_hides_the_view_bar()
@@ -267,5 +349,9 @@ return function()
   test_apply_scale_replaces_with_new_cap()
   test_apply_scale_while_hidden_does_not_place()
   test_apply_scale_while_stale_does_not_place()
+  test_tall_content_stops_at_sixty_percent_of_the_screen()
+  test_content_shorter_than_the_cap_has_no_view_bar()
+  test_expanded_box_lifts_the_cap_and_collapsing_restores_it()
+  test_box_taller_than_the_full_cap_stops_at_the_full_cap()
   test_fill_error_hides_the_view_bar()
 end

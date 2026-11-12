@@ -279,8 +279,8 @@ local function test_capped_rank_row_requests_nothing()
     cacheSpell(5, 200 + index, "Rank 2")
   end
   Window.Show(record())
-  Assert.equal(#shownRows(), 5)
-  Assert.equal(W.calls.RequestLoadSpellData, 10)
+  Assert.equal(#shownRows(), 4)
+  Assert.equal(W.calls.RequestLoadSpellData, 8)
 end
 
 local function test_hide_unregisters_event()
