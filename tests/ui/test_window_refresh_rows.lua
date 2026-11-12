@@ -1,12 +1,11 @@
 local Assert = require("tests.helpers.assert")
-local Wow = require("tests.helpers.wow")
+local WindowHelper = require("tests.helpers.window")
 
 local W
 local ns
 local Window
 local db
 
-local LOAD_EVENT = "SPELL_DATA_LOAD_RESULT"
 local RANK_1 = 589
 local RANK_2 = 594
 local RENEW_1 = 139
@@ -19,9 +18,12 @@ local RENEW_TEXT = "Heals 100 over 15 sec."
 local HINT_TEXT = "Visit your class trainer to see all new skills."
 local ROW_HEIGHT = 47
 
-local function mana(cost)
-  return { { cost = cost, name = "MANA" } }
-end
+local mana = WindowHelper.mana
+local rowNamed = WindowHelper.rowNamed
+local shownLines = WindowHelper.shownLines
+local toggle = WindowHelper.toggle
+local click = WindowHelper.click
+local loadText = WindowHelper.loadText
 
 local function cacheSpell(level, spellID, rank)
   db.trainers.PRIEST.levels[level] = db.trainers.PRIEST.levels[level] or {}
@@ -31,40 +33,16 @@ end
 -- Fresh fake client, modules and db per test. Priest cache: Shadow Word: Pain
 -- Rank 1 (level 4, known) and Rank 2 (level 10, text not loaded yet).
 local function setup()
-  W = Wow.Install()
+  W = WindowHelper.install()
   W.money = 1000
-  db = {
-    duration = 10,
-    reducedMotion = false,
-    scale = 1.0,
-    foldedGroups = {},
-    trainers = { PRIEST = { covered = { Scourge = 10 }, levels = {} } },
-  }
+  db = WindowHelper.db({ PRIEST = { covered = { Scourge = 10 }, levels = {} } })
   W.spells[RANK_1] = { name = "Shadow Word: Pain", iconID = 1, description = OLD_TEXT, costs = mana(25) }
   W.spells[RANK_2] = { name = "Shadow Word: Pain", iconID = 1, description = "", costs = mana(50) }
   W.known[RANK_1] = true
   cacheSpell(4, RANK_1, "Rank 1")
   cacheSpell(10, RANK_2, "Rank 2")
   ns = { OtherSources = {} }
-  for _, file in ipairs({
-    "Core/Localization.lua",
-    "Core/Events.lua",
-    "Data/TrainerCache.lua",
-    "Data/SkillList.lua",
-    "Data/NextLevel.lua",
-    "Data/RankChanges.lua",
-    "Data/SpellFacts.lua",
-    "UI/AutoHide.lua",
-    "UI/ScrollBox.lua",
-    "UI/SkillRow.lua",
-    "UI/SkillGroup.lua",
-    "UI/Layout.lua",
-    "UI/GainLines.lua",
-    "UI/NextLevelLine.lua",
-  }) do
-    assert(loadfile(file))("LevelUpInfo", ns)
-  end
-  Window = assert(loadfile("UI/Window.lua"))("LevelUpInfo", ns)
+  Window = WindowHelper.load(ns)
   Window.Install(db)
   ns.SpellFacts.Install(Window.Refresh)
 end
@@ -88,47 +66,6 @@ end
 
 local function record(fromLevel, toLevel)
   return { fromLevel = fromLevel or 9, toLevel = toLevel or 10, gains = { health = 15 }, before = { health = 100 } }
-end
-
-local function rowNamed(name)
-  for _, widget in ipairs(W.frames) do
-    if W.state(widget).frameType == "Button" and widget.name and widget:IsShown() then
-      if widget.name:GetText() == name then
-        return widget
-      end
-    end
-  end
-end
-
-local function shownLines(row)
-  local count = 0
-  for _, line in ipairs(row.changeLines) do
-    if line:IsShown() then
-      count = count + 1
-    end
-  end
-  return count
-end
-
--- The shown toggle (a Button without a name) whose label contains `text`.
-local function toggle(text)
-  for _, widget in ipairs(W.frames) do
-    local label = widget.label
-    if W.state(widget).frameType == "Button" and not widget.name and label and widget:IsShown() then
-      if string.find(label:GetText() or "", text, 1, true) then
-        return widget
-      end
-    end
-  end
-end
-
-local function click(button)
-  W.fireScript(button, "OnClick")
-end
-
-local function loadText(spellID, text)
-  W.spells[spellID].description = text
-  W.broadcast(LOAD_EVENT, spellID, true)
 end
 
 -- Counts SpellFacts.Changes calls from now on; returns a reader.

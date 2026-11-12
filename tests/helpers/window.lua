@@ -157,7 +157,7 @@ function WindowHelper.topOf(region)
   return select(5, region:GetPoint(1))
 end
 
--- Makes the window's fill throw (GetMoney errors) with a silent error handler.
+-- Every later fill fails inside `guarded` (GetMoney throws); the error is swallowed.
 function WindowHelper.breakFill()
   W.def("geterrorhandler", function()
     return function() end

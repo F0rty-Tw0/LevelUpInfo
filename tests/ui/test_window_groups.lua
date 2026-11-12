@@ -1,9 +1,15 @@
 local Assert = require("tests.helpers.assert")
-local Wow = require("tests.helpers.wow")
+local WindowHelper = require("tests.helpers.window")
 
 local W
 local Window
 local db
+
+local frame = WindowHelper.frame
+local content = WindowHelper.content
+local shownRows = WindowHelper.shownRows
+local rowNames = WindowHelper.rowNames
+local topOf = WindowHelper.topOf
 
 local HINT = "Visit your class trainer to see all new skills."
 local MISSED_LEVEL = 5
@@ -14,35 +20,10 @@ local KNOWN_RANK_OFFSET = 100000
 -- Fresh fake client, modules and db per test. The priest cache starts empty and
 -- covers level 10 (no hint row); ns.OtherSources is this test's fixture.
 local function setup(otherSources)
-  W = Wow.Install()
+  W = WindowHelper.install()
   W.money = 1000
-  db = {
-    duration = 10,
-    reducedMotion = false,
-    scale = 1.0,
-    foldedGroups = {},
-    trainers = { PRIEST = { covered = { Scourge = 10 }, levels = {} } },
-  }
-  local ns = { OtherSources = { PRIEST = otherSources or {} } }
-  for _, file in ipairs({
-    "Core/Localization.lua",
-    "Core/Events.lua",
-    "Data/TrainerCache.lua",
-    "Data/SkillList.lua",
-    "Data/NextLevel.lua",
-    "Data/RankChanges.lua",
-    "Data/SpellFacts.lua",
-    "UI/AutoHide.lua",
-    "UI/ScrollBox.lua",
-    "UI/SkillRow.lua",
-    "UI/SkillGroup.lua",
-    "UI/Layout.lua",
-    "UI/GainLines.lua",
-    "UI/NextLevelLine.lua",
-  }) do
-    assert(loadfile(file))("LevelUpInfo", ns)
-  end
-  Window = assert(loadfile("UI/Window.lua"))("LevelUpInfo", ns)
+  db = WindowHelper.db({ PRIEST = { covered = { Scourge = 10 }, levels = {} } })
+  Window = WindowHelper.load({ OtherSources = { PRIEST = otherSources or {} } })
   Window.Install(db)
 end
 
@@ -87,18 +68,6 @@ local function record()
   }
 end
 
-local function frame()
-  return _G.LevelUpInfoFrame
-end
-
-local function content()
-  for _, widget in ipairs(W.frames) do
-    if widget:GetParent() == frame() and W.state(widget).frameType == "ScrollFrame" then
-      return widget:GetScrollChild()
-    end
-  end
-end
-
 -- A shown toggle: a Button on content without a row's `.name`.
 local function isToggle(widget)
   return W.state(widget).frameType == "Button" and not widget.name and widget:GetParent() == content() and widget:IsShown()
@@ -118,25 +87,6 @@ local function lines(template)
   return table.concat(texts, "|")
 end
 
-local function shownRows()
-  local rows = {}
-  for _, widget in ipairs(W.frames) do
-    local stub = W.state(widget)
-    if stub.frameType == "Button" and widget.name and widget:GetParent() == content() and widget:IsShown() then
-      rows[#rows + 1] = widget
-    end
-  end
-  return rows
-end
-
-local function rowNames()
-  local names = {}
-  for _, row in ipairs(shownRows()) do
-    names[#names + 1] = row.name:GetText()
-  end
-  return table.concat(names, "|")
-end
-
 local function test_groups_render_in_order_with_headings()
   local otherSources = {}
   setup(otherSources)
@@ -147,10 +97,6 @@ local function test_groups_render_in_order_with_headings()
   Window.Show(record())
   Assert.equal(lines("GameFontNormalLarge"), "Stats|New skills|New ranks|Not yet learned|Weapon skills")
   Assert.equal(rowNames(), "New Skill|New Rank|Old Skill|Axe")
-end
-
-local function topOf(region)
-  return select(5, region:GetPoint(1))
 end
 
 local function headingNamed(text)
