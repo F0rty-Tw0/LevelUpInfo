@@ -26,7 +26,7 @@ A small window in Blizzard's own trainer style opens when you level up:
 - **What changed.** A new rank lists what changed from the rank before it, like patch notes: for example `Healing: 47-58 → 76-91` or `Mana cost: 30 → 45`. Missed ranks under **Not yet learned** show it too.
 - **Long lists.** **Not yet learned** and **Weapon skills** show their first 5 rows; click `+N more` to scroll through the rest right in the window, and `Show less` to shrink it back. Click the **Not yet learned** or **Weapon skills** heading to fold the whole group, and it stays folded on your next level-up.
 - **Learning from trainers.** The addon learns skills and prices from class trainers you visit. Until your race has visited its trainer for the new level, the window adds a line telling you to visit your class trainer.
-- **Next level.** The last line of the window peeks ahead: for example `Next at 14: Renew (Rank 2), Fade` names what the trainer will teach you at the next level that has something new, from the class trainers you have visited.
+- **Next level.** The last line of the window peeks ahead: for example `Next at 14: Fade (Rank 1), Renew (Rank 2)` names what the trainer will teach you at the next level that has something new, from the class trainers you have visited.
 
 The window closes by itself after a few seconds. Hover it to keep it open, drag it to move it, or press the X to close it. If you level up in combat, it waits until combat ends.
 
