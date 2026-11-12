@@ -77,6 +77,7 @@ read_globals = {
   "SPELL_STAT3_NAME",
   "SPELL_STAT4_NAME",
   "SPELL_STAT5_NAME",
+  "SPELL_STATALL",
   "TALENT_POINTS",
   "UISpecialFrames",
   -- Options panel

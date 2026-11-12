@@ -8,6 +8,8 @@ local Format = ns.Format or require("LevelUpInfo.Core.Format")
 local Layout = ns.Layout or require("LevelUpInfo.UI.Layout")
 
 local format = string.format
+local gsub = string.gsub
+local upper = string.upper
 local ipairs = ipairs
 local tostring = tostring
 
@@ -82,9 +84,19 @@ end
 
 -- Text for one shown line: the `All stats (+N)` line in Strength's slot when
 -- the stats collapse, else the gain's own line.
+-- Blizzard's `SPELL_STATALL` ("all stats", written for mid-sentence) with its
+-- first letter raised, as it starts the line; our own text when it is missing.
+local function allStatsName()
+  local name = _G.SPELL_STATALL
+  if type(name) ~= "string" or name == "" then
+    return Text("All stats")
+  end
+  return (gsub(name, "^%l", upper))
+end
+
 local function lineText(record, gain, amount, collapsed)
   if collapsed and gain.key == "strength" then
-    return format(Text("%s %s"), Text("All stats"), green .. format(Text("(+%d)"), collapsed) .. "|r")
+    return format(Text("%s %s"), allStatsName(), green .. format(Text("(+%d)"), collapsed) .. "|r")
   end
   return gainText(record, gain, amount)
 end
