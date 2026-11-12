@@ -44,11 +44,13 @@ Open them with `/lui` or under Options, AddOns, Level Up Info.
 | Reset position | Put the window back at its default spot | |
 | Clear skill data | Forget the skills learned from trainers | |
 | Test | Close the options and show a preview of the window | |
+| Show last level-up | Bring back the window from your last level-up | |
 
 ## Commands
 
 - `/lui` opens the settings.
 - `/lui test` shows a preview of the window right now.
+- `/lui last` brings back the window from your last level-up.
 
 ## Game versions
 

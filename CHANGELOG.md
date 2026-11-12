@@ -7,6 +7,7 @@ All releases: **0.1.x (current)**
 ## [Unreleased]
 
 - When every primary stat goes up by the same amount, the window shows one "All stats" line instead of five.
+- New "Show last level-up" button in the options, and /lui last: brings back the window from your last level-up, with the same gains, even after a relog.
 - Fixed: higher ranks of spells you can't learn yet (such as Binding Heal) no longer show up the first time the window opens.
 
 ## [0.1.8] - 2026-11-10

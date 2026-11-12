@@ -37,6 +37,9 @@ local function setup()
     onTest = function()
       log[#log + 1] = "test"
     end,
+    onShowLast = function()
+      log[#log + 1] = "last"
+    end,
     onMinimapButton = function()
       calls.minimapButton = calls.minimapButton + 1
       calls.minimapButtonSeen = db.minimapButton
@@ -231,6 +234,52 @@ local function test_test_button_without_settings_panel_still_previews()
   Assert.equal(table.concat(log, ","), "test")
 end
 
+local function test_show_last_button_exists_after_first_open_on_a_second_row()
+  setup()
+  open()
+  local last = button("Show last level-up")
+  Assert.equal(last ~= nil, true)
+  local reset = button("Reset position")
+  Assert.equal(select(4, last:GetPoint()), select(4, reset:GetPoint()))
+  Assert.equal(select(5, last:GetPoint()), select(5, reset:GetPoint()) - 24 - 12)
+end
+
+local function test_show_last_button_closes_options_then_shows_last()
+  setup()
+  open()
+  W.fireScript(button("Show last level-up"), "OnClick")
+  Assert.equal(table.concat(log, ","), "hide,last")
+  Assert.equal(hiddenFrame, _G.SettingsPanel)
+end
+
+local function test_show_last_button_in_combat_shows_last_without_closing_options()
+  setup()
+  W.inCombat = true
+  open()
+  W.fireScript(button("Show last level-up"), "OnClick")
+  Assert.equal(table.concat(log, ","), "last")
+end
+
+local function test_show_last_button_without_settings_panel_still_shows_last()
+  setup()
+  _G.SettingsPanel = nil
+  open()
+  W.fireScript(button("Show last level-up"), "OnClick")
+  Assert.equal(table.concat(log, ","), "last")
+end
+
+local function test_clear_skill_data_and_defaults_leave_the_char_db_alone()
+  setup()
+  local last = {}
+  local charDB = { last = last }
+  _G.LevelUpInfoCharDB = charDB
+  open()
+  W.fireScript(button("Clear skill data"), "OnClick")
+  canvas.OnDefault()
+  Assert.equal(_G.LevelUpInfoCharDB, charDB)
+  Assert.equal(charDB.last, last)
+end
+
 local function test_default_button_restores_every_default_and_applies_scale()
   setup()
   db.enabled, db.duration, db.scale, db.reducedMotion = false, 20, 1.25, true
@@ -306,6 +355,11 @@ return function()
   test_test_button_closes_options_then_previews()
   test_test_button_in_combat_previews_without_closing_options()
   test_test_button_without_settings_panel_still_previews()
+  test_show_last_button_exists_after_first_open_on_a_second_row()
+  test_show_last_button_closes_options_then_shows_last()
+  test_show_last_button_in_combat_shows_last_without_closing_options()
+  test_show_last_button_without_settings_panel_still_shows_last()
+  test_clear_skill_data_and_defaults_leave_the_char_db_alone()
   test_default_button_restores_every_default_and_applies_scale()
   test_default_button_restores_and_applies_minimap_button()
   test_default_button_before_first_show_builds_nothing()

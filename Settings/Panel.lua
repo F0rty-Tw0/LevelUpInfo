@@ -98,6 +98,14 @@ local function addButton(frame, text, x, y, onClick)
   return button
 end
 
+-- The options window draws above ours, so it closes before our window
+-- shows. Not in combat: closing it from addon code is blocked there.
+local function closeOptions()
+  if _G.SettingsPanel and not _G.InCombatLockdown() then
+    _G.HideUIPanel(_G.SettingsPanel)
+  end
+end
+
 local function build(frame, db, actions)
   addText(frame, "GameFontNormalLarge", CATEGORY_NAME, LEFT, TOP)
   local y = TOP - TITLE_HEIGHT
@@ -109,17 +117,18 @@ local function build(frame, db, actions)
     end
     y = y - ROW_HEIGHT
   end
-  addButton(frame, Text("Reset position"), LEFT, y - BUTTON_GAP, actions.onResetPosition)
-  addButton(frame, Text("Clear skill data"), LEFT + BUTTON_WIDTH + BUTTON_GAP, y - BUTTON_GAP, function()
+  local buttonRowY = y - BUTTON_GAP
+  addButton(frame, Text("Reset position"), LEFT, buttonRowY, actions.onResetPosition)
+  addButton(frame, Text("Clear skill data"), LEFT + BUTTON_WIDTH + BUTTON_GAP, buttonRowY, function()
     _G.wipe(db.trainers)
   end)
-  -- The options window draws above ours, so it closes before the preview
-  -- shows. Not in combat: closing it from addon code is blocked there.
-  addButton(frame, Text("Test"), LEFT + 2 * (BUTTON_WIDTH + BUTTON_GAP), y - BUTTON_GAP, function()
-    if _G.SettingsPanel and not _G.InCombatLockdown() then
-      _G.HideUIPanel(_G.SettingsPanel)
-    end
+  addButton(frame, Text("Test"), LEFT + 2 * (BUTTON_WIDTH + BUTTON_GAP), buttonRowY, function()
+    closeOptions()
     actions.onTest()
+  end)
+  addButton(frame, Text("Show last level-up"), LEFT, buttonRowY - BUTTON_HEIGHT - BUTTON_GAP, function()
+    closeOptions()
+    actions.onShowLast()
   end)
 end
 
@@ -138,7 +147,7 @@ local function restoreDefaults(db, actions)
   actions.onMinimapButton()
 end
 
--- actions = { onScale = fn, onResetPosition = fn, onTest = fn, onMinimapButton = fn };
+-- actions = { onScale = fn, onResetPosition = fn, onTest = fn, onShowLast = fn, onMinimapButton = fn };
 -- returns the settings category.
 function Panel.Register(db, actions)
   controls = {}
