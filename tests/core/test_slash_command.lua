@@ -4,16 +4,19 @@ local Wow = require("tests.helpers.wow")
 local opened
 local tested
 local testedLevel
+local shownLast
 
 local function setup()
   Wow.Install()
   local SlashCommand = assert(loadfile("Core/SlashCommand.lua"))("LevelUpInfo", {})
-  opened, tested, testedLevel = 0, 0, nil
+  opened, tested, testedLevel, shownLast = 0, 0, nil, 0
   SlashCommand.Register(function()
     opened = opened + 1
   end, function(level)
     tested = tested + 1
     testedLevel = level
+  end, function()
+    shownLast = shownLast + 1
   end)
 end
 
@@ -31,6 +34,7 @@ local function test_bare_command_opens_settings()
   run("")
   Assert.equal(opened, 1)
   Assert.equal(tested, 0)
+  Assert.equal(shownLast, 0)
 end
 
 local function test_test_argument_runs_the_preview()
@@ -38,6 +42,7 @@ local function test_test_argument_runs_the_preview()
   run("test")
   Assert.equal(tested, 1)
   Assert.equal(opened, 0)
+  Assert.equal(shownLast, 0)
 end
 
 local function test_test_argument_ignores_case_and_surrounding_spaces()
@@ -74,6 +79,28 @@ local function test_unknown_argument_opens_settings()
   Assert.equal(tested, 0)
 end
 
+local function test_last_argument_shows_the_last_level_up()
+  setup()
+  run("last")
+  Assert.equal(shownLast, 1)
+  Assert.equal(opened, 0)
+  Assert.equal(tested, 0)
+end
+
+local function test_last_argument_ignores_case_and_surrounding_spaces()
+  setup()
+  run("  LAST ")
+  Assert.equal(shownLast, 1)
+end
+
+local function test_last_with_trailing_text_opens_settings()
+  setup()
+  run("lastx")
+  run("last 5")
+  Assert.equal(opened, 2)
+  Assert.equal(shownLast, 0)
+end
+
 return function()
   test_registers_the_lui_command()
   test_bare_command_opens_settings()
@@ -83,4 +110,7 @@ return function()
   test_test_with_level_passes_the_level()
   test_test_with_non_number_opens_settings()
   test_unknown_argument_opens_settings()
+  test_last_argument_shows_the_last_level_up()
+  test_last_argument_ignores_case_and_surrounding_spaces()
+  test_last_with_trailing_text_opens_settings()
 end
