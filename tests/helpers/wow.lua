@@ -717,6 +717,7 @@ function Wow.Install()
   rawset(_G, "HEALTH", "Health")
   rawset(_G, "MANA", "Mana")
   rawset(_G, "TALENT_POINTS", "Talent points")
+  rawset(_G, "SPELL_STATALL", "all stats") -- the live value: lowercase, meant mid-sentence
   for i, stat in ipairs({ "Strength", "Agility", "Stamina", "Intellect", "Spirit" }) do
     rawset(_G, "SPELL_STAT" .. i .. "_NAME", stat)
   end

@@ -206,6 +206,20 @@ local function test_all_stats_line_ignores_missing_before()
   Assert.equal(table.concat(gainLines(), "|"), ALL_STATS_1)
 end
 
+local function test_all_stats_name_is_the_blizzard_string_capitalized()
+  setup()
+  _G.SPELL_STATALL = "alle Werte"
+  Window.Show(record({ gains = statsAt(1), before = statsAt(10) }))
+  Assert.equal(table.concat(gainLines(), "|"), "Alle Werte " .. GREEN .. "(+1)|r")
+end
+
+local function test_all_stats_name_falls_back_without_the_blizzard_string()
+  setup()
+  _G.SPELL_STATALL = nil
+  Window.Show(record({ gains = statsAt(1), before = statsAt(10) }))
+  Assert.equal(table.concat(gainLines(), "|"), ALL_STATS_1)
+end
+
 local function test_missing_stat_gain_keys_do_not_collapse()
   setup()
   Window.Show(record({ gains = { health = 15 }, before = { health = 100 } }))
@@ -308,6 +322,8 @@ return function()
   test_any_one_differing_stat_keeps_five_lines()
   test_equal_gains_on_all_five_stats_show_one_all_stats_line()
   test_all_stats_line_ignores_missing_before()
+  test_all_stats_name_is_the_blizzard_string_capitalized()
+  test_all_stats_name_falls_back_without_the_blizzard_string()
   test_every_gain_has_distinct_hex_color()
   test_headings_have_no_divider_lines()
   test_talent_line_sits_above_stats_with_a_divider_between()
