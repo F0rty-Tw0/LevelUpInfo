@@ -20,6 +20,9 @@ Data/WeaponMasters.lua
 Data/QuestSpells.lua
 Data/OtherSources.lua
 Data/WeaponIcons.lua
+Data/ClassSpells/Forever.lua
+Data/ClassSpells/Era.lua
+Data/ClassSpells/Tbc.lua
 Data/SkillList.lua
 Data/NextLevel.lua
 Data/RankDiff.lua
