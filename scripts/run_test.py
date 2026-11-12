@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run a single Lua test file using the lupa (LuaJIT FFI) runtime.
+"""Run a single Lua test file on lupa's Lua 5.1 runtime, matching CI's lua5.1.
 
 Usage:  python scripts/run_test.py tests/core/test_secret.lua
 """
@@ -8,9 +8,11 @@ import sys
 import os
 
 try:
-    from lupa import LuaRuntime
+    # Plain `from lupa import LuaRuntime` picks lupa's newest bundled Lua (5.5),
+    # which accepts code that breaks on CI's Lua 5.1.
+    from lupa.lua51 import LuaRuntime
 except ImportError:
-    print("ERROR: lupa is not installed. Run: pip install lupa", file=sys.stderr)
+    print("ERROR: lupa with Lua 5.1 is not installed. Run: pip install -U lupa", file=sys.stderr)
     sys.exit(1)
 
 
