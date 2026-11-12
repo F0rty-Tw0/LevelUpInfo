@@ -190,6 +190,16 @@ local function test_one_differing_stat_gain_shows_separate_lines()
   )
 end
 
+local function test_any_one_differing_stat_keeps_five_lines()
+  for _, key in ipairs(STAT_KEYS) do
+    setup()
+    Window.Show(record({ gains = statsAt(1, { [key] = 2 }), before = statsAt(10) }))
+    local texts = gainLines()
+    Assert.equal(#texts, 5)
+    Assert.notContains(table.concat(texts, "|"), "All stats")
+  end
+end
+
 local function test_all_stats_line_ignores_missing_before()
   setup()
   Window.Show(record({ gains = statsAt(1), before = {} }))
@@ -295,6 +305,7 @@ return function()
   test_talent_line_uses_short_form()
   test_missing_stat_gain_keys_do_not_collapse()
   test_one_differing_stat_gain_shows_separate_lines()
+  test_any_one_differing_stat_keeps_five_lines()
   test_equal_gains_on_all_five_stats_show_one_all_stats_line()
   test_all_stats_line_ignores_missing_before()
   test_every_gain_has_distinct_hex_color()
