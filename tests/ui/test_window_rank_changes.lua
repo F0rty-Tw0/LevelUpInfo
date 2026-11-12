@@ -44,6 +44,7 @@ local function setup()
     "Core/Events.lua",
     "Data/TrainerCache.lua",
     "Data/SkillList.lua",
+    "Data/NextLevel.lua",
     "Data/RankChanges.lua",
     "Data/SpellFacts.lua",
     "UI/AutoHide.lua",
@@ -52,6 +53,7 @@ local function setup()
     "UI/SkillGroup.lua",
     "UI/Layout.lua",
     "UI/GainLines.lua",
+    "UI/NextLevelLine.lua",
   }) do
     assert(loadfile(file))("LevelUpInfo", ns)
   end

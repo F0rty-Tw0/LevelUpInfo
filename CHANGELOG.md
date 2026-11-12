@@ -6,6 +6,7 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
+- The level-up window now ends with a peek at the next level: what the trainer will teach you there.
 - When every primary stat goes up by the same amount, the window shows one "All stats" line instead of five.
 - Fixed: higher ranks of spells you can't learn yet (such as Binding Heal) no longer show up the first time the window opens.
 
