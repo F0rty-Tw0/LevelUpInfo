@@ -21,6 +21,7 @@ Data/QuestSpells.lua
 Data/OtherSources.lua
 Data/WeaponIcons.lua
 Data/SkillList.lua
+Data/NextLevel.lua
 Data/RankDiff.lua
 Data/RankChanges.lua
 Data/SpellFacts.lua
