@@ -67,7 +67,7 @@ local function setup(client)
   Window = ns.Window
   Window.Install(db)
   LevelUp = assert(loadfile("Core/LevelUp.lua"))("LevelUpInfo", ns)
-  LevelUp.Install(db)
+  LevelUp.Install(db, {})
 end
 
 -- PLAYER_LEVEL_UP: level, health, power, talents, pvpSlots, str, agi, sta, int, spirit.
@@ -83,6 +83,12 @@ local function test_install_registers_only_the_level_up_event()
   setup()
   Assert.equal(Events.frame:IsEventRegistered("PLAYER_LEVEL_UP"), true)
   Assert.equal(regenRegistered(), false)
+end
+
+local function test_install_requires_a_character_table()
+  setup()
+  Assert.equal(pcall(LevelUp.Install, db), false)
+  Assert.equal(pcall(LevelUp.Install, db, "x"), false)
 end
 
 local function test_ding_out_of_combat_shows_payload_gains()
@@ -469,6 +475,7 @@ end
 
 return function()
   test_install_registers_only_the_level_up_event()
+  test_install_requires_a_character_table()
   test_ding_out_of_combat_shows_payload_gains()
   test_ding_in_combat_waits_for_regen_when_enabled()
   test_ding_in_combat_shows_now_when_wait_is_off()

@@ -32,7 +32,8 @@ local function priestServices()
 end
 
 -- Fresh fake client with every TOC file loaded in order, as at login (before ADDON_LOADED).
--- opts.trainer is passed to Trainer.Install; saved becomes the SavedVariables the client loads.
+-- opts.trainer is passed to Trainer.Install; saved becomes the SavedVariables the client loads,
+-- opts.char the per-character ones.
 local function login(saved, opts)
   W = Wow.Install()
   -- Named frames from an earlier test's client.
@@ -46,6 +47,7 @@ local function login(saved, opts)
     Trainer.Install(W, opts.trainer)
   end
   _G.LevelUpInfoDB = saved
+  _G.LevelUpInfoCharDB = opts and opts.char
   baseFrames = #W.frames
   ns = {}
   for _, file in ipairs(tocFiles()) do
@@ -316,7 +318,39 @@ local function test_window_clicks_flip_the_saved_fold_table_in_place()
   Assert.equal(_G.LevelUpInfoDB.foldedGroups.missed, nil)
 end
 
+local function test_toc_declares_the_per_character_saved_variable()
+  local found = false
+  for line in io.lines("LevelUpInfo.toc") do
+    found = found or line == "## SavedVariablesPerCharacter: LevelUpInfoCharDB"
+  end
+  Assert.equal(found, true)
+end
+
+local function test_addon_loaded_writes_the_normalized_char_db()
+  setup(nil, { char = { junk = true, last = { fromLevel = 9, toLevel = 10, bogus = 1, gains = { health = 15 } } } })
+  Assert.equal(_G.LevelUpInfoCharDB.junk, nil)
+  Assert.equal(_G.LevelUpInfoCharDB.last.bogus, nil)
+  Assert.equal(_G.LevelUpInfoCharDB.last.gains.health, 15)
+  Assert.equal(_G.LevelUpInfoCharDB.last.gains.power, 0)
+end
+
+local function test_missing_char_db_becomes_an_empty_table()
+  setup(nil)
+  Assert.equal(type(_G.LevelUpInfoCharDB), "table")
+  Assert.equal(next(_G.LevelUpInfoCharDB), nil)
+end
+
+local function test_ding_saves_the_record_in_the_global_char_db()
+  setup(nil)
+  ding()
+  Assert.equal(_G.LevelUpInfoCharDB.last, ns.Window.Current())
+end
+
 return function()
+  test_toc_declares_the_per_character_saved_variable()
+  test_addon_loaded_writes_the_normalized_char_db()
+  test_missing_char_db_becomes_an_empty_table()
+  test_ding_saves_the_record_in_the_global_char_db()
   test_saved_fold_flags_reach_the_db_and_garbage_gives_an_empty_table()
   test_window_clicks_flip_the_saved_fold_table_in_place()
   test_only_the_event_frame_exists_before_addon_loaded()
