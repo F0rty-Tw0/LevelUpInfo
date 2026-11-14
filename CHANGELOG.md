@@ -10,7 +10,7 @@ All releases: **0.1.x (current)**
 - New "Show last level-up" button in the options, and /lui last: brings back the window from your last level-up, with the same gains, even after a relog.
 - Priests now see their new skills on their very first level-up, even before visiting a class trainer.
 - The level-up window stays smaller: it shows four skills per group and stops growing at about 60% of the screen height, scrolling the rest.
-- Each skill row has a small eye. Click it to hide that skill from the level-up window, all its ranks, for that character. Hidden skills wait in a folded "Hidden" group at the bottom, where you can click the eye again to bring one back, or press "Show hidden skills" in the options to bring them all back.
+- Each skill row has a small red minus. Click it to hide that skill from the level-up window, all its ranks, for that character. Hidden skills wait in a folded "Hidden" group at the bottom with their total price; click the green plus to bring one back. The "Not yet learned" and "Weapon skills" headings have a minus that hides the whole group, and the "Hidden" heading a plus that brings everything back. "Show hidden skills" in the options still brings them all back too.
 
 ## [0.1.9] - 2026-11-12
 
