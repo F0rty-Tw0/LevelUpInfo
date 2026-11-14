@@ -337,7 +337,8 @@ end
 local function test_missing_char_db_becomes_an_empty_table()
   setup(nil)
   Assert.equal(type(_G.LevelUpInfoCharDB), "table")
-  Assert.equal(next(_G.LevelUpInfoCharDB), nil)
+  Assert.equal(_G.LevelUpInfoCharDB.last, nil)
+  Assert.equal(next(_G.LevelUpInfoCharDB.hidden), nil)
 end
 
 local function test_ding_saves_the_record_in_the_global_char_db()
