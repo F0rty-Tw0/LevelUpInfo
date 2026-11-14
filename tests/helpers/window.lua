@@ -25,6 +25,7 @@ WindowHelper.FILES = {
   "UI/AutoHide.lua",
   "UI/ScrollBox.lua",
   "UI/SkillRow.lua",
+  "UI/GroupButton.lua",
   "UI/SkillGroup.lua",
   "UI/Layout.lua",
   "UI/GainLines.lua",

@@ -7,7 +7,7 @@ local SPECS = { { group = "skill", cap = 5 }, { group = "weapon", cap = 5, fold 
 local function setup()
   local W = Wow.Install()
   local ns = {}
-  for _, path in ipairs({ "Core/Localization.lua", "Core/Events.lua", "UI/AutoHide.lua", "UI/ScrollBox.lua" }) do
+  for _, path in ipairs({ "Core/Localization.lua", "Core/Events.lua", "UI/AutoHide.lua", "UI/ScrollBox.lua", "UI/GroupButton.lua" }) do
     assert(loadfile(path))("LevelUpInfo", ns)
   end
   local t = { W = W }
@@ -43,7 +43,7 @@ end
 local function test_total_widths_line_up()
   local t = setup()
   Assert.equal(t.SkillGroup.Total("skill", 1, 1):GetWidth(), 292)
-  Assert.equal(t.SkillGroup.Total("weapon", 1, 1):GetWidth(), 278)
+  Assert.equal(t.SkillGroup.Total("weapon", 1, 1):GetWidth(), 258)
 end
 
 local function test_total_is_a_16_high_right_aligned_line()
