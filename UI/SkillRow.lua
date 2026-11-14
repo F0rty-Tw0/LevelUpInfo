@@ -21,6 +21,11 @@ local SOURCE_WIDTH = 190
 local SOURCE_GAP = 2
 local ICON_TOP = (ROW_HEIGHT - ICON_SIZE) / 2
 local CHANGE_LINE_HEIGHT = 12
+local EYE_SIZE = 16
+local EYE_OPEN = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeOpen.tga"
+local EYE_CLOSED = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeClosed.tga"
+local EYE_REST_ALPHA = 0.6
+local EYE_HOVER_ALPHA = 1
 local NO_LINES = {}
 local sourceLines = {}
 
@@ -79,7 +84,31 @@ local function newChangeLine(row, i)
   return line
 end
 
-function SkillRow.Create(parent, enterFn, leaveFn)
+-- The hide/restore eye at the row's top right: a plain Button (no template,
+-- no events). Hovering it brightens it and pauses like the row, with no
+-- tooltip; a click hands the row's current skill name to eyeFn.
+local function newEye(row, eyeFn)
+  local eye = _G.CreateFrame("Button", nil, row)
+  eye:SetSize(EYE_SIZE, EYE_SIZE)
+  eye:SetPoint("TOPRIGHT", row, "TOPRIGHT", -PAD, -PAD)
+  eye:SetAlpha(EYE_REST_ALPHA)
+  eye.texture = eye:CreateTexture()
+  eye.texture:SetAllPoints()
+  eye:SetScript("OnClick", function()
+    eyeFn(row.skillName)
+  end)
+  eye:SetScript("OnEnter", function()
+    eye:SetAlpha(EYE_HOVER_ALPHA)
+    row.onEnter()
+  end)
+  eye:SetScript("OnLeave", function()
+    eye:SetAlpha(EYE_REST_ALPHA)
+    row.onLeave()
+  end)
+  return eye
+end
+
+function SkillRow.Create(parent, enterFn, leaveFn, eyeFn)
   local row = _G.CreateFrame("Button", nil, parent)
   row:SetSize(ROW_WIDTH, ROW_HEIGHT)
   row.onEnter, row.onLeave = enterFn, leaveFn
@@ -98,6 +127,7 @@ function SkillRow.Create(parent, enterFn, leaveFn)
   row.price:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -PAD, PAD)
   row.price:SetJustifyH("RIGHT")
   row.changeLines = {}
+  row.eye = newEye(row, eyeFn)
   row:SetScript("OnEnter", onEnter)
   row:SetScript("OnLeave", onLeave)
   return row
@@ -122,6 +152,9 @@ end
 function SkillRow.SetSkill(row, entry, money)
   SkillRow.SetChanges(row, entry.source and sourceText(entry.source) or NO_LINES)
   row.spellID = entry.spellID
+  row.skillName = entry.name
+  row.eye.texture:SetTexture(entry.hidden == true and EYE_CLOSED or EYE_OPEN)
+  row.eye:SetShown(entry.name ~= "")
   row.icon:SetTexture(entry.icon)
   row.name:SetWidth(0)
   row.name:SetText(entry.name)
@@ -138,6 +171,8 @@ end
 function SkillRow.SetHint(row)
   SkillRow.SetChanges(row, NO_LINES)
   row.spellID = nil
+  row.skillName = nil
+  row.eye:SetShown(false)
   row.icon:SetTexture(HINT_ICON)
   row.name:SetWidth(HINT_WIDTH)
   row.name:SetText(Text("Visit your class trainer to see all new skills."))
