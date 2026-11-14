@@ -140,7 +140,7 @@ local function test_eye_click_pins_the_top_edge_like_a_fold_click()
   Assert.equal(db.position, nil)
 end
 
--- Review Focus 2: the last row leaves an expanded group, so its heading, toggle
+-- The last row leaves an expanded group, so its heading, toggle
 -- and box go; the Hidden heading takes the count.
 local function test_hiding_the_last_entry_of_an_expanded_group_removes_the_group()
   setup()
@@ -163,7 +163,7 @@ local function test_hiding_the_last_entry_of_an_expanded_group_removes_the_group
   Assert.equal(x, 100)
 end
 
--- Review Focus 1: a quest Rank 1 and a trainer Rank 2 share a name; one eye
+-- A quest Rank 1 and a trainer Rank 2 share a name; one eye
 -- click moves both, one click on the closed eye returns both.
 local function test_a_repeated_name_hides_and_restores_together()
   local otherSources = {}
@@ -182,7 +182,7 @@ local function test_a_repeated_name_hides_and_restores_together()
   Assert.equal(headings(), "Stats|New ranks|Not yet learned")
 end
 
--- Review Focus 5: a /lui test or Show last record is not a live level-up.
+-- A /lui test or Show last record is not a live level-up.
 local function test_eye_works_on_a_test_record()
   setup()
   addMissed(2)
@@ -236,8 +236,8 @@ local function test_show_hidden_skills_with_the_window_closed_still_wipes()
   Assert.equal(rowNames(), "Missed 1|Missed 2")
 end
 
--- Review Focus 3: Fade Rank 1 is a row now; its Rank 2 is the only skill of
--- level 14, so hiding Fade moves the line on, or hides it with nothing after.
+-- Fade Rank 1 is a row; its Rank 2 is the only skill of level 14, so
+-- hiding Fade moves the line on, or hides it with nothing after.
 local function setupNextLevel()
   setup()
   W.spells[FADE_1] = { name = "Fade", iconID = 1 }
