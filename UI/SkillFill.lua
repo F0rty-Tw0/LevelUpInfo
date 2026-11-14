@@ -35,22 +35,15 @@ local HIDDEN = "hidden"
 -- Skill groups in display order; a capped group shows its first `cap` rows
 -- and a `+N more` toggle, or, expanded, all rows in a scroll box. A `fold`
 -- group has a button that hides its rows behind a count in the heading;
--- `startFolded` folds it until the player opens it. A `noTotal` group shows
--- no price total. Hidden holds every hidden entry, whatever its own group.
+-- `startFolded` folds it until the player opens it. Hidden holds every hidden
+-- entry, whatever its own group; no entry has group "hidden", so it never
+-- shows a price total.
 local GROUPS = {
   { group = "skill", title = "New skills", cap = GROUP_CAP, more = "+%d more new skills" },
   { group = "rank", title = "New ranks", cap = GROUP_CAP, more = "+%d more new ranks" },
   { group = "missed", title = "Not yet learned", cap = GROUP_CAP, fold = true, more = "+%d more not yet learned" },
   { group = "weapon", title = "Weapon skills", cap = GROUP_CAP, fold = true, more = "+%d more weapon skills" },
-  {
-    group = HIDDEN,
-    title = "Hidden",
-    cap = GROUP_CAP,
-    fold = true,
-    startFolded = true,
-    noTotal = true,
-    more = "+%d more hidden",
-  },
+  { group = HIDDEN, title = "Hidden", cap = GROUP_CAP, fold = true, startFolded = true, more = "+%d more hidden" },
 }
 
 -- The window's skill area: group headings, skill rows, the hint row and the
@@ -168,7 +161,7 @@ local function fillGroup(spec, entries, money, gap)
   local folded = SkillGroup.IsFolded(group)
   local parent = content
   local count = 0
-  local total = not spec.noTotal and SkillList.GroupTotal(entries, group) or nil
+  local total = SkillList.GroupTotal(entries, group)
   for _, entry in ipairs(entries) do
     if belongs(spec, entry) then
       count = count + 1
