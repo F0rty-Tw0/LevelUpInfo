@@ -1,5 +1,6 @@
 local Assert = require("tests.helpers.assert")
 local Wow = require("tests.helpers.wow")
+local WindowHelper = require("tests.helpers.window")
 local ARROW = require("LevelUpInfo.Core.Format").ARROW
 
 local W
@@ -45,29 +46,11 @@ local function setup(client)
       end,
     }
   end
-  for _, file in ipairs({
-    "Core/Localization.lua",
-    "Core/Format.lua",
-    "Core/Events.lua",
-    "Data/TrainerCache.lua",
-    "Data/SkillList.lua",
-    "Data/RankChanges.lua",
-    "Data/SpellFacts.lua",
-    "UI/AutoHide.lua",
-    "UI/ScrollBox.lua",
-    "UI/SkillRow.lua",
-    "UI/SkillGroup.lua",
-    "UI/Layout.lua",
-    "UI/GainLines.lua",
-    "UI/Window.lua",
-  }) do
-    assert(loadfile(file))("LevelUpInfo", ns)
-  end
+  Window = WindowHelper.load(ns)
   Events = ns.Events
-  Window = ns.Window
   Window.Install(db)
   LevelUp = assert(loadfile("Core/LevelUp.lua"))("LevelUpInfo", ns)
-  LevelUp.Install(db)
+  LevelUp.Install(db, {})
 end
 
 -- PLAYER_LEVEL_UP: level, health, power, talents, pvpSlots, str, agi, sta, int, spirit.
@@ -83,6 +66,12 @@ local function test_install_registers_only_the_level_up_event()
   setup()
   Assert.equal(Events.frame:IsEventRegistered("PLAYER_LEVEL_UP"), true)
   Assert.equal(regenRegistered(), false)
+end
+
+local function test_install_requires_a_character_table()
+  setup()
+  Assert.equal(pcall(LevelUp.Install, db), false)
+  Assert.equal(pcall(LevelUp.Install, db, "x"), false)
 end
 
 local function test_ding_out_of_combat_shows_payload_gains()
@@ -469,6 +458,7 @@ end
 
 return function()
   test_install_registers_only_the_level_up_event()
+  test_install_requires_a_character_table()
   test_ding_out_of_combat_shows_payload_gains()
   test_ding_in_combat_waits_for_regen_when_enabled()
   test_ding_in_combat_shows_now_when_wait_is_off()

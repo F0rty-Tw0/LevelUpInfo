@@ -156,6 +156,53 @@ local function cleanTrainers(trainers)
   return clean
 end
 
+local GAIN_KEYS = { "health", "power", "talents", "strength", "agility", "stamina", "intellect", "spirit" }
+local BEFORE_KEYS = { "health", "power", "strength", "agility", "stamina", "intellect", "spirit" }
+
+-- Every gain key, a number; a missing or bad gain is 0.
+local function cleanGains(gains)
+  gains = type(gains) == "table" and gains or {}
+  local clean = {}
+  for _, key in ipairs(GAIN_KEYS) do
+    clean[key] = isNumber(gains[key]) and gains[key] or 0
+  end
+  return clean
+end
+
+-- Only the known keys with a number value; a missing one shows as `+N`.
+local function cleanBefore(before)
+  local clean = {}
+  if type(before) ~= "table" then
+    return clean
+  end
+  for _, key in ipairs(BEFORE_KEYS) do
+    if isNumber(before[key]) then
+      clean[key] = before[key]
+    end
+  end
+  return clean
+end
+
+local function cleanLast(last)
+  if type(last) ~= "table" or not isPositiveInteger(last.fromLevel) or not isPositiveInteger(last.toLevel) then
+    return nil
+  end
+  if last.fromLevel >= last.toLevel then
+    return nil
+  end
+  return {
+    fromLevel = last.fromLevel,
+    toLevel = last.toLevel,
+    gains = cleanGains(last.gains),
+    before = cleanBefore(last.before),
+  }
+end
+
+-- Per-character data: only the last real level-up record.
+function SavedState.InitializeCharacter(saved)
+  return { last = cleanLast(type(saved) == "table" and saved.last or nil) }
+end
+
 function SavedState.Initialize(saved)
   saved = type(saved) == "table" and saved or {}
   local db = {

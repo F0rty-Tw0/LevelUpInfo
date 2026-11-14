@@ -3,8 +3,9 @@
 ## Notes: When you level up, a small trainer-style window shows what you gained and which class skills you can now buy, with their price.
 ## Author: F0rty_tw0
 ## IconTexture: Interface\AddOns\LevelUpInfo\Media\Icon
-## Version: v0.1.8
+## Version: v0.1.9
 ## SavedVariables: LevelUpInfoDB
+## SavedVariablesPerCharacter: LevelUpInfoCharDB
 ## X-Curse-Project-ID: 1732593
 
 Core/Constants.lua
@@ -20,7 +21,12 @@ Data/WeaponMasters.lua
 Data/QuestSpells.lua
 Data/OtherSources.lua
 Data/WeaponIcons.lua
+Data/ClassSpells/Forever.lua
+Data/ClassSpells/Era.lua
+Data/ClassSpells/Tbc.lua
+Data/BuiltinSpells.lua
 Data/SkillList.lua
+Data/NextLevel.lua
 Data/RankDiff.lua
 Data/RankChanges.lua
 Data/SpellFacts.lua
@@ -30,6 +36,8 @@ UI/SkillRow.lua
 UI/SkillGroup.lua
 UI/Layout.lua
 UI/GainLines.lua
+UI/NextLevelLine.lua
+UI/SkillFill.lua
 UI/Window.lua
 UI/MinimapButton.lua
 Core/LevelUp.lua
