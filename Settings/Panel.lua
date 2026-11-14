@@ -130,13 +130,7 @@ local function build(frame, db, actions)
     closeOptions()
     actions.onShowLast()
   end)
-  addButton(
-    frame,
-    Text("Show hidden skills"),
-    LEFT + BUTTON_WIDTH + BUTTON_GAP,
-    buttonRowY - BUTTON_HEIGHT - BUTTON_GAP,
-    actions.onShowHidden
-  )
+  addButton(frame, Text("Show hidden skills"), LEFT + BUTTON_WIDTH + BUTTON_GAP, buttonRowY - BUTTON_HEIGHT - BUTTON_GAP, actions.onShowHidden)
 end
 
 local function refresh()
