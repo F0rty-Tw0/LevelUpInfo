@@ -14,6 +14,7 @@ local NextLevelLine = ns.NextLevelLine or require("LevelUpInfo.UI.NextLevelLine"
 
 local format = string.format
 local ipairs = ipairs
+local max = math.max
 local min = math.min
 local pairs = pairs
 
@@ -27,7 +28,7 @@ local GROUP_GAP = 14
 local ROW_HEIGHT = 47
 local ROW_GAP = 4
 local TEXT_LEFT = 4
-local GROUP_CAP = 5
+local GROUP_CAP = 4
 local NO_LINES = {}
 
 -- Skill groups in display order; a capped group shows its first `cap` rows
@@ -213,6 +214,7 @@ end
 -- between them, so expanding keeps the group's size and only adds the
 -- scrollbar. Runs before placing: the layout reads the box's height.
 function SkillFill.FitBoxes()
+  local tallest = 0
   for _, spec in ipairs(GROUPS) do
     local first = boxFirstRow[spec.group]
     if spec.cap and first and SkillGroup.IsExpanded(spec.group) then
@@ -222,8 +224,10 @@ function SkillFill.FitBoxes()
         height = height + rows[index]:GetHeight()
       end
       SkillGroup.SetBoxHeight(spec.group, height)
+      tallest = max(tallest, height)
     end
   end
+  return tallest
 end
 
 -- Recomputes the change lines of shown rows that use `spellID`; returns

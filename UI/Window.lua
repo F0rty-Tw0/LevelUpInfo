@@ -15,6 +15,7 @@ local GainLines = ns.GainLines or require("LevelUpInfo.UI.GainLines")
 local SkillFill = ns.SkillFill or require("LevelUpInfo.UI.SkillFill")
 
 local format = string.format
+local max = math.max
 local min = math.min
 local select = select
 local tinsert = table.insert
@@ -34,8 +35,9 @@ local FOOTER_HEIGHT = 12
 local VIEW_WIDTH = CONTENT_WIDTH + 12
 local VIEW_BAR_COLUMN = 12
 -- Room kept between the window and the top and bottom of the screen: the
--- height cap leaves it, and the clamp rect reaches this far past the frame.
+-- full height cap leaves it, and the clamp rect reaches this far past the frame.
 local SCREEN_MARGIN = 16
+local SCREEN_FRACTION = 0.6 -- the window stops growing at this share of the screen
 -- Congratulation line in the header strip right of the portrait.
 local HEADER_LEFT = 62
 local HEADER_TOP = -35
@@ -179,12 +181,16 @@ local function fillSkills(record, gainCount)
 end
 
 local function applyLayout()
-  SkillFill.FitBoxes()
+  local floor = SkillFill.FitBoxes()
   local height, cursors = Layout.Run(content)
   SkillFill.SizeBoxes(cursors)
   content:SetHeight(height)
-  -- The screen height in frame units, less the margins and the frame's chrome.
-  local maxView = _G.UIParent:GetHeight() / frame:GetScale() - 2 * SCREEN_MARGIN - HEADER_HEIGHT - FOOTER_HEIGHT
+  -- The view stops at SCREEN_FRACTION of the screen, or at the tallest
+  -- expanded box if that is more, but never past the screen less its margins.
+  local screen = _G.UIParent:GetHeight() / frame:GetScale()
+  local chrome = HEADER_HEIGHT + FOOTER_HEIGHT
+  local fullCap = screen - 2 * SCREEN_MARGIN - chrome
+  local maxView = min(fullCap, max(SCREEN_FRACTION * screen - chrome, floor))
   local viewHeight = min(height, maxView)
   view:SetHeight(viewHeight)
   viewBar:SetHeight(viewHeight)

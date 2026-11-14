@@ -9,7 +9,8 @@ local ScrollBox = ns.ScrollBox or require("LevelUpInfo.UI.ScrollBox")
 local ipairs = ipairs
 local pairs = pairs
 
-local BOX_HEIGHT = 235
+-- A box's size at creation and fallback: 4 rows of 47, the window's group cap.
+local BOX_HEIGHT = 188
 local CONTENT_WIDTH = 298
 local TOGGLE_HEIGHT = 16
 local TEXT_LEFT = 4
