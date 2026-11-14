@@ -1,4 +1,5 @@
 local Assert = require("tests.helpers.assert")
+local BuiltinHelper = require("tests.helpers.builtin_spells")
 local Wow = require("tests.helpers.wow")
 
 local W
@@ -10,8 +11,16 @@ local FADE = 586
 local FLAY_1, FLAY_2, FLAY_3 = 15407, 17311, 17312
 local SMITE_2 = 591
 
-local function loadModules(otherSources)
+-- builtin (optional): built-in levels for the priest, else no built-in data.
+local function loadModules(otherSources, builtin)
   ns = { OtherSources = otherSources or {} }
+  if builtin then
+    ns.BuiltinSpells = BuiltinHelper.load("forever", {
+      forever = function()
+        return { PRIEST = builtin }
+      end,
+    })
+  end
   assert(loadfile("Data/TrainerCache.lua"))("LevelUpInfo", ns)
   assert(loadfile("Data/SkillList.lua"))("LevelUpInfo", ns)
   NextLevel = assert(loadfile("Data/NextLevel.lua"))("LevelUpInfo", ns)
@@ -19,7 +28,7 @@ end
 
 -- Fresh fake client and modules per test. Renew and Mind Blast each have a
 -- known spellbook rank (not in the cache), so their higher ranks can be bought.
-local function setup(otherSources)
+local function setup(otherSources, builtin)
   W = Wow.Install()
   W.spells[139] = { name = "Renew", iconID = 135953 }
   W.spells[8092] = { name = "Mind Blast", iconID = 136224 }
@@ -31,7 +40,7 @@ local function setup(otherSources)
   W.spells[FADE] = { name = "Fade", iconID = 135994 }
   W.spells[2652] = { name = "Touch of Weakness", iconID = 136143 }
   W.spells[227] = { name = "Staves", iconID = 135138 }
-  loadModules(otherSources)
+  loadModules(otherSources, builtin)
 end
 
 local function spell(races, cost, rank)
@@ -203,7 +212,52 @@ local function test_nothing_cached_above_gives_nil()
   end
 end
 
+-- Built-in priest levels 10, 12 and 14 (no races, like the shipped tables).
+local function builtinLevels()
+  return {
+    [10] = { [8092] = { cost = 100, rank = "Rank 1" } },
+    [12] = { [588] = { cost = 100, rank = "Rank 1" } },
+    [14] = { [FADE] = { cost = 100, rank = "Rank 1" } },
+  }
+end
+
+local function test_fresh_priest_gets_the_next_built_in_level()
+  setup(nil, builtinLevels())
+  local level, entries = find({}, 12)
+  Assert.equal(level, 14)
+  Assert.equal(ids(entries), "586")
+end
+
+local function test_top_level_is_the_larger_of_live_and_built_in()
+  setup(nil, builtinLevels())
+  local trainers = priest({ Scourge = 10 }, { [10] = { [8092] = spell({ Scourge = true }) } })
+  Assert.equal((find(trainers, 12)), 14)
+end
+
+local function test_a_level_only_the_live_cache_has_counts()
+  setup(nil, builtinLevels())
+  local trainers = priest({ Scourge = 13 }, { [13] = { [139] = spell({ Scourge = true }) } })
+  local level, entries = find(trainers, 12)
+  Assert.equal(level, 13)
+  Assert.equal(ids(entries), "139")
+end
+
+local function test_nothing_above_the_built_in_top_gives_nil()
+  setup(nil, builtinLevels())
+  Assert.equal(find({}, 14), nil)
+end
+
+local function test_another_class_without_built_in_data_gives_nil()
+  setup(nil, builtinLevels())
+  Assert.equal(NextLevel.Find({}, "WARRIOR", "Orc", "Horde", 12), nil)
+end
+
 return function()
+  test_fresh_priest_gets_the_next_built_in_level()
+  test_top_level_is_the_larger_of_live_and_built_in()
+  test_a_level_only_the_live_cache_has_counts()
+  test_nothing_above_the_built_in_top_gives_nil()
+  test_another_class_without_built_in_data_gives_nil()
   test_next_level_is_the_lowest_cached_level_above_to_level()
   test_levels_with_no_key_are_skipped_without_a_build()
   test_level_with_only_hidden_entries_is_skipped()
