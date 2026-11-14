@@ -40,6 +40,9 @@ local function setup()
     onShowLast = function()
       log[#log + 1] = "last"
     end,
+    onShowHidden = function()
+      log[#log + 1] = "hidden"
+    end,
     onMinimapButton = function()
       calls.minimapButton = calls.minimapButton + 1
       calls.minimapButtonSeen = db.minimapButton
@@ -268,6 +271,44 @@ local function test_show_last_button_without_settings_panel_still_shows_last()
   Assert.equal(table.concat(log, ","), "last")
 end
 
+local function test_show_hidden_button_sits_right_of_show_last_on_the_second_row()
+  setup()
+  open()
+  local hiddenButton = button("Show hidden skills")
+  Assert.equal(hiddenButton ~= nil, true)
+  local last = button("Show last level-up")
+  Assert.equal(select(4, hiddenButton:GetPoint()), select(4, last:GetPoint()) + 140 + 12)
+  Assert.equal(select(5, hiddenButton:GetPoint()), select(5, last:GetPoint()))
+end
+
+local function test_show_hidden_button_calls_the_action_without_closing_options()
+  setup()
+  open()
+  W.fireScript(button("Show hidden skills"), "OnClick")
+  Assert.equal(table.concat(log, ","), "hidden")
+  Assert.equal(hiddenFrame, nil)
+end
+
+local function test_show_hidden_button_in_combat_still_calls_the_action()
+  setup()
+  W.inCombat = true
+  open()
+  W.fireScript(button("Show hidden skills"), "OnClick")
+  Assert.equal(table.concat(log, ","), "hidden")
+end
+
+-- Guard: the panel holds no character table, so Defaults cannot reach `hidden`.
+local function test_defaults_and_clear_skill_data_leave_the_hidden_list_alone()
+  setup()
+  local hidden = { ["Mind Flay"] = true }
+  _G.LevelUpInfoCharDB = { hidden = hidden }
+  open()
+  W.fireScript(button("Clear skill data"), "OnClick")
+  canvas.OnDefault()
+  Assert.equal(_G.LevelUpInfoCharDB.hidden, hidden)
+  Assert.equal(hidden["Mind Flay"], true)
+end
+
 local function test_clear_skill_data_and_defaults_leave_the_char_db_alone()
   setup()
   local last = {}
@@ -359,6 +400,10 @@ return function()
   test_show_last_button_closes_options_then_shows_last()
   test_show_last_button_in_combat_shows_last_without_closing_options()
   test_show_last_button_without_settings_panel_still_shows_last()
+  test_show_hidden_button_sits_right_of_show_last_on_the_second_row()
+  test_show_hidden_button_calls_the_action_without_closing_options()
+  test_show_hidden_button_in_combat_still_calls_the_action()
+  test_defaults_and_clear_skill_data_leave_the_hidden_list_alone()
   test_clear_skill_data_and_defaults_leave_the_char_db_alone()
   test_default_button_restores_every_default_and_applies_scale()
   test_default_button_restores_and_applies_minimap_button()

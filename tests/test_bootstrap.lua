@@ -432,12 +432,24 @@ local function test_slash_test_does_not_change_what_the_button_shows()
   Assert.equal(ns.Window.Current(), last)
 end
 
+local function test_options_show_hidden_button_empties_the_saved_hidden_list_without_building_the_window()
+  setup(nil, { char = { hidden = { Smite = true, Renew = true } } })
+  local hidden = _G.LevelUpInfoCharDB.hidden
+  Assert.equal(hidden.Smite, true)
+  openPanel()
+  clickButton("Show hidden skills")
+  Assert.equal(_G.LevelUpInfoCharDB.hidden, hidden)
+  Assert.equal(next(hidden), nil)
+  Assert.equal(ns.Window.Frame(), nil)
+end
+
 return function()
   test_saved_last_level_up_shows_with_its_gains_after_login()
   test_options_button_shows_the_last_level_up()
   test_saved_last_level_up_of_an_older_level_shows_skills_only()
   test_fresh_character_shows_skills_only()
   test_slash_test_does_not_change_what_the_button_shows()
+  test_options_show_hidden_button_empties_the_saved_hidden_list_without_building_the_window()
   test_toc_declares_the_per_character_saved_variable()
   test_addon_loaded_writes_the_normalized_char_db()
   test_missing_char_db_becomes_an_empty_table()

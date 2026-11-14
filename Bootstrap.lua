@@ -30,6 +30,7 @@ function Bootstrap.Initialize(saved, charSaved)
     onResetPosition = Window.ResetPosition,
     onTest = LevelUp.ShowTest,
     onShowLast = LevelUp.ShowLast,
+    onShowHidden = Window.ShowHidden,
     onMinimapButton = MinimapButton.Apply,
   })
   SlashCommand.Register(Panel.Open, LevelUp.ShowTest, LevelUp.ShowLast)
