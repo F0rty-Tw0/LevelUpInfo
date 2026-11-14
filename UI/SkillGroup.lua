@@ -183,6 +183,10 @@ function SkillGroup.Collapse()
   end
 end
 
+function SkillGroup.CollapseOne(group)
+  collapse(groups[group])
+end
+
 -- Saves the group's flipped fold state as a boolean (never clears the key, so
 -- an open start-folded group stays open) and drops its expansion and scroll.
 function SkillGroup.Flip(group)

@@ -145,10 +145,25 @@ local function belongs(spec, entry)
   return entry.group == spec.group and entry.hidden ~= true
 end
 
+local function countIn(spec, entries)
+  local count = 0
+  for _, entry in ipairs(entries) do
+    if belongs(spec, entry) then
+      count = count + 1
+    end
+  end
+  return count
+end
+
 -- `gap` goes above the heading when the group has rows; returns the row count
 -- (a folded group counts its folded-away rows, so the next block's gap stays).
+-- An expanded group an eye click shrank to its cap is collapsed for good: no
+-- box, no toggle, and it does not come back expanded when entries return.
 local function fillGroup(spec, entries, money, gap)
   local group = spec.group
+  if spec.cap and SkillGroup.IsExpanded(group) and countIn(spec, entries) <= spec.cap then
+    SkillGroup.CollapseOne(group)
+  end
   local expanded = SkillGroup.IsExpanded(group)
   local folded = SkillGroup.IsFolded(group)
   local parent = content
