@@ -123,6 +123,17 @@ local function test_group_button_leave_hides_the_tooltip_and_resumes()
   Assert.equal(t.spy.resume, 1)
 end
 
+-- Hiding the clicked group empties it and hides its fold button mid-hover; WoW
+-- may send no OnLeave, so placing the heading again must reset the alpha.
+local function test_placing_the_fold_button_resets_the_group_button_alpha()
+  local t = setup()
+  local button = t.SkillGroup.GroupButton("missed")
+  t.W.fireScript(button, "OnEnter")
+  Assert.equal(button:GetAlpha(), 1)
+  t.SkillGroup.FoldButton("missed")
+  Assert.equal(button:GetAlpha(), 0.6)
+end
+
 return function()
   test_dismiss_groups_get_a_red_minus_button()
   test_hidden_group_gets_a_green_plus_button()
@@ -130,4 +141,5 @@ return function()
   test_group_button_click_calls_on_group_action_with_its_group()
   test_group_button_hover_shows_its_tooltip()
   test_group_button_leave_hides_the_tooltip_and_resumes()
+  test_placing_the_fold_button_resets_the_group_button_alpha()
 end

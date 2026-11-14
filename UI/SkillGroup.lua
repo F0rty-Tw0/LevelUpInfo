@@ -173,9 +173,15 @@ function SkillGroup.IsFolded(group)
   return saved == true
 end
 
--- The group's fold button with the icon for its current state.
+-- The group's fold button with the icon for its current state. Its heading
+-- button is back at rest alpha: hiding the fold button mid-hover may send no
+-- OnLeave.
 function SkillGroup.FoldButton(group)
-  local button = groups[group].foldButton
+  local state = groups[group]
+  local button = state.foldButton
+  if state.groupButton then
+    state.groupButton:SetAlpha(GroupButton.REST_ALPHA)
+  end
   button.foldIcon:SetTexture(SkillGroup.IsFolded(group) and ICON_FOLDED or ICON_OPEN)
   return button
 end

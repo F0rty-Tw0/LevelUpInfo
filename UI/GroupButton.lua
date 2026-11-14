@@ -22,6 +22,7 @@ local RESTORE = "Interface\\AddOns\\LevelUpInfo\\Media\\Restore.tga"
 local GroupButton = {}
 
 GroupButton.SIZE = SIZE
+GroupButton.REST_ALPHA = REST_ALPHA
 
 local function paint(texture, isRestore)
   local color = isRestore and _G.GREEN_FONT_COLOR or _G.RED_FONT_COLOR
