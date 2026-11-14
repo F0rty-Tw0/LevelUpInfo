@@ -100,6 +100,16 @@ local function test_eye_hover_brightens_it_and_pauses_without_a_tooltip()
   Assert.equal(#W.tooltip, 0)
 end
 
+-- A row pooled while its eye was hovered gets no OnLeave before its reuse.
+local function test_set_skill_puts_a_hovered_eye_back_to_its_resting_alpha()
+  setup()
+  local row = newRow()
+  SkillRow.SetSkill(row, ENTRY, W.money)
+  W.fireScript(row.eye, "OnEnter")
+  SkillRow.SetSkill(row, QUEST_ENTRY, W.money)
+  Assert.equal(row.eye:GetAlpha(), 0.6)
+end
+
 local function test_hint_row_hides_the_eye_and_clears_the_name()
   setup()
   local row = newRow()
@@ -137,6 +147,7 @@ return function()
   test_a_hidden_entry_gets_the_closed_eye()
   test_eye_click_passes_the_rows_current_skill_name()
   test_eye_hover_brightens_it_and_pauses_without_a_tooltip()
+  test_set_skill_puts_a_hovered_eye_back_to_its_resting_alpha()
   test_hint_row_hides_the_eye_and_clears_the_name()
   test_entry_without_a_name_has_no_eye()
   test_eye_texture_paths_name_files_the_addon_ships()

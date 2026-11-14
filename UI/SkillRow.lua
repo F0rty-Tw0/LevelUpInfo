@@ -155,6 +155,7 @@ function SkillRow.SetSkill(row, entry, money)
   row.skillName = entry.name
   row.eye.texture:SetTexture(entry.hidden == true and EYE_CLOSED or EYE_OPEN)
   row.eye:SetShown(entry.name ~= "")
+  row.eye:SetAlpha(EYE_REST_ALPHA) -- a row pooled while hovered got no OnLeave
   row.icon:SetTexture(entry.icon)
   row.name:SetWidth(0)
   row.name:SetText(entry.name)
