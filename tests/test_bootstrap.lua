@@ -346,7 +346,78 @@ local function test_ding_saves_the_record_in_the_global_char_db()
   Assert.equal(_G.LevelUpInfoCharDB.last, ns.Window.Current())
 end
 
+local function slashLast()
+  _G.SlashCmdList.LEVELUPINFO("last")
+end
+
+local function clickButton(text)
+  for _, button in ipairs(withTemplate("UIPanelButtonTemplate")) do
+    if button:GetText() == text then
+      W.fireScript(button, "OnClick")
+    end
+  end
+end
+
+-- A saved last level-up as WoW loads it from disk; the helper's player is level 10.
+local function lastRecord()
+  return {
+    fromLevel = 9,
+    toLevel = 10,
+    gains = { health = 15, power = 20, talents = 1, strength = 0, agility = 0, stamina = 1, intellect = 0, spirit = 0 },
+    before = { health = 100, power = 50, stamina = 25 },
+  }
+end
+
+local function test_saved_last_level_up_shows_with_its_gains_after_login()
+  setup(nil, { char = { last = lastRecord() } })
+  slashLast()
+  Assert.equal(shownLevels(), "9 to 10")
+  Assert.equal(ns.Window.Current().isTest, nil)
+  Assert.equal(ns.Window.Current().gains.health, 15)
+  Assert.equal(ns.Window.Current(), _G.LevelUpInfoCharDB.last)
+end
+
+local function test_options_button_shows_the_last_level_up()
+  setup(nil, { char = { last = lastRecord() } })
+  openPanel()
+  clickButton("Show last level-up")
+  Assert.equal(_G.LevelUpInfoFrame:IsShown(), true)
+  Assert.equal(shownLevels(), "9 to 10")
+end
+
+local function test_saved_last_level_up_of_an_older_level_shows_skills_only()
+  local older = lastRecord()
+  older.fromLevel, older.toLevel = 8, 9
+  setup(nil, { char = { last = older } })
+  slashLast()
+  Assert.equal(ns.Window.Current().isTest, true)
+  Assert.equal(shownLevels(), "9 to 10")
+  Assert.equal(_G.LevelUpInfoCharDB.last.toLevel, 9)
+end
+
+local function test_fresh_character_shows_skills_only()
+  setup(nil)
+  slashLast()
+  Assert.equal(shownLevels(), "9 to 10")
+  Assert.equal(ns.Window.Current().isTest, true)
+end
+
+local function test_slash_test_does_not_change_what_the_button_shows()
+  setup(nil, { char = { last = lastRecord() } })
+  local last = _G.LevelUpInfoCharDB.last
+  slashTest()
+  Assert.equal(_G.LevelUpInfoCharDB.last, last)
+  openPanel()
+  clickButton("Show last level-up")
+  Assert.equal(ns.Window.Current(), last)
+end
+
 return function()
+  test_saved_last_level_up_shows_with_its_gains_after_login()
+  test_options_button_shows_the_last_level_up()
+  test_saved_last_level_up_of_an_older_level_shows_skills_only()
+  test_fresh_character_shows_skills_only()
+  test_slash_test_does_not_change_what_the_button_shows()
   test_toc_declares_the_per_character_saved_variable()
   test_addon_loaded_writes_the_normalized_char_db()
   test_missing_char_db_becomes_an_empty_table()

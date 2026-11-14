@@ -159,6 +159,27 @@ function LevelUp.Install(savedDB, savedCharDB)
   Events.On("PLAYER_LEVEL_UP", onLevelUp)
 end
 
+-- Brings back the last real level-up when it reached the current level, else a
+-- skills-only record for the current level (not saved); ignores Enabled and Wait for combat.
+function LevelUp.ShowLast()
+  local level = _G.UnitLevel("player")
+  local last = charDB.last
+  if last and last.toLevel == level then
+    -- Shown now, so combat end must not show it again; a stat wait stays.
+    if last == pending then
+      pending = nil
+      if not awaitingStats then
+        Events.Off("PLAYER_REGEN_ENABLED")
+      end
+    end
+    show(last)
+    return
+  end
+  local record = newRecord(level - 1, level)
+  record.isTest = true
+  show(record)
+end
+
 -- Preview of a ding to `level` (default and out of range: the current level)
 -- with sample gains; ignores Enabled and Wait for combat.
 -- A gain whose live value is 0 (no mana on a Warrior) stays 0, so its line hides.

@@ -11,6 +11,7 @@ All releases: **0.1.x (current)**
 ## [0.1.9] - 2026-11-12
 
 - When every primary stat goes up by the same amount, the window shows one "All stats" line instead of five.
+- New "Show last level-up" button in the options, and /lui last: brings back the window from your last level-up, with the same gains, even after a relog.
 - Fixed: higher ranks of spells you can't learn yet (such as Binding Heal) no longer show up the first time the window opens.
 - Priests now see their new skills on their very first level-up, even before visiting a class trainer.
 

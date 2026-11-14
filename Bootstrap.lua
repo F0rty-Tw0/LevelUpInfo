@@ -29,9 +29,10 @@ function Bootstrap.Initialize(saved, charSaved)
     onScale = Window.ApplyScale,
     onResetPosition = Window.ResetPosition,
     onTest = LevelUp.ShowTest,
+    onShowLast = LevelUp.ShowLast,
     onMinimapButton = MinimapButton.Apply,
   })
-  SlashCommand.Register(Panel.Open, LevelUp.ShowTest)
+  SlashCommand.Register(Panel.Open, LevelUp.ShowTest, LevelUp.ShowLast)
   -- Last: the button is optional, so a failure building it leaves /lui and the options working.
   MinimapButton.Install(db, { onPreview = LevelUp.ShowTest, onOptions = Panel.Open })
   return db
