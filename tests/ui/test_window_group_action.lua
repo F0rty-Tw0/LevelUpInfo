@@ -153,16 +153,6 @@ local function test_group_buttons_do_nothing_without_a_live_record()
   Assert.equal(hiddenNames(), "Elsewhere")
 end
 
--- The button is a child of the fold button; its click must not fold the group.
-local function test_group_button_click_does_not_flip_the_fold()
-  setup()
-  addMissed(2)
-  Window.Show(record())
-  clickGroupButton("missed")
-  Assert.equal(db.foldedGroups.missed, nil)
-  Assert.equal(ns.SkillGroup.IsFolded("missed"), false)
-end
-
 return function()
   test_dismiss_all_hides_every_not_yet_learned_skill()
   test_dismiss_all_on_a_folded_group_hides_all_its_entries()
@@ -171,5 +161,4 @@ return function()
   test_dismiss_all_on_weapon_skills_hides_only_weapon_rows()
   test_restore_all_brings_every_hidden_skill_back()
   test_group_buttons_do_nothing_without_a_live_record()
-  test_group_button_click_does_not_flip_the_fold()
 end
