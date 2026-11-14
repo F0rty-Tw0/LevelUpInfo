@@ -1,5 +1,6 @@
 local Assert = require("tests.helpers.assert")
 local Wow = require("tests.helpers.wow")
+local WindowHelper = require("tests.helpers.window")
 local ARROW = require("LevelUpInfo.Core.Format").ARROW
 
 local W
@@ -45,28 +46,8 @@ local function setup(client)
       end,
     }
   end
-  for _, file in ipairs({
-    "Core/Localization.lua",
-    "Core/Format.lua",
-    "Core/Events.lua",
-    "Data/TrainerCache.lua",
-    "Data/SkillList.lua",
-    "Data/NextLevel.lua",
-    "Data/RankChanges.lua",
-    "Data/SpellFacts.lua",
-    "UI/AutoHide.lua",
-    "UI/ScrollBox.lua",
-    "UI/SkillRow.lua",
-    "UI/SkillGroup.lua",
-    "UI/Layout.lua",
-    "UI/GainLines.lua",
-    "UI/NextLevelLine.lua",
-    "UI/Window.lua",
-  }) do
-    assert(loadfile(file))("LevelUpInfo", ns)
-  end
+  Window = WindowHelper.load(ns)
   Events = ns.Events
-  Window = ns.Window
   Window.Install(db)
   LevelUp = assert(loadfile("Core/LevelUp.lua"))("LevelUpInfo", ns)
   LevelUp.Install(db)

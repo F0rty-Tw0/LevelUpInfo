@@ -1,5 +1,5 @@
 local Assert = require("tests.helpers.assert")
-local Wow = require("tests.helpers.wow")
+local WindowHelper = require("tests.helpers.window")
 
 local W
 local ns
@@ -12,9 +12,13 @@ local RANK_2 = 594
 local OLD_TEXT = "Deals 30 Shadow damage over 18 sec."
 local NEW_TEXT = "Deals 66 Shadow damage over 18 sec."
 
-local function mana(cost)
-  return { { cost = cost, name = "MANA" } }
-end
+local mana = WindowHelper.mana
+local frame = WindowHelper.frame
+-- Every shown skill row, scroll boxes included (rows are the buttons with change lines).
+local shownRows = WindowHelper.allRows
+local rowNamed = WindowHelper.rowNamed
+local shownLines = WindowHelper.shownLines
+local loadText = WindowHelper.loadText
 
 local function cacheSpell(level, spellID, rank)
   db.trainers.PRIEST.levels[level] = db.trainers.PRIEST.levels[level] or {}
@@ -24,40 +28,16 @@ end
 -- Fresh fake client, modules and db per test. Priest cache: Shadow Word: Pain
 -- Rank 1 (level 4, known) and Rank 2 (level 10); the facts differ in damage and cost.
 local function setup()
-  W = Wow.Install()
+  W = WindowHelper.install()
   W.money = 1000
-  db = {
-    duration = 10,
-    reducedMotion = false,
-    scale = 1.0,
-    foldedGroups = {},
-    trainers = { PRIEST = { covered = { Scourge = 10 }, levels = {} } },
-  }
+  db = WindowHelper.db({ PRIEST = { covered = { Scourge = 10 }, levels = {} } })
   W.spells[RANK_1] = { name = "Shadow Word: Pain", iconID = 1, description = OLD_TEXT, costs = mana(25) }
   W.spells[RANK_2] = { name = "Shadow Word: Pain", iconID = 1, description = NEW_TEXT, costs = mana(50) }
   W.known[RANK_1] = true
   cacheSpell(4, RANK_1, "Rank 1")
   cacheSpell(10, RANK_2, "Rank 2")
   ns = { OtherSources = {} }
-  for _, file in ipairs({
-    "Core/Localization.lua",
-    "Core/Events.lua",
-    "Data/TrainerCache.lua",
-    "Data/SkillList.lua",
-    "Data/NextLevel.lua",
-    "Data/RankChanges.lua",
-    "Data/SpellFacts.lua",
-    "UI/AutoHide.lua",
-    "UI/ScrollBox.lua",
-    "UI/SkillRow.lua",
-    "UI/SkillGroup.lua",
-    "UI/Layout.lua",
-    "UI/GainLines.lua",
-    "UI/NextLevelLine.lua",
-  }) do
-    assert(loadfile(file))("LevelUpInfo", ns)
-  end
-  Window = assert(loadfile("UI/Window.lua"))("LevelUpInfo", ns)
+  Window = WindowHelper.load(ns)
   Window.Install(db)
   ns.SpellFacts.Install(Window.Refresh)
 end
@@ -66,46 +46,8 @@ local function record(fromLevel, toLevel)
   return { fromLevel = fromLevel or 9, toLevel = toLevel or 10, gains = { health = 15 }, before = { health = 100 } }
 end
 
-local function frame()
-  return _G.LevelUpInfoFrame
-end
-
-local function shownRows()
-  local rows = {}
-  for _, widget in ipairs(W.frames) do
-    local stub = W.state(widget)
-    if stub.frameType == "Button" and widget.changeLines and widget:IsShown() then
-      rows[#rows + 1] = widget
-    end
-  end
-  return rows
-end
-
-local function rowNamed(name)
-  for _, row in ipairs(shownRows()) do
-    if row.name:GetText() == name then
-      return row
-    end
-  end
-end
-
-local function shownLines(row)
-  local count = 0
-  for _, line in ipairs(row.changeLines) do
-    if line:IsShown() then
-      count = count + 1
-    end
-  end
-  return count
-end
-
 local function rankLines()
   return shownLines(rowNamed("Shadow Word: Pain"))
-end
-
-local function loadText(spellID, text)
-  W.spells[spellID].description = text
-  W.broadcast(LOAD_EVENT, spellID, true)
 end
 
 local function test_rank_row_shows_lines_and_frame_grows()

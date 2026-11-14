@@ -1,5 +1,5 @@
 local Assert = require("tests.helpers.assert")
-local Wow = require("tests.helpers.wow")
+local WindowHelper = require("tests.helpers.window")
 local ARROW = require("LevelUpInfo.Core.Format").ARROW
 
 local W
@@ -8,50 +8,24 @@ local db
 
 local HEADING_FONT = "GameFontNormalLarge"
 
-local function spell(cost, rank)
-  return { cost = cost, rank = rank, races = { Scourge = true } }
-end
+local spell = WindowHelper.spell
+local content = WindowHelper.content
+local topOf = WindowHelper.topOf
 
 -- Fresh fake client, modules and db per test. Priest cache at level 10:
 -- Mind Blast (skill), Shadow Word: Pain Rank 2 (rank).
 local function setup()
-  W = Wow.Install()
+  W = WindowHelper.install()
   W.money = 1000
   W.spells[8092] = { name = "Mind Blast", iconID = 136224 }
   W.spells[589] = { name = "Shadow Word: Pain", iconID = 136207 }
-  db = {
-    duration = 10,
-    reducedMotion = false,
-    scale = 1.0,
-    foldedGroups = {},
-    trainers = {
-      PRIEST = {
-        covered = { Scourge = 10 },
-        levels = { [10] = { [8092] = spell(300, "Rank 1"), [589] = spell(50, "Rank 2") } },
-      },
+  db = WindowHelper.db({
+    PRIEST = {
+      covered = { Scourge = 10 },
+      levels = { [10] = { [8092] = spell(300, "Rank 1"), [589] = spell(50, "Rank 2") } },
     },
-  }
-  local ns = { OtherSources = {} }
-  for _, file in ipairs({
-    "Core/Localization.lua",
-    "Core/Format.lua",
-    "Core/Events.lua",
-    "Data/TrainerCache.lua",
-    "Data/SkillList.lua",
-    "Data/NextLevel.lua",
-    "Data/RankChanges.lua",
-    "Data/SpellFacts.lua",
-    "UI/AutoHide.lua",
-    "UI/ScrollBox.lua",
-    "UI/SkillRow.lua",
-    "UI/SkillGroup.lua",
-    "UI/Layout.lua",
-    "UI/GainLines.lua",
-    "UI/NextLevelLine.lua",
-  }) do
-    assert(loadfile(file))("LevelUpInfo", ns)
-  end
-  Window = assert(loadfile("UI/Window.lua"))("LevelUpInfo", ns)
+  })
+  Window = WindowHelper.load({ OtherSources = {} })
   Window.Install(db)
 end
 
@@ -66,14 +40,6 @@ local function record(overrides)
     result[key] = value
   end
   return result
-end
-
-local function content()
-  for _, widget in ipairs(W.frames) do
-    if widget:GetParent() == Window.Frame() and W.state(widget).frameType == "ScrollFrame" then
-      return widget:GetScrollChild()
-    end
-  end
 end
 
 -- The content's own widgets of this type (and font, when given), in pool order.
@@ -244,10 +210,6 @@ local function test_headings_have_no_divider_lines()
   Window.Show(record())
   Assert.equal(headingNamed("New skills"):IsShown(), true)
   Assert.equal(#shownTextures(), 0)
-end
-
-local function topOf(region)
-  return select(5, region:GetPoint(1))
 end
 
 local function test_talent_line_sits_above_stats_with_a_divider_between()

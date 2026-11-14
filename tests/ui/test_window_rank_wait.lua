@@ -3,7 +3,7 @@
 -- list is built again (player report, 2026-11-11, Forever: Binding Heal showed
 -- with no rank, though Rank 2 can't be bought without Rank 1).
 local Assert = require("tests.helpers.assert")
-local Wow = require("tests.helpers.wow")
+local WindowHelper = require("tests.helpers.window")
 
 local W
 local Window
@@ -14,16 +14,12 @@ local BINDING_2 = 32546
 local FADE = 586
 local SHACKLE = 9484
 
+local rowNamed = WindowHelper.rowNamed
+
 local function setup()
-  W = Wow.Install()
+  W = WindowHelper.install()
   W.money = 1000
-  local db = {
-    duration = 10,
-    reducedMotion = false,
-    scale = 1.0,
-    foldedGroups = {},
-    trainers = { PRIEST = { covered = { Scourge = 60 }, levels = {} } },
-  }
+  local db = WindowHelper.db({ PRIEST = { covered = { Scourge = 60 }, levels = {} } })
   local levels = db.trainers.PRIEST.levels
   -- Smite Rank 2 is cached and known: the probe proving lookups by name work.
   W.spells[SMITE_2] = { name = "Smite", iconID = 1, subtext = "Rank 2" }
@@ -31,25 +27,7 @@ local function setup()
   levels[6] = { [SMITE_2] = { cost = 10, rank = "Rank 2", races = { Scourge = true } } }
   levels[60] = {}
   local ns = { OtherSources = {} }
-  for _, file in ipairs({
-    "Core/Localization.lua",
-    "Core/Events.lua",
-    "Data/TrainerCache.lua",
-    "Data/SkillList.lua",
-    "Data/NextLevel.lua",
-    "Data/RankChanges.lua",
-    "Data/SpellFacts.lua",
-    "UI/AutoHide.lua",
-    "UI/ScrollBox.lua",
-    "UI/SkillRow.lua",
-    "UI/SkillGroup.lua",
-    "UI/Layout.lua",
-    "UI/GainLines.lua",
-    "UI/NextLevelLine.lua",
-  }) do
-    assert(loadfile(file))("LevelUpInfo", ns)
-  end
-  Window = assert(loadfile("UI/Window.lua"))("LevelUpInfo", ns)
+  Window = WindowHelper.load(ns)
   Window.Install(db)
   ns.SpellFacts.Install(Window.Refresh)
   return levels
@@ -63,16 +41,6 @@ end
 
 local function record()
   return { fromLevel = 59, toLevel = 60, gains = { health = 15 }, before = { health = 100 } }
-end
-
-local function rowNamed(name)
-  for _, widget in ipairs(W.frames) do
-    if W.state(widget).frameType == "Button" and widget.name and widget:IsShown() then
-      if widget.name:GetText() == name then
-        return widget
-      end
-    end
-  end
 end
 
 local function load(spellID, subtext)

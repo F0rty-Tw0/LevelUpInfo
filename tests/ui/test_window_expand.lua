@@ -1,12 +1,21 @@
 local Assert = require("tests.helpers.assert")
-local Wow = require("tests.helpers.wow")
+local WindowHelper = require("tests.helpers.window")
 
 local W
 local ns
 local Window
 local db
 
-local LOAD_EVENT = "SPELL_DATA_LOAD_RESULT"
+local frame = WindowHelper.frame
+local content = WindowHelper.content
+local allRows = WindowHelper.allRows
+local rowNamed = WindowHelper.rowNamed
+local toggle = WindowHelper.toggle
+local click = WindowHelper.click
+local shownBoxes = WindowHelper.shownBoxes
+local loadText = WindowHelper.loadText
+local shownLines = WindowHelper.shownLines
+
 local MISSED_LEVEL = 5
 local MISSED_BASE = 1000
 local WEAPON_BASE = 2000
@@ -21,35 +30,11 @@ local RANK_2 = 594
 -- Fresh fake client, modules and db per test. The priest cache starts empty and
 -- covers level 10 (no hint row); ns.OtherSources is this test's fixture.
 local function setup(otherSources)
-  W = Wow.Install()
+  W = WindowHelper.install()
   W.money = 1000
-  db = {
-    duration = 10,
-    reducedMotion = false,
-    scale = 1.0,
-    foldedGroups = {},
-    trainers = { PRIEST = { covered = { Scourge = 10 }, levels = {} } },
-  }
+  db = WindowHelper.db({ PRIEST = { covered = { Scourge = 10 }, levels = {} } })
   ns = { OtherSources = { PRIEST = otherSources or {} } }
-  for _, file in ipairs({
-    "Core/Localization.lua",
-    "Core/Events.lua",
-    "Data/TrainerCache.lua",
-    "Data/SkillList.lua",
-    "Data/NextLevel.lua",
-    "Data/RankChanges.lua",
-    "Data/SpellFacts.lua",
-    "UI/AutoHide.lua",
-    "UI/ScrollBox.lua",
-    "UI/SkillRow.lua",
-    "UI/SkillGroup.lua",
-    "UI/Layout.lua",
-    "UI/GainLines.lua",
-    "UI/NextLevelLine.lua",
-  }) do
-    assert(loadfile(file))("LevelUpInfo", ns)
-  end
-  Window = assert(loadfile("UI/Window.lua"))("LevelUpInfo", ns)
+  Window = WindowHelper.load(ns)
   Window.Install(db)
   ns.SpellFacts.Install(Window.Refresh)
 end
@@ -82,18 +67,6 @@ local function record()
   return { fromLevel = 9, toLevel = 10, gains = { health = 15 }, before = { health = 100 } }
 end
 
-local function frame()
-  return _G.LevelUpInfoFrame
-end
-
-local function content()
-  for _, widget in ipairs(W.frames) do
-    if widget:GetParent() == frame() and W.state(widget).frameType == "ScrollFrame" then
-      return widget:GetScrollChild()
-    end
-  end
-end
-
 -- Shown skill rows (Buttons with a name) whose parent is `parent`.
 local function rowsIn(parent)
   local rows = {}
@@ -105,40 +78,6 @@ local function rowsIn(parent)
   return rows
 end
 
-local function allRows()
-  local rows = {}
-  for _, widget in ipairs(W.frames) do
-    if W.state(widget).frameType == "Button" and widget.name and widget:IsShown() then
-      rows[#rows + 1] = widget
-    end
-  end
-  return rows
-end
-
-local function rowNamed(name)
-  for _, row in ipairs(allRows()) do
-    if row.name:GetText() == name then
-      return row
-    end
-  end
-end
-
--- The shown toggle (a Button without a name) whose label contains `text`.
-local function toggle(text)
-  for _, widget in ipairs(W.frames) do
-    local label = widget.label
-    if W.state(widget).frameType == "Button" and not widget.name and label and widget:IsShown() then
-      if string.find(label:GetText() or "", text, 1, true) then
-        return widget
-      end
-    end
-  end
-end
-
-local function click(button)
-  W.fireScript(button, "OnClick")
-end
-
 -- The scroll box holding the row named `name`, and its child.
 local function boxOf(name)
   local child = rowNamed(name):GetParent()
@@ -148,17 +87,6 @@ end
 local function boxRows(name)
   local _, child = boxOf(name)
   return rowsIn(child)
-end
-
-local function shownBoxes()
-  local count = 0
-  for _, widget in ipairs(W.frames) do
-    -- The window's own view (a child of the frame) is always shown; skip it.
-    if W.state(widget).frameType == "ScrollFrame" and widget:IsShown() and widget:GetParent() ~= frame() then
-      count = count + 1
-    end
-  end
-  return count
 end
 
 local function test_more_line_is_a_hidden_toggle_until_needed()
@@ -211,11 +139,6 @@ local function test_collapse_returns_five_rows_to_content()
   Assert.equal(toggle("more").label:GetText(), "+3 more not yet learned")
 end
 
-local function loadText(spellID, text)
-  W.spells[spellID].description = text
-  W.broadcast(LOAD_EVENT, spellID, true)
-end
-
 -- Six "Missed n" at level 5, then Shadow Word: Pain Rank 2 (level 6, the
 -- 7th missed entry) whose known Rank 1 (level 4) gives it change lines.
 local function setupRankPastCap()
@@ -226,16 +149,6 @@ local function setupRankPastCap()
   W.known[RANK_1] = true
   trainerSpell(RANK_1, 4, "Shadow Word: Pain", "Rank 1")
   trainerSpell(RANK_2, 6, "Shadow Word: Pain", "Rank 2")
-end
-
-local function shownLines(row)
-  local count = 0
-  for _, line in ipairs(row.changeLines) do
-    if line:IsShown() then
-      count = count + 1
-    end
-  end
-  return count
 end
 
 local function test_expanded_rows_past_cap_get_change_lines()

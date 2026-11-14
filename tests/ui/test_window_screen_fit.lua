@@ -1,5 +1,5 @@
 local Assert = require("tests.helpers.assert")
-local Wow = require("tests.helpers.wow")
+local WindowHelper = require("tests.helpers.window")
 
 local W
 local Window
@@ -10,53 +10,27 @@ local KNOWN_PAIN_1 = 100589
 local CHROME = 68 + 12
 local MARGINS = 2 * 16
 
-local function spell(cost, rank)
-  return { cost = cost, rank = rank, races = { Scourge = true } }
-end
+local spell = WindowHelper.spell
+local frame = WindowHelper.frame
+local breakFill = WindowHelper.breakFill
 
 -- Fresh fake client, modules and db per test. Priest cache at level 10:
 -- Mind Blast (skill), Renew (skill), Shadow Word: Pain Rank 2 (rank; Rank 1 known).
 local function setup()
-  W = Wow.Install()
+  W = WindowHelper.install()
   W.money = 1000
   W.spells[8092] = { name = "Mind Blast", iconID = 136224 }
   W.spells[139] = { name = "Renew", iconID = 135953 }
   W.spells[589] = { name = "Shadow Word: Pain", iconID = 136207 }
   W.spells[KNOWN_PAIN_1] = { name = "Shadow Word: Pain", iconID = 136207 }
   W.known[KNOWN_PAIN_1] = true
-  db = {
-    duration = 10,
-    reducedMotion = false,
-    scale = 1.0,
-    foldedGroups = {},
-    trainers = {
-      PRIEST = {
-        covered = { Scourge = 10 },
-        levels = { [10] = { [8092] = spell(300, "Rank 1"), [139] = spell(100, "Rank 1"), [589] = spell(50, "Rank 2") } },
-      },
+  db = WindowHelper.db({
+    PRIEST = {
+      covered = { Scourge = 10 },
+      levels = { [10] = { [8092] = spell(300, "Rank 1"), [139] = spell(100, "Rank 1"), [589] = spell(50, "Rank 2") } },
     },
-  }
-  local ns = { OtherSources = {} }
-  for _, file in ipairs({
-    "Core/Localization.lua",
-    "Core/Format.lua",
-    "Core/Events.lua",
-    "Data/TrainerCache.lua",
-    "Data/SkillList.lua",
-    "Data/NextLevel.lua",
-    "Data/RankChanges.lua",
-    "Data/SpellFacts.lua",
-    "UI/AutoHide.lua",
-    "UI/ScrollBox.lua",
-    "UI/SkillRow.lua",
-    "UI/SkillGroup.lua",
-    "UI/Layout.lua",
-    "UI/GainLines.lua",
-    "UI/NextLevelLine.lua",
-  }) do
-    assert(loadfile(file))("LevelUpInfo", ns)
-  end
-  Window = assert(loadfile("UI/Window.lua"))("LevelUpInfo", ns)
+  })
+  Window = WindowHelper.load({ OtherSources = {} })
   Window.Install(db)
 end
 
@@ -67,10 +41,6 @@ local function record()
     gains = { health = 15, power = 0, talents = 0, strength = 0, agility = 0, stamina = 1, intellect = 0, spirit = 0 },
     before = { health = 100, stamina = 25 },
   }
-end
-
-local function frame()
-  return _G.LevelUpInfoFrame
 end
 
 local function childOf(parent, frameType)
@@ -103,19 +73,6 @@ end
 
 local function screen(height)
   _G.UIParent:SetHeight(height)
-end
-
--- Every later fill fails inside `guarded`; the error is swallowed.
-local function breakFill()
-  W.def("geterrorhandler", function()
-    return function() end
-  end)
-  W.def("debugstack", function()
-    return ""
-  end)
-  W.def("GetMoney", function()
-    error("boom")
-  end)
 end
 
 local function test_window_is_clamped_to_screen()

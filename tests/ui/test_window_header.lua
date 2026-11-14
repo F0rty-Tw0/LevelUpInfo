@@ -1,35 +1,16 @@
 local Assert = require("tests.helpers.assert")
-local Wow = require("tests.helpers.wow")
+local WindowHelper = require("tests.helpers.window")
 
 local W
 local Window
 
+local frame = WindowHelper.frame
+
 -- Fresh fake client, modules and an empty trainer cache per test.
 local function setup()
-  W = Wow.Install()
-  local db = { duration = 10, reducedMotion = false, scale = 1.0, foldedGroups = {}, trainers = {} }
-  local ns = { OtherSources = {} }
-  for _, file in ipairs({
-    "Core/Localization.lua",
-    "Core/Format.lua",
-    "Core/Events.lua",
-    "Data/TrainerCache.lua",
-    "Data/SkillList.lua",
-    "Data/NextLevel.lua",
-    "Data/RankChanges.lua",
-    "Data/SpellFacts.lua",
-    "UI/AutoHide.lua",
-    "UI/ScrollBox.lua",
-    "UI/SkillRow.lua",
-    "UI/SkillGroup.lua",
-    "UI/Layout.lua",
-    "UI/GainLines.lua",
-    "UI/NextLevelLine.lua",
-  }) do
-    assert(loadfile(file))("LevelUpInfo", ns)
-  end
-  Window = assert(loadfile("UI/Window.lua"))("LevelUpInfo", ns)
-  Window.Install(db)
+  W = WindowHelper.install()
+  Window = WindowHelper.load({ OtherSources = {} })
+  Window.Install(WindowHelper.db({}))
 end
 
 local function record(fromLevel, toLevel)
@@ -39,10 +20,6 @@ local function record(fromLevel, toLevel)
     gains = { health = 15, power = 0, talents = 0, strength = 0, agility = 0, stamina = 0, intellect = 0, spirit = 0 },
     before = { health = 100 },
   }
-end
-
-local function frame()
-  return _G.LevelUpInfoFrame
 end
 
 -- The font strings made directly on the window frame, in creation order.

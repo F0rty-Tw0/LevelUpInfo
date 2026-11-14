@@ -1,5 +1,5 @@
 local Assert = require("tests.helpers.assert")
-local Wow = require("tests.helpers.wow")
+local WindowHelper = require("tests.helpers.window")
 
 local W
 local Window
@@ -10,36 +10,15 @@ local MISSED_BASE = 1000
 local WEAPON_BASE = 2000
 local HEADING_TO_ROW = 24
 
+local content = WindowHelper.content
+local shownRows = WindowHelper.shownRows
+local topOf = WindowHelper.topOf
+
 local function setup(otherSources)
-  W = Wow.Install()
+  W = WindowHelper.install()
   W.money = 1000
-  db = {
-    duration = 10,
-    reducedMotion = false,
-    scale = 1.0,
-    foldedGroups = {},
-    trainers = { PRIEST = { covered = { Scourge = 10 }, levels = {} } },
-  }
-  local ns = { OtherSources = { PRIEST = otherSources or {} } }
-  for _, file in ipairs({
-    "Core/Localization.lua",
-    "Core/Events.lua",
-    "Data/TrainerCache.lua",
-    "Data/SkillList.lua",
-    "Data/NextLevel.lua",
-    "Data/RankChanges.lua",
-    "Data/SpellFacts.lua",
-    "UI/AutoHide.lua",
-    "UI/ScrollBox.lua",
-    "UI/SkillRow.lua",
-    "UI/SkillGroup.lua",
-    "UI/Layout.lua",
-    "UI/GainLines.lua",
-    "UI/NextLevelLine.lua",
-  }) do
-    assert(loadfile(file))("LevelUpInfo", ns)
-  end
-  Window = assert(loadfile("UI/Window.lua"))("LevelUpInfo", ns)
+  db = WindowHelper.db({ PRIEST = { covered = { Scourge = 10 }, levels = {} } })
+  Window = WindowHelper.load({ OtherSources = { PRIEST = otherSources or {} } })
   Window.Install(db)
 end
 
@@ -76,38 +55,6 @@ local function record()
     gains = { health = 15 },
     before = { health = 100 },
   }
-end
-
-local function frame()
-  return _G.LevelUpInfoFrame
-end
-
-local function content()
-  for _, widget in ipairs(W.frames) do
-    local isChild = widget:GetParent() == frame()
-    local isView = W.state(widget).frameType == "ScrollFrame"
-    if isChild and isView then
-      return widget:GetScrollChild()
-    end
-  end
-end
-
-local function shownRows()
-  local rows = {}
-  for _, widget in ipairs(W.frames) do
-    local stub = W.state(widget)
-    local isRow = stub.frameType == "Button" and widget.name ~= nil
-    local isInContent = widget:GetParent() == content()
-    if isRow and isInContent and stub.shown then
-      rows[#rows + 1] = widget
-    end
-  end
-
-  return rows
-end
-
-local function topOf(region)
-  return select(5, region:GetPoint(1))
 end
 
 -- The shown heading whose text starts with `title`.

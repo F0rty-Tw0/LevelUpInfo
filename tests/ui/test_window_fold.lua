@@ -1,10 +1,19 @@
 local Assert = require("tests.helpers.assert")
-local Wow = require("tests.helpers.wow")
+local WindowHelper = require("tests.helpers.window")
 
 local W
 local ns
 local Window
 local db
+
+local frame = WindowHelper.frame
+local content = WindowHelper.content
+local allRows = WindowHelper.allRows
+local rowNamed = WindowHelper.rowNamed
+local toggle = WindowHelper.toggle
+local click = WindowHelper.click
+local shownScrollBoxes = WindowHelper.shownBoxes
+local topOf = WindowHelper.topOf
 
 local MISSED_LEVEL = 5
 local MISSED_BASE = 1000
@@ -24,35 +33,11 @@ local FOLDED_HEIGHT_SAVED = CAP * SOURCE_ROW_HEIGHT + (CAP - 1) * ROW_GAP + TOGG
 -- Fresh fake client, modules and db per test. The priest cache starts empty and
 -- covers level 10 (no hint row); ns.OtherSources is this test's fixture.
 local function setup(otherSources)
-  W = Wow.Install()
+  W = WindowHelper.install()
   W.money = 1000
-  db = {
-    duration = 10,
-    reducedMotion = false,
-    scale = 1.0,
-    foldedGroups = {},
-    trainers = { PRIEST = { covered = { Scourge = 10 }, levels = {} } },
-  }
+  db = WindowHelper.db({ PRIEST = { covered = { Scourge = 10 }, levels = {} } })
   ns = { OtherSources = { PRIEST = otherSources or {} } }
-  for _, file in ipairs({
-    "Core/Localization.lua",
-    "Core/Events.lua",
-    "Data/TrainerCache.lua",
-    "Data/SkillList.lua",
-    "Data/NextLevel.lua",
-    "Data/RankChanges.lua",
-    "Data/SpellFacts.lua",
-    "UI/AutoHide.lua",
-    "UI/ScrollBox.lua",
-    "UI/SkillRow.lua",
-    "UI/SkillGroup.lua",
-    "UI/Layout.lua",
-    "UI/GainLines.lua",
-    "UI/NextLevelLine.lua",
-  }) do
-    assert(loadfile(file))("LevelUpInfo", ns)
-  end
-  Window = assert(loadfile("UI/Window.lua"))("LevelUpInfo", ns)
+  Window = WindowHelper.load(ns)
   Window.Install(db)
   ns.SpellFacts.Install(Window.Refresh)
 end
@@ -90,63 +75,6 @@ local function record()
   return { fromLevel = 9, toLevel = 10, gains = { health = 15 }, before = { health = 100 } }
 end
 
-local function frame()
-  return _G.LevelUpInfoFrame
-end
-
-local function content()
-  for _, widget in ipairs(W.frames) do
-    if widget:GetParent() == frame() and W.state(widget).frameType == "ScrollFrame" then
-      return widget:GetScrollChild()
-    end
-  end
-end
-
-local function allRows()
-  local rows = {}
-  for _, widget in ipairs(W.frames) do
-    if W.state(widget).frameType == "Button" and widget.name and widget:IsShown() then
-      rows[#rows + 1] = widget
-    end
-  end
-  return rows
-end
-
-local function rowNamed(name)
-  for _, row in ipairs(allRows()) do
-    if row.name:GetText() == name then
-      return row
-    end
-  end
-end
-
--- The shown toggle (a Button without a name) whose label contains `text`.
-local function toggle(text)
-  for _, widget in ipairs(W.frames) do
-    local label = widget.label
-    if W.state(widget).frameType == "Button" and not widget.name and label and widget:IsShown() then
-      if string.find(label:GetText() or "", text, 1, true) then
-        return widget
-      end
-    end
-  end
-end
-
-local function click(button)
-  W.fireScript(button, "OnClick")
-end
-
-local function shownScrollBoxes()
-  local count = 0
-  for _, widget in ipairs(W.frames) do
-    -- The window's own view (a child of the frame) is always shown; skip it.
-    if W.state(widget).frameType == "ScrollFrame" and widget:IsShown() and widget:GetParent() ~= frame() then
-      count = count + 1
-    end
-  end
-  return count
-end
-
 -- Shown fold buttons in build order: Not yet learned, then Weapon skills.
 local function foldButtons()
   local buttons = {}
@@ -173,10 +101,6 @@ end
 local function headingText(prefix)
   local heading = headingWidget(prefix)
   return heading and heading:GetText()
-end
-
-local function topOf(region)
-  return select(5, region:GetPoint(1))
 end
 
 local function iconOf(button)

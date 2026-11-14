@@ -1,13 +1,19 @@
 -- The window's last line names what the trainer teaches at the next cached
 -- level that has something: `Next at 14: Fade (Rank 1), Renew (Rank 1)`.
 local Assert = require("tests.helpers.assert")
-local Wow = require("tests.helpers.wow")
+local WindowHelper = require("tests.helpers.window")
 
 local W
 local ns
 local Window
 local levels
 local db
+
+local content = WindowHelper.content
+local rowNamed = WindowHelper.rowNamed
+local toggle = WindowHelper.toggle
+local click = WindowHelper.click
+local breakFill = WindowHelper.breakFill
 
 local LOAD_EVENT = "SPELL_DATA_LOAD_RESULT"
 local HINT = "Visit your class trainer to see all new skills."
@@ -29,56 +35,24 @@ end
 -- Fresh fake client, modules and db per test. Mind Blast is new at 10; the
 -- cache also holds level 14 (Fade, Renew).
 local function setup()
-  W = Wow.Install()
+  W = WindowHelper.install()
   W.money = 1000
   W.spells[MIND_BLAST] = { name = "Mind Blast", iconID = 1 }
   W.spells[FADE] = { name = "Fade", iconID = 2 }
   W.spells[RENEW] = { name = "Renew", iconID = 3 }
   W.spells[INNER_FIRE] = { name = "Inner Fire", iconID = 4 }
-  db = {
-    duration = 10,
-    reducedMotion = false,
-    scale = 1.0,
-    foldedGroups = {},
-    trainers = { PRIEST = { covered = { Scourge = 10 }, levels = {} } },
-  }
+  db = WindowHelper.db({ PRIEST = { covered = { Scourge = 10 }, levels = {} } })
   levels = db.trainers.PRIEST.levels
   levels[10] = { [MIND_BLAST] = rank1() }
   levels[14] = { [FADE] = rank1(), [RENEW] = rank1() }
   ns = { OtherSources = { PRIEST = {} } }
-  for _, file in ipairs({
-    "Core/Localization.lua",
-    "Core/Events.lua",
-    "Data/TrainerCache.lua",
-    "Data/SkillList.lua",
-    "Data/NextLevel.lua",
-    "Data/RankChanges.lua",
-    "Data/SpellFacts.lua",
-    "UI/AutoHide.lua",
-    "UI/ScrollBox.lua",
-    "UI/SkillRow.lua",
-    "UI/SkillGroup.lua",
-    "UI/Layout.lua",
-    "UI/GainLines.lua",
-    "UI/NextLevelLine.lua",
-  }) do
-    assert(loadfile(file))("LevelUpInfo", ns)
-  end
-  Window = assert(loadfile("UI/Window.lua"))("LevelUpInfo", ns)
+  Window = WindowHelper.load(ns)
   Window.Install(db)
   ns.SpellFacts.Install(Window.Refresh)
 end
 
 local function record()
   return { fromLevel = 9, toLevel = 10, gains = { health = 15 }, before = { health = 100 } }
-end
-
-local function content()
-  for _, widget in ipairs(W.frames) do
-    if widget:GetParent() == _G.LevelUpInfoFrame and W.state(widget).frameType == "ScrollFrame" then
-      return widget:GetScrollChild()
-    end
-  end
 end
 
 -- Every font string on the content frame whose text starts with `Next at`.
@@ -113,45 +87,6 @@ end
 
 local function contentHeight()
   return content():GetHeight()
-end
-
-local function rowNamed(name)
-  for _, widget in ipairs(W.frames) do
-    if W.state(widget).frameType == "Button" and widget.name and widget:IsShown() then
-      if widget.name:GetText() == name then
-        return widget
-      end
-    end
-  end
-end
-
--- The shown toggle (a Button without a name) whose label contains `text`.
-local function toggle(text)
-  for _, widget in ipairs(W.frames) do
-    local label = widget.label
-    if W.state(widget).frameType == "Button" and not widget.name and label and widget:IsShown() then
-      if string.find(label:GetText() or "", text, 1, true) then
-        return widget
-      end
-    end
-  end
-end
-
-local function click(button)
-  W.fireScript(button, "OnClick")
-end
-
--- Every later fill fails inside `guarded`; the error is swallowed.
-local function breakFill()
-  W.def("geterrorhandler", function()
-    return function() end
-  end)
-  W.def("debugstack", function()
-    return ""
-  end)
-  W.def("GetMoney", function()
-    error("boom")
-  end)
 end
 
 -- Wraps SkillList.Build with a call counter.
