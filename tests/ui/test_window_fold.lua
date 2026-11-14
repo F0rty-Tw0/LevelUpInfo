@@ -137,7 +137,7 @@ local function test_unfolding_restores_capped_view()
   Assert.equal(toggle("more") ~= nil, true)
   Assert.equal(headingText("Weapon skills"), "Weapon skills")
   Assert.equal(iconOf(foldButtons()[1]), MINUS_ICON)
-  Assert.equal(db.foldedGroups.weapon, nil)
+  Assert.equal(db.foldedGroups.weapon, false)
 end
 
 local function test_new_show_keeps_fold_and_resets_expansion()

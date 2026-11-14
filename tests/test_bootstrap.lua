@@ -315,7 +315,7 @@ local function test_window_clicks_flip_the_saved_fold_table_in_place()
   slashTest()
   Assert.equal(_G.LevelUpInfoDB.foldedGroups.missed, true)
   W.fireScript(foldButton(), "OnClick")
-  Assert.equal(_G.LevelUpInfoDB.foldedGroups.missed, nil)
+  Assert.equal(_G.LevelUpInfoDB.foldedGroups.missed, false)
 end
 
 local function test_toc_declares_the_per_character_saved_variable()
