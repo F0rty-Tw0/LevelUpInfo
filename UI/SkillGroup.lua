@@ -98,8 +98,21 @@ local function newFoldButton(group, onFold)
   button:SetScript("OnClick", function()
     onFold(group)
   end)
-  button:SetScript("OnEnter", pause)
-  button:SetScript("OnLeave", resume)
+  -- Hovering the heading line shows its group button (made after this one).
+  button:SetScript("OnEnter", function()
+    pause()
+    local groupButton = groups[group].groupButton
+    if groupButton then
+      groupButton:SetAlpha(GroupButton.REST_ALPHA)
+    end
+  end)
+  button:SetScript("OnLeave", function()
+    resume()
+    local groupButton = groups[group].groupButton
+    if groupButton then
+      groupButton:SetAlpha(GroupButton.RestAlpha(button))
+    end
+  end)
   button:Hide()
   return button
 end
@@ -174,13 +187,13 @@ function SkillGroup.IsFolded(group)
 end
 
 -- The group's fold button with the icon for its current state. Its heading
--- button is back at rest alpha: hiding the fold button mid-hover may send no
+-- button is invisible again: hiding the fold button mid-hover may send no
 -- OnLeave.
 function SkillGroup.FoldButton(group)
   local state = groups[group]
   local button = state.foldButton
   if state.groupButton then
-    state.groupButton:SetAlpha(GroupButton.REST_ALPHA)
+    state.groupButton:SetAlpha(GroupButton.HIDDEN_ALPHA)
   end
   button.foldIcon:SetTexture(SkillGroup.IsFolded(group) and ICON_FOLDED or ICON_OPEN)
   return button

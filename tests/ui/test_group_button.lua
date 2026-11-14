@@ -69,7 +69,7 @@ local function test_dismiss_groups_get_a_red_minus_button()
     Assert.equal(relativePoint, "TOPRIGHT")
     Assert.equal(x, -20)
     Assert.equal(y, 0)
-    Assert.equal(button:GetAlpha(), 0.6)
+    Assert.equal(button:GetAlpha(), 0) -- hover only: invisible until the heading is hovered
     Assert.equal(textureOf(t, group).allPoints, true)
     Assert.equal(textureOf(t, group).texture, DISMISS)
     assertColor(textureOf(t, group).vertexColor, RED)
@@ -119,18 +119,52 @@ local function test_group_button_leave_hides_the_tooltip_and_resumes()
   t.W.fireScript(button, "OnEnter")
   t.W.fireScript(button, "OnLeave")
   Assert.equal(t.W.tooltip[#t.W.tooltip][1], "Hide")
-  Assert.equal(button:GetAlpha(), 0.6)
+  Assert.equal(button:GetAlpha(), 0)
   Assert.equal(t.spy.resume, 1)
 end
 
 -- Hiding the clicked group empties it and hides its fold button mid-hover; WoW
--- may send no OnLeave, so placing the heading again must reset the alpha.
-local function test_placing_the_fold_button_resets_the_group_button_alpha()
+-- may send no OnLeave, so placing the heading again must hide the button.
+local function test_placing_the_fold_button_hides_the_group_button_again()
   local t = setup()
   local button = t.SkillGroup.GroupButton("missed")
   t.W.fireScript(button, "OnEnter")
   Assert.equal(button:GetAlpha(), 1)
   t.SkillGroup.FoldButton("missed")
+  Assert.equal(button:GetAlpha(), 0)
+end
+
+local function test_heading_hover_shows_the_group_button_dim()
+  local t = setup()
+  t.W.fireScript(t.SkillGroup.FoldButton("missed"), "OnEnter")
+  Assert.equal(t.SkillGroup.GroupButton("missed"):GetAlpha(), 0.6)
+end
+
+local function test_leaving_the_heading_hides_the_group_button()
+  local t = setup()
+  local fold = t.SkillGroup.FoldButton("missed")
+  t.W.fireScript(fold, "OnEnter")
+  t.W.fireScript(fold, "OnLeave")
+  Assert.equal(t.SkillGroup.GroupButton("missed"):GetAlpha(), 0)
+end
+
+-- Moving onto the group button leaves the heading, but the mouse is still inside it.
+local function test_moving_onto_the_group_button_keeps_it_shown()
+  local t = setup()
+  local fold = t.SkillGroup.FoldButton("missed")
+  t.W.fireScript(fold, "OnEnter")
+  t.W.mouseOver[fold] = true
+  t.W.fireScript(fold, "OnLeave")
+  Assert.equal(t.SkillGroup.GroupButton("missed"):GetAlpha(), 0.6)
+end
+
+local function test_leaving_the_group_button_back_onto_the_heading_dims_it()
+  local t = setup()
+  local fold = t.SkillGroup.FoldButton("missed")
+  local button = t.SkillGroup.GroupButton("missed")
+  t.W.fireScript(button, "OnEnter")
+  t.W.mouseOver[fold] = true
+  t.W.fireScript(button, "OnLeave")
   Assert.equal(button:GetAlpha(), 0.6)
 end
 
@@ -141,5 +175,9 @@ return function()
   test_group_button_click_calls_on_group_action_with_its_group()
   test_group_button_hover_shows_its_tooltip()
   test_group_button_leave_hides_the_tooltip_and_resumes()
-  test_placing_the_fold_button_resets_the_group_button_alpha()
+  test_placing_the_fold_button_hides_the_group_button_again()
+  test_heading_hover_shows_the_group_button_dim()
+  test_leaving_the_heading_hides_the_group_button()
+  test_moving_onto_the_group_button_keeps_it_shown()
+  test_leaving_the_group_button_back_onto_the_heading_dims_it()
 end

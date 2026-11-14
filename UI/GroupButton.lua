@@ -10,6 +10,9 @@ local Text = Localization.Text
 
 local SIZE = 16
 local RIGHT_OFFSET = -20 -- left of the fold icon: its 16 px plus a 4 px gap
+-- Hover only (user decision, 2026-11-15): invisible until its heading is
+-- hovered, dim over the heading, bright over the button itself.
+local HIDDEN_ALPHA = 0
 local REST_ALPHA = 0.6
 local HOVER_ALPHA = 1
 local DISMISS = "Interface\\AddOns\\LevelUpInfo\\Media\\Dismiss.tga"
@@ -23,6 +26,13 @@ local GroupButton = {}
 
 GroupButton.SIZE = SIZE
 GroupButton.REST_ALPHA = REST_ALPHA
+GroupButton.HIDDEN_ALPHA = HIDDEN_ALPHA
+
+-- The alpha once the mouse left the button or the heading: dim while the mouse
+-- is still inside the heading line, else invisible.
+function GroupButton.RestAlpha(foldButton)
+  return foldButton:IsMouseOver() and REST_ALPHA or HIDDEN_ALPHA
+end
 
 local function paint(texture, isRestore)
   local color = isRestore and _G.GREEN_FONT_COLOR or _G.RED_FONT_COLOR
@@ -35,7 +45,7 @@ function GroupButton.Create(foldButton, group, action, onGroupAction)
   local button = _G.CreateFrame("Button", nil, foldButton)
   button:SetSize(SIZE, SIZE)
   button:SetPoint("TOPRIGHT", foldButton, "TOPRIGHT", RIGHT_OFFSET, 0)
-  button:SetAlpha(REST_ALPHA)
+  button:SetAlpha(HIDDEN_ALPHA)
   local texture = button:CreateTexture()
   texture:SetAllPoints()
   paint(texture, isRestore)
@@ -52,7 +62,7 @@ function GroupButton.Create(foldButton, group, action, onGroupAction)
   end)
   button:SetScript("OnLeave", function()
     _G.GameTooltip:Hide()
-    button:SetAlpha(REST_ALPHA)
+    button:SetAlpha(GroupButton.RestAlpha(foldButton))
     AutoHide.Resume()
   end)
 
