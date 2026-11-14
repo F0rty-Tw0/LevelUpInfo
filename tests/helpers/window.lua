@@ -28,6 +28,7 @@ WindowHelper.FILES = {
   "UI/Layout.lua",
   "UI/GainLines.lua",
   "UI/NextLevelLine.lua",
+  "UI/SkillFill.lua",
   "UI/Window.lua",
 }
 
