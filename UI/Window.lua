@@ -57,6 +57,7 @@ local reachedLine
 local current
 local skillEntries, skillHint -- skill list of `current`: built on Show, reused by Refresh
 local nextLevel, nextEntries -- next level with trainer skills, built with skillEntries
+local nextStale = false -- set when the hidden list changed: the next fill finds nextLevel again
 -- Spells left out of `skillEntries` until their rank text loads; the last
 -- one's load result builds the list again.
 local waitingRanks = {}
@@ -104,11 +105,11 @@ local function findNextLevel(toLevel)
   return NextLevel.Find(db.trainers, class, race, faction, toLevel, charDB.hidden)
 end
 
--- The hidden list changed: find the next-level line again, keep the top edge
--- and refill (the skill list is reused; the fill marks it from the new names).
+-- The hidden list changed: keep the top edge and refill; the fill finds the
+-- next-level line again and marks the reused skill list from the new names.
 function Window.RefreshHidden()
   if current and not filling then
-    nextLevel, nextEntries = findNextLevel(current.toLevel)
+    nextStale = true
     pinTop()
     fill(current)
   end
@@ -211,7 +212,11 @@ local function fillSkills(record, gainCount)
   if not skillEntries then
     local class, race, faction = player()
     skillEntries, skillHint = SkillList.Build(db.trainers, class, race, faction, record.fromLevel, record.toLevel, isRankWaiting)
+    nextStale = true
+  end
+  if nextStale then
     nextLevel, nextEntries = findNextLevel(record.toLevel)
+    nextStale = false
   end
   HiddenSkills.Mark(skillEntries, charDB.hidden)
   SkillFill.Fill(skillEntries, skillHint, nextLevel, nextEntries, gainCount)
@@ -307,7 +312,6 @@ function Window.Show(record)
   AutoHide.Pause()
   current = record
   skillEntries = nil
-  nextLevel, nextEntries = nil, nil
   _G.wipe(waitingRanks)
   SkillGroup.Collapse()
   -- Scale first: the fill caps the height with it.
@@ -330,7 +334,6 @@ function Window.Refresh(spellID)
     waitingRanks[spellID] = nil
     if next(waitingRanks) == nil then
       skillEntries = nil
-      nextLevel, nextEntries = nil, nil
       fill(current)
     end
   elseif spellID == nil or stale then
