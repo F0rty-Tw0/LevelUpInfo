@@ -332,12 +332,12 @@ function SkillList.Build(trainers, class, race, faction, fromLevel, toLevel, isW
   return entries, TrainerCache.Covered(trainers, class, race) < toLevel and BuiltinSpells.MaxLevel(class) < toLevel
 end
 
--- Summed price of one group's priced entries; nil under two (quest rows have no cost).
+-- Summed price of one group's shown (not hidden) priced entries; nil under two (quest rows have no cost).
 function SkillList.GroupTotal(entries, group)
   local total = 0
   local priced = 0
   for _, entry in ipairs(entries) do
-    if entry.group == group and entry.cost ~= nil then
+    if entry.group == group and entry.hidden ~= true and entry.cost ~= nil then
       total = total + entry.cost
       priced = priced + 1
     end

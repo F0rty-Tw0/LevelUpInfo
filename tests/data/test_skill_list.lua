@@ -252,6 +252,30 @@ local function test_group_total_of_empty_group_is_nil()
   Assert.equal(SkillList.GroupTotal({}, "skill"), nil)
 end
 
+local function test_group_total_skips_hidden_entries()
+  setup()
+  local entries = {
+    { group = "missed", cost = 100 },
+    { group = "missed", cost = 250 },
+    { group = "missed", cost = 4000, hidden = true },
+    { group = "missed", cost = 50, hidden = false },
+  }
+  Assert.equal(SkillList.GroupTotal(entries, "missed"), 400)
+end
+
+-- Two priced entries, one hidden: only one shown, so no total (same rule as a single priced entry).
+local function test_group_total_needs_two_shown_priced_entries()
+  setup()
+  local entries = { { group = "missed", cost = 100 }, { group = "missed", cost = 250, hidden = true } }
+  Assert.equal(SkillList.GroupTotal(entries, "missed"), nil)
+end
+
+local function test_group_total_of_an_all_hidden_group_is_nil()
+  setup()
+  local entries = { { group = "weapon", cost = 1000, hidden = true }, { group = "weapon", cost = 2000, hidden = true } }
+  Assert.equal(SkillList.GroupTotal(entries, "weapon"), nil)
+end
+
 return function()
   test_levels_above_to_level_are_excluded()
   test_skipped_trainer_spell_is_not_yet_learned()
@@ -276,4 +300,7 @@ return function()
   test_group_total_needs_two_priced_entries()
   test_group_total_counts_entries_past_the_cap()
   test_group_total_of_empty_group_is_nil()
+  test_group_total_skips_hidden_entries()
+  test_group_total_needs_two_shown_priced_entries()
+  test_group_total_of_an_all_hidden_group_is_nil()
 end
