@@ -6,6 +6,7 @@ end
 local TrainerCache = ns.TrainerCache or require("LevelUpInfo.Data.TrainerCache")
 local OtherSources = ns.OtherSources or require("LevelUpInfo.Data.OtherSources")
 local WeaponIcons = ns.WeaponIcons or require("LevelUpInfo.Data.WeaponIcons")
+local BuiltinSpells = ns.BuiltinSpells or require("LevelUpInfo.Data.BuiltinSpells")
 
 local ipairs = ipairs
 local match = string.match
@@ -18,6 +19,7 @@ local tonumber = tonumber
 local SkillList = {}
 
 local MIN_PRICED_FOR_TOTAL = 2
+local NO_DATA = { covered = {}, levels = {} }
 -- Classic Era and TBC drop IsPlayerSpell unless a deprecation CVar is on.
 local function isKnown(spellID)
   if _G.IsPlayerSpell then
@@ -71,17 +73,20 @@ local function rankKey(name, number)
   return name .. ":" .. number
 end
 
--- Class cache over levels 1..toLevel: spell name + rank number to the lowest spellID.
-local function rankIndex(data, toLevel)
+-- Class cache and built-in rows over levels 1..toLevel: spell name + rank
+-- number to the lowest spellID.
+local function rankIndex(sources, toLevel)
   local index = {}
-  for level = 1, toLevel do
-    for spellID, entry in pairs(data.levels[level] or {}) do
-      local number = rankNumber(rankOf(spellID, entry))
-      local info = number and _G.C_Spell.GetSpellInfo(spellID)
-      if info then
-        local key = rankKey(info.name, number)
-        if index[key] == nil or spellID < index[key] then
-          index[key] = spellID
+  for _, source in ipairs(sources) do
+    for level = 1, toLevel do
+      for spellID, entry in pairs(source.levels[level] or {}) do
+        local number = rankNumber(rankOf(spellID, entry))
+        local info = number and _G.C_Spell.GetSpellInfo(spellID)
+        if info then
+          local key = rankKey(info.name, number)
+          if index[key] == nil or spellID < index[key] then
+            index[key] = spellID
+          end
         end
       end
     end
@@ -104,11 +109,11 @@ local function knownPrevious(name, previous)
 end
 
 -- The index is built only when a new rank is listed.
-local function addPreviousRanks(entries, data, toLevel)
+local function addPreviousRanks(entries, sources, toLevel)
   local index
   for _, entry in ipairs(entries) do
     if entry.newRank then
-      index = index or rankIndex(data, toLevel)
+      index = index or rankIndex(sources, toLevel)
       local previous = rankNumber(entry.rank) - 1
       entry.previousSpellID = index[rankKey(entry.name, previous)] or knownPrevious(entry.name, previous)
     end
@@ -166,11 +171,12 @@ local function recordKnownRank(knownRanks, spellID, entry)
   end
 end
 
+-- Built-in rows have no `covered` and no races: no race rule.
 local function addLevel(bySpell, knownRanks, data, race, level, fromLevel, isWaiting)
   for spellID, entry in pairs(data.levels[level] or {}) do
     if isKnown(spellID) then
       recordKnownRank(knownRanks, spellID, entry)
-    elseif isVisible(data.covered, race, level, entry) and not isRankPending(spellID, entry, isWaiting) then
+    elseif (data.covered == nil or isVisible(data.covered, race, level, entry)) and not isRankPending(spellID, entry, isWaiting) then
       addTrainerEntry(bySpell, spellID, entry, level, fromLevel)
     end
   end
@@ -293,19 +299,21 @@ local function addOtherSource(bySpell, row, fromLevel)
   end
 end
 
--- Unlearned trainer, quest and weapon-master skills up to toLevel: new skills
--- and new ranks from (fromLevel, toLevel], then the ones skipped at or below
--- fromLevel, then weapon skills; plus whether to show the hint row.
+-- Unlearned trainer, built-in, quest and weapon-master skills up to toLevel:
+-- new skills and new ranks from (fromLevel, toLevel], then the ones skipped at
+-- or below fromLevel, then weapon skills; plus whether to show the hint row
+-- (neither the trainer scan nor the built-in table reaches toLevel).
+-- Built-in rows skip any spell the trainer cache holds at any level.
 -- `isWaiting(spellID)` (optional): true leaves out a trainer entry whose rank
 -- text is not loaded yet.
 function SkillList.Build(trainers, class, race, faction, fromLevel, toLevel, isWaiting)
   local bySpell = {}
   local knownRanks = {}
-  local data = trainers[class]
-  if data then
-    for level = 1, toLevel do
-      addLevel(bySpell, knownRanks, data, race, level, fromLevel, isWaiting)
-    end
+  local live = trainers[class] or NO_DATA
+  local builtin = { levels = BuiltinSpells.Candidates(class, trainers[class], toLevel) }
+  for level = 1, toLevel do
+    addLevel(bySpell, knownRanks, live, race, level, fromLevel, isWaiting)
+    addLevel(bySpell, knownRanks, builtin, race, level, fromLevel, isWaiting)
   end
   for _, row in ipairs(OtherSources[class] or {}) do
     if rowApplies(row, race, faction, toLevel) then
@@ -319,9 +327,9 @@ function SkillList.Build(trainers, class, race, faction, fromLevel, toLevel, isW
     end
   end
   entries = dropUnbuyable(entries, knownRanks)
-  addPreviousRanks(entries, data, toLevel)
+  addPreviousRanks(entries, { live, builtin }, toLevel)
   sort(entries, byGroupThenLevelThenName)
-  return entries, TrainerCache.Covered(trainers, class, race) < toLevel
+  return entries, TrainerCache.Covered(trainers, class, race) < toLevel and BuiltinSpells.MaxLevel(class) < toLevel
 end
 
 -- Summed price of one group's priced entries; nil under two (quest rows have no cost).
