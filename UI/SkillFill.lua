@@ -36,8 +36,7 @@ local HIDDEN = "hidden"
 -- and a `+N more` toggle, or, expanded, all rows in a scroll box. A `fold`
 -- group has a button that hides its rows behind a count in the heading;
 -- `startFolded` folds it until the player opens it. Hidden holds every hidden
--- entry, whatever its own group; no entry has group "hidden", so it never
--- shows a price total.
+-- entry, whatever its own group.
 local GROUPS = {
   { group = "skill", title = "New skills", cap = GROUP_CAP, more = "+%d more new skills" },
   { group = "rank", title = "New ranks", cap = GROUP_CAP, more = "+%d more new ranks" },

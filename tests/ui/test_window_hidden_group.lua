@@ -123,14 +123,23 @@ local function test_opening_hidden_lists_its_rows_with_the_closed_eye()
   Assert.equal(db.foldedGroups.hidden, false)
 end
 
-local function test_hidden_group_shows_no_total_and_shown_groups_skip_hidden_cost()
+local function test_shown_groups_skip_hidden_cost()
   setup()
   addMissed(4)
   hide({ "Missed 1", "Missed 2" })
   Window.Show(record())
   click(foldButtons()[2])
   Assert.equal(totalOf("Not yet learned"):GetText(), "200c")
-  Assert.equal(totalOf("Hidden"), nil)
+end
+
+-- Three hidden at trainerSpell's 100 each; Not yet learned keeps 200c, so a
+-- wrong-line match fails. Hidden stays folded: its total shows anyway.
+local function test_hidden_group_shows_the_total_of_its_skills()
+  setup()
+  addMissed(5)
+  hide({ "Missed 1", "Missed 2", "Missed 3" })
+  Window.Show(record())
+  Assert.equal(totalOf("Hidden"):GetText(), "300c")
 end
 
 local function test_hidden_group_is_capped_with_a_more_hidden_toggle_and_a_box()
@@ -227,7 +236,8 @@ return function()
   test_hidden_group_has_a_fold_button()
   test_hidden_group_starting_folded_saves_no_flag()
   test_opening_hidden_lists_its_rows_with_the_closed_eye()
-  test_hidden_group_shows_no_total_and_shown_groups_skip_hidden_cost()
+  test_shown_groups_skip_hidden_cost()
+  test_hidden_group_shows_the_total_of_its_skills()
   test_hidden_group_is_capped_with_a_more_hidden_toggle_and_a_box()
   test_hidden_rows_have_no_change_lines()
   test_hidden_rows_request_no_spell_text()

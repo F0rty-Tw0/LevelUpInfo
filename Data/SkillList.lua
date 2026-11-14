@@ -19,6 +19,7 @@ local tonumber = tonumber
 local SkillList = {}
 
 local MIN_PRICED_FOR_TOTAL = 2
+local HIDDEN_GROUP = "hidden" -- the window's Hidden group: not an entry group
 local NO_DATA = { covered = {}, levels = {} }
 -- Classic Era and TBC drop IsPlayerSpell unless a deprecation CVar is on.
 local function isKnown(spellID)
@@ -332,12 +333,20 @@ function SkillList.Build(trainers, class, race, faction, fromLevel, toLevel, isW
   return entries, TrainerCache.Covered(trainers, class, race) < toLevel and BuiltinSpells.MaxLevel(class) < toLevel
 end
 
--- Summed price of one group's shown (not hidden) priced entries; nil under two (quest rows have no cost).
+-- Hidden holds every hidden entry; any other group, its own shown entries.
+local function inGroup(entry, group)
+  if group == HIDDEN_GROUP then
+    return entry.hidden == true
+  end
+  return entry.group == group and entry.hidden ~= true
+end
+
+-- Summed price of one group's priced entries; nil under two (quest rows have no cost).
 function SkillList.GroupTotal(entries, group)
   local total = 0
   local priced = 0
   for _, entry in ipairs(entries) do
-    if entry.group == group and entry.hidden ~= true and entry.cost ~= nil then
+    if inGroup(entry, group) and entry.cost ~= nil then
       total = total + entry.cost
       priced = priced + 1
     end
