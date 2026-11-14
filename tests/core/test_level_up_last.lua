@@ -44,7 +44,6 @@ local function setup()
     "UI/AutoHide.lua",
     "UI/ScrollBox.lua",
     "UI/SkillRow.lua",
-    "UI/GroupButton.lua",
     "UI/SkillGroup.lua",
     "UI/Layout.lua",
     "UI/GainLines.lua",

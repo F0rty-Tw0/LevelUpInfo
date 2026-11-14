@@ -4,7 +4,6 @@ if type(ns) ~= "table" then
 end
 
 local AutoHide = ns.AutoHide or require("LevelUpInfo.UI.AutoHide")
-local GroupButton = ns.GroupButton or require("LevelUpInfo.UI.GroupButton")
 local ScrollBox = ns.ScrollBox or require("LevelUpInfo.UI.ScrollBox")
 
 local ipairs = ipairs
@@ -25,8 +24,7 @@ local TOTAL_HEIGHT = 16
 local PRICE_PAD = 6 -- SkillRow's PAD: the rows' price edge
 local TOTAL_FOLD_GAP = 4
 local TOTAL_WIDTH = CONTENT_WIDTH - PRICE_PAD
--- Stops before the group button, which sits left of the fold icon.
-local TOTAL_FOLD_WIDTH = CONTENT_WIDTH - FOLD_ICON_SIZE - TOTAL_FOLD_GAP - GroupButton.SIZE - TOTAL_FOLD_GAP
+local TOTAL_FOLD_WIDTH = CONTENT_WIDTH - FOLD_ICON_SIZE - TOTAL_FOLD_GAP -- stops before the fold icon
 local TOTAL_FONT = "GameFontHighlightSmall"
 
 -- Per group: the "+N more" / "Show less" toggle and scroll box of a capped
@@ -98,21 +96,8 @@ local function newFoldButton(group, onFold)
   button:SetScript("OnClick", function()
     onFold(group)
   end)
-  -- Hovering the heading line shows its group button (made after this one).
-  button:SetScript("OnEnter", function()
-    pause()
-    local groupButton = groups[group].groupButton
-    if groupButton then
-      groupButton:SetAlpha(GroupButton.REST_ALPHA)
-    end
-  end)
-  button:SetScript("OnLeave", function()
-    resume()
-    local groupButton = groups[group].groupButton
-    if groupButton then
-      groupButton:SetAlpha(GroupButton.RestAlpha(button))
-    end
-  end)
+  button:SetScript("OnEnter", pause)
+  button:SetScript("OnLeave", resume)
   button:Hide()
   return button
 end
@@ -143,9 +128,7 @@ local function newTotal(width)
   return total
 end
 
--- A fold group whose spec has a groupAction ("dismiss" or "restore") also gets
--- its heading button, calling onGroupAction(group).
-function SkillGroup.Build(content, specs, onToggle, foldedGroups, onFold, onGroupAction)
+function SkillGroup.Build(content, specs, onToggle, foldedGroups, onFold)
   parent = content
   foldedByGroup = foldedGroups
   for _, spec in ipairs(specs) do
@@ -155,21 +138,10 @@ function SkillGroup.Build(content, specs, onToggle, foldedGroups, onFold, onGrou
       groups[spec.group].total = newTotal(spec.fold and TOTAL_FOLD_WIDTH or TOTAL_WIDTH)
     end
     if spec.fold then
-      local foldButton = newFoldButton(spec.group, onFold)
-      groups[spec.group].foldButton = foldButton
+      groups[spec.group].foldButton = newFoldButton(spec.group, onFold)
       groups[spec.group].startFolded = spec.startFolded == true
-      if spec.groupAction then
-        groups[spec.group].groupButton = GroupButton.Create(foldButton, spec.group, spec.groupAction, onGroupAction)
-      end
     end
   end
-end
-
--- The group's heading button, or nil for a group without one.
-function SkillGroup.GroupButton(group)
-  local state = groups[group]
-
-  return state and state.groupButton
 end
 
 -- Only a group with a fold button can be folded. A saved flag wins; without
@@ -186,15 +158,9 @@ function SkillGroup.IsFolded(group)
   return saved == true
 end
 
--- The group's fold button with the icon for its current state. Its heading
--- button is invisible again: hiding the fold button mid-hover may send no
--- OnLeave.
+-- The group's fold button with the icon for its current state.
 function SkillGroup.FoldButton(group)
-  local state = groups[group]
-  local button = state.foldButton
-  if state.groupButton then
-    state.groupButton:SetAlpha(GroupButton.HIDDEN_ALPHA)
-  end
+  local button = groups[group].foldButton
   button.foldIcon:SetTexture(SkillGroup.IsFolded(group) and ICON_FOLDED or ICON_OPEN)
   return button
 end

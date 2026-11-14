@@ -16,7 +16,6 @@ local GainLines = ns.GainLines or require("LevelUpInfo.UI.GainLines")
 local SkillFill = ns.SkillFill or require("LevelUpInfo.UI.SkillFill")
 
 local format = string.format
-local ipairs = ipairs
 local max = math.max
 local min = math.min
 local select = select
@@ -26,7 +25,6 @@ local xpcall = xpcall
 
 local Text = Localization.Text
 
-local HIDDEN_GROUP = "hidden" -- the skill group whose heading button restores
 local FRAME_NAME = "LevelUpInfoFrame"
 local FRAME_WIDTH = 338
 local CONTENT_WIDTH = 298
@@ -126,25 +124,6 @@ local function onDismiss(name)
   end
 end
 
--- A heading button: the Hidden group's brings every hidden skill back; any
--- other hides every skill of its group still shown, past the cap and folded
--- ones too (skillEntries is the full list).
-local function onGroupAction(group)
-  if current and not filling then
-    if group == HIDDEN_GROUP then
-      _G.wipe(charDB.hidden)
-    else
-      for _, entry in ipairs(skillEntries) do
-        local isShownInGroup = entry.group == group and entry.hidden ~= true and entry.name ~= ""
-        if isShownInGroup then
-          charDB.hidden[entry.name] = true
-        end
-      end
-    end
-    Window.RefreshHidden()
-  end
-end
-
 -- Show hidden skills: the list empties even while the window is closed.
 function Window.ShowHidden()
   _G.wipe(charDB.hidden)
@@ -219,7 +198,7 @@ local function build()
   buildHeader()
   buildView()
   GainLines.Build(content)
-  SkillFill.Build(content, onToggle, db.foldedGroups, onFold, onDismiss, onGroupAction)
+  SkillFill.Build(content, onToggle, db.foldedGroups, onFold, onDismiss)
 end
 
 local function isRankWaiting(spellID)

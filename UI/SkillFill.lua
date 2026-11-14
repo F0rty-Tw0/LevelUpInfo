@@ -35,16 +35,14 @@ local HIDDEN = "hidden"
 -- Skill groups in display order; a capped group shows its first `cap` rows
 -- and a `+N more` toggle, or, expanded, all rows in a scroll box. A `fold`
 -- group has a button that hides its rows behind a count in the heading;
--- `startFolded` folds it until the player opens it. A `groupAction` gives the
--- fold group a heading button: "dismiss" hides all its skills, "restore" brings
--- every hidden skill back. Hidden holds every hidden entry, whatever its own
--- group.
+-- `startFolded` folds it until the player opens it. Hidden holds every hidden
+-- entry, whatever its own group.
 local GROUPS = {
   { group = "skill", title = "New skills", cap = GROUP_CAP, more = "+%d more new skills" },
   { group = "rank", title = "New ranks", cap = GROUP_CAP, more = "+%d more new ranks" },
-  { group = "missed", title = "Not yet learned", cap = GROUP_CAP, fold = true, groupAction = "dismiss", more = "+%d more not yet learned" },
-  { group = "weapon", title = "Weapon skills", cap = GROUP_CAP, fold = true, groupAction = "dismiss", more = "+%d more weapon skills" },
-  { group = HIDDEN, title = "Hidden", cap = GROUP_CAP, fold = true, startFolded = true, groupAction = "restore", more = "+%d more hidden" },
+  { group = "missed", title = "Not yet learned", cap = GROUP_CAP, fold = true, more = "+%d more not yet learned" },
+  { group = "weapon", title = "Weapon skills", cap = GROUP_CAP, fold = true, more = "+%d more weapon skills" },
+  { group = HIDDEN, title = "Hidden", cap = GROUP_CAP, fold = true, startFolded = true, more = "+%d more hidden" },
 }
 
 -- The window's skill area: group headings, skill rows, the hint row and the
@@ -194,14 +192,14 @@ end
 
 -- Makes the group headings and the group widgets on `parent`, the window's
 -- content frame, which every later call fills. `onDismiss(name)` runs on a
--- row's dismiss or restore click, `onGroupAction(group)` on a heading's.
-function SkillFill.Build(parent, onToggle, foldedGroups, onFold, onDismiss, onGroupAction)
+-- row's dismiss or restore click.
+function SkillFill.Build(parent, onToggle, foldedGroups, onFold, onDismiss)
   content = parent
   dismissFn = onDismiss
   for _, spec in ipairs(GROUPS) do
     headings[spec.group] = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
   end
-  SkillGroup.Build(content, GROUPS, onToggle, foldedGroups, onFold, onGroupAction)
+  SkillGroup.Build(content, GROUPS, onToggle, foldedGroups, onFold)
 end
 
 -- Adds the groups, the hint row and the next-level line to the layout list;
