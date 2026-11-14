@@ -97,7 +97,8 @@ end
 local function player()
   local class = select(2, _G.UnitClass("player"))
   local race = select(2, _G.UnitRace("player"))
-  return class, race, _G.UnitFactionGroup("player")
+  local faction = _G.UnitFactionGroup("player")
+  return class, race, faction
 end
 
 local function findNextLevel(toLevel)
