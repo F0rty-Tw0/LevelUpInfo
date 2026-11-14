@@ -31,7 +31,7 @@ local function setup()
     foldedGroups = {},
     trainers = {},
   }
-  charDB = {}
+  charDB = { hidden = {} }
   local ns = { OtherSources = {} }
   for _, file in ipairs({
     "Core/Localization.lua",
@@ -53,7 +53,7 @@ local function setup()
   end
   Events = ns.Events
   Window = ns.Window
-  Window.Install(db)
+  Window.Install(db, charDB)
   LevelUp = assert(loadfile("Core/LevelUp.lua"))("LevelUpInfo", ns)
   LevelUp.Install(db, charDB)
 end

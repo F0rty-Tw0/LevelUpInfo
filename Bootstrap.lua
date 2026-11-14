@@ -22,7 +22,7 @@ function Bootstrap.Initialize(saved, charSaved)
   local charDB = SavedState.InitializeCharacter(charSaved)
   _G.LevelUpInfoCharDB = charDB
   TrainerScan.Install(db)
-  Window.Install(db)
+  Window.Install(db, charDB)
   SpellFacts.Install(Window.Refresh)
   LevelUp.Install(db, charDB)
   Panel.Register(db, {

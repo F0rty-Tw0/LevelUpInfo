@@ -48,7 +48,7 @@ local function setup(client)
   end
   Window = WindowHelper.load(ns)
   Events = ns.Events
-  Window.Install(db)
+  Window.Install(db, { hidden = {} })
   LevelUp = assert(loadfile("Core/LevelUp.lua"))("LevelUpInfo", ns)
   LevelUp.Install(db, {})
 end

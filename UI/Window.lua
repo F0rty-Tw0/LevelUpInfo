@@ -6,6 +6,7 @@ end
 local Localization = ns.Localization or require("LevelUpInfo.Core.Localization")
 local SkillList = ns.SkillList or require("LevelUpInfo.Data.SkillList")
 local NextLevel = ns.NextLevel or require("LevelUpInfo.Data.NextLevel")
+local HiddenSkills = ns.HiddenSkills or require("LevelUpInfo.Data.HiddenSkills")
 local AutoHide = ns.AutoHide or require("LevelUpInfo.UI.AutoHide")
 local ScrollBox = ns.ScrollBox or require("LevelUpInfo.UI.ScrollBox")
 local SkillGroup = ns.SkillGroup or require("LevelUpInfo.UI.SkillGroup")
@@ -46,6 +47,7 @@ local HEADER_WIDTH = 262
 local Window = {}
 
 local db
+local charDB -- per-character saved table: `hidden` holds the names of hidden skills
 local frame
 local view -- ScrollFrame around `content`; scrolls only when content is taller than the screen allows
 local viewBar
@@ -88,6 +90,42 @@ local function onFold(group)
     pinTop()
     fill(current)
   end
+end
+
+-- class, race and faction of the player, as the skill list and next-level line read them.
+local function player()
+  local class = select(2, _G.UnitClass("player"))
+  local race = select(2, _G.UnitRace("player"))
+  return class, race, _G.UnitFactionGroup("player")
+end
+
+local function findNextLevel(toLevel)
+  local class, race, faction = player()
+  return NextLevel.Find(db.trainers, class, race, faction, toLevel, charDB.hidden)
+end
+
+-- The hidden list changed: find the next-level line again, keep the top edge
+-- and refill (the skill list is reused; the fill marks it from the new names).
+function Window.RefreshHidden()
+  if current and not filling then
+    nextLevel, nextEntries = findNextLevel(current.toLevel)
+    pinTop()
+    fill(current)
+  end
+end
+
+-- An eye click hides a skill (every rank) or brings it back.
+local function onEye(name)
+  if current and not filling then
+    charDB.hidden[name] = charDB.hidden[name] ~= true and true or nil
+    Window.RefreshHidden()
+  end
+end
+
+-- Show hidden skills: the list empties even while the window is closed.
+function Window.ShowHidden()
+  _G.wipe(charDB.hidden)
+  Window.RefreshHidden()
 end
 
 local function applyAnchor()
@@ -158,7 +196,7 @@ local function build()
   buildHeader()
   buildView()
   GainLines.Build(content)
-  SkillFill.Build(content, onToggle, db.foldedGroups, onFold)
+  SkillFill.Build(content, onToggle, db.foldedGroups, onFold, onEye)
 end
 
 local function isRankWaiting(spellID)
@@ -171,12 +209,11 @@ end
 
 local function fillSkills(record, gainCount)
   if not skillEntries then
-    local class = select(2, _G.UnitClass("player"))
-    local race = select(2, _G.UnitRace("player"))
-    local faction = _G.UnitFactionGroup("player")
+    local class, race, faction = player()
     skillEntries, skillHint = SkillList.Build(db.trainers, class, race, faction, record.fromLevel, record.toLevel, isRankWaiting)
-    nextLevel, nextEntries = NextLevel.Find(db.trainers, class, race, faction, record.toLevel)
+    nextLevel, nextEntries = findNextLevel(record.toLevel)
   end
+  HiddenSkills.Mark(skillEntries, charDB.hidden)
   SkillFill.Fill(skillEntries, skillHint, nextLevel, nextEntries, gainCount)
 end
 
@@ -228,8 +265,10 @@ function fill(record)
   end)
 end
 
-function Window.Install(savedDB)
+function Window.Install(savedDB, savedCharDB)
+  assert(type(savedCharDB) == "table", "Window.Install: charDB")
   db = savedDB
+  charDB = savedCharDB
 end
 
 function Window.Current()

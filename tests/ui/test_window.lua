@@ -31,7 +31,7 @@ local function setup()
     },
   })
   Window = WindowHelper.load({ OtherSources = {} })
-  Window.Install(db)
+  Window.Install(db, WindowHelper.charDB())
 end
 
 local function record(overrides)

@@ -19,7 +19,7 @@ local function setup(otherSources)
   W.money = 1000
   db = WindowHelper.db({ PRIEST = { covered = { Scourge = 10 }, levels = {} } })
   Window = WindowHelper.load({ OtherSources = { PRIEST = otherSources or {} } })
-  Window.Install(db)
+  Window.Install(db, WindowHelper.charDB())
 end
 
 local function trainerSpell(spellID, level, name, rank)

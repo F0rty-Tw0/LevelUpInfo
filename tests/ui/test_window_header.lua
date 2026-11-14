@@ -10,7 +10,7 @@ local frame = WindowHelper.frame
 local function setup()
   W = WindowHelper.install()
   Window = WindowHelper.load({ OtherSources = {} })
-  Window.Install(WindowHelper.db({}))
+  Window.Install(WindowHelper.db({}), WindowHelper.charDB())
 end
 
 local function record(fromLevel, toLevel)

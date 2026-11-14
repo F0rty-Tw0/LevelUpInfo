@@ -19,6 +19,7 @@ WindowHelper.FILES = {
   "Data/TrainerCache.lua",
   "Data/SkillList.lua",
   "Data/NextLevel.lua",
+  "Data/HiddenSkills.lua",
   "Data/RankChanges.lua",
   "Data/SpellFacts.lua",
   "UI/AutoHide.lua",
@@ -223,6 +224,11 @@ end
 -- The texture path on the eye of the shown row named `name`.
 function WindowHelper.eyeOf(name)
   return W.state(WindowHelper.rowNamed(name).eye.texture).texture
+end
+
+-- A fresh per-character table as SavedState.InitializeCharacter gives it.
+function WindowHelper.charDB()
+  return { hidden = {} }
 end
 
 return WindowHelper

@@ -24,7 +24,7 @@ local function setup(otherSources)
   W.money = 1000
   db = WindowHelper.db({ PRIEST = { covered = { Scourge = 10 }, levels = {} } })
   Window = WindowHelper.load({ OtherSources = { PRIEST = otherSources or {} } })
-  Window.Install(db)
+  Window.Install(db, WindowHelper.charDB())
 end
 
 -- A Rank 2 or higher also gives the player a known earlier rank (spellbook only).

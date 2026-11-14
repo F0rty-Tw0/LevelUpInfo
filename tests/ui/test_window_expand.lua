@@ -35,7 +35,7 @@ local function setup(otherSources)
   db = WindowHelper.db({ PRIEST = { covered = { Scourge = 10 }, levels = {} } })
   ns = { OtherSources = { PRIEST = otherSources or {} } }
   Window = WindowHelper.load(ns)
-  Window.Install(db)
+  Window.Install(db, WindowHelper.charDB())
   ns.SpellFacts.Install(Window.Refresh)
 end
 

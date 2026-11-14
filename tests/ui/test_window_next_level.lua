@@ -47,7 +47,7 @@ local function setup()
   levels[14] = { [FADE] = rank1(), [RENEW] = rank1() }
   ns = { OtherSources = { PRIEST = {} } }
   Window = WindowHelper.load(ns)
-  Window.Install(db)
+  Window.Install(db, WindowHelper.charDB())
   ns.SpellFacts.Install(Window.Refresh)
 end
 

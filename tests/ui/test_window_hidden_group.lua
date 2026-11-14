@@ -7,6 +7,7 @@ local W
 local ns
 local Window
 local db
+local charDB
 
 local rowNames = WindowHelper.rowNames
 local rowNamed = WindowHelper.rowNamed
@@ -37,25 +38,15 @@ local function setup(otherSources)
   db = WindowHelper.db({ PRIEST = { covered = { Scourge = 10 }, levels = {} } })
   ns = { OtherSources = { PRIEST = otherSources or {} } }
   Window = WindowHelper.load(ns)
-  Window.Install(db)
+  charDB = WindowHelper.charDB()
+  Window.Install(db, charDB)
   ns.SpellFacts.Install(Window.Refresh)
 end
 
--- Flags every entry of the built list whose name is in `list` as hidden. Once
--- the window marks the list itself from the character's hidden names, this
--- writes those names instead.
+-- Marks every name in `list` hidden for this character.
 local function hide(list)
-  local names = {}
   for _, name in ipairs(list) do
-    names[name] = true
-  end
-  local build = ns.SkillList.Build
-  ns.SkillList.Build = function(...)
-    local entries, hint = build(...)
-    for _, entry in ipairs(entries) do
-      entry.hidden = names[entry.name] == true
-    end
-    return entries, hint
+    charDB.hidden[name] = true
   end
 end
 

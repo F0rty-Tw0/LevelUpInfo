@@ -38,7 +38,7 @@ local function setup()
   cacheSpell(10, RANK_2, "Rank 2")
   ns = { OtherSources = {} }
   Window = WindowHelper.load(ns)
-  Window.Install(db)
+  Window.Install(db, WindowHelper.charDB())
   ns.SpellFacts.Install(Window.Refresh)
 end
 
