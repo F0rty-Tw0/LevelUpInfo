@@ -22,8 +22,8 @@ local SOURCE_GAP = 2
 local ICON_TOP = (ROW_HEIGHT - ICON_SIZE) / 2
 local CHANGE_LINE_HEIGHT = 12
 local DISMISS_SIZE = 16
-local DISMISS = "Interface\\AddOns\\LevelUpInfo\\Media\\Dismiss.tga"
-local RESTORE = "Interface\\AddOns\\LevelUpInfo\\Media\\Restore.tga"
+local EYE_CROSSED = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeCrossed.tga"
+local EYE_OPEN = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeOpen.tga"
 -- Hover only (user decision, 2026-11-15): the button is invisible until its
 -- row is hovered, dim over the row, bright over the button itself.
 local DISMISS_HIDDEN_ALPHA = 0
@@ -94,8 +94,8 @@ local function newChangeLine(row, i)
   return line
 end
 
--- The dismiss / restore button at the row's top right: a plain Button (no
--- template, no events). Hovering it brightens it, shows a tooltip and pauses
+-- The hide / show button at the row's top right (a crossed eye on a shown row,
+-- an open eye on a hidden one): a plain Button (no template, no events). Hovering it brightens it, shows a tooltip and pauses
 -- like the row; a click hands the row's current skill name to dismissFn. The
 -- tooltip text reads row.hidden at hover time, so a reused row follows its
 -- new entry.
@@ -110,7 +110,7 @@ local function newDismiss(row, dismissFn)
     dismissFn(row.skillName)
   end)
   dismiss:SetScript("OnEnter", function()
-    local tooltipText = row.hidden and Text("Restore") or Text("Dismiss")
+    local tooltipText = row.hidden and Text("Show") or Text("Hide")
     _G.GameTooltip:SetOwner(dismiss, "ANCHOR_RIGHT")
     _G.GameTooltip:SetText(tooltipText)
     _G.GameTooltip:Show()
@@ -171,9 +171,7 @@ function SkillRow.SetSkill(row, entry, money)
   row.spellID = entry.spellID
   row.skillName = entry.name
   row.hidden = entry.hidden == true
-  local buttonColor = row.hidden and _G.GREEN_FONT_COLOR or _G.RED_FONT_COLOR
-  row.dismiss.texture:SetTexture(row.hidden and RESTORE or DISMISS)
-  row.dismiss.texture:SetVertexColor(buttonColor:GetRGB())
+  row.dismiss.texture:SetTexture(row.hidden and EYE_OPEN or EYE_CROSSED)
   row.dismiss:SetShown(entry.name ~= "")
   row.dismiss:SetAlpha(DISMISS_HIDDEN_ALPHA) -- a row pooled while hovered got no OnLeave
   row.icon:SetTexture(entry.icon)

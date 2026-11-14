@@ -26,8 +26,8 @@ local QUEST_SPELL = 3001
 local RANK_2_SPELL = 3002
 local KNOWN_RANK_OFFSET = 100000
 local CAP = 4 -- SkillFill GROUP_CAP
-local DISMISS = "Interface\\AddOns\\LevelUpInfo\\Media\\Dismiss.tga"
-local RESTORE = "Interface\\AddOns\\LevelUpInfo\\Media\\Restore.tga"
+local EYE_CROSSED = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeCrossed.tga"
+local EYE_OPEN = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeOpen.tga"
 local SHADOW_PAIN = "Shadow Word: Pain"
 
 -- Fresh fake client, modules and db per test. The priest cache starts empty and
@@ -117,9 +117,9 @@ local function test_opening_hidden_lists_its_rows_with_the_restore_button()
   click(foldButtons()[2])
   Assert.equal(headings(), "Stats|New skills|Not yet learned|Hidden")
   Assert.equal(rowNames(), "New Skill|Missed 2|Missed 1|Axe")
-  Assert.equal(dismissOf("Missed 1"), RESTORE)
-  Assert.equal(dismissOf("Axe"), RESTORE)
-  Assert.equal(dismissOf("New Skill"), DISMISS)
+  Assert.equal(dismissOf("Missed 1"), EYE_OPEN)
+  Assert.equal(dismissOf("Axe"), EYE_OPEN)
+  Assert.equal(dismissOf("New Skill"), EYE_CROSSED)
   Assert.equal(db.foldedGroups.hidden, false)
 end
 

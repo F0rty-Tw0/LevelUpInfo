@@ -27,8 +27,8 @@ local KNOWN_RANK_OFFSET = 100000
 local QUEST_SPELL, RANK_2_SPELL = 3001, 3002
 local FADE_1, FADE_2, RENEW = 586, 9586, 139
 local SHADOW_PAIN = "Shadow Word: Pain"
-local DISMISS = "Interface\\AddOns\\LevelUpInfo\\Media\\Dismiss.tga"
-local RESTORE = "Interface\\AddOns\\LevelUpInfo\\Media\\Restore.tga"
+local EYE_CROSSED = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeCrossed.tga"
+local EYE_OPEN = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeOpen.tga"
 
 -- Fresh fake client, modules, db and character table per test. The priest cache
 -- starts empty and covers level 10 (no hint row).
@@ -102,8 +102,8 @@ local function test_an_opened_hidden_group_shows_the_restore_button()
   showAndHideMissed1()
   click(foldButtons()[2])
   Assert.equal(headings(), "Stats|Not yet learned|Hidden")
-  Assert.equal(dismissOf("Missed 1"), RESTORE)
-  Assert.equal(dismissOf("Missed 2"), DISMISS)
+  Assert.equal(dismissOf("Missed 1"), EYE_OPEN)
+  Assert.equal(dismissOf("Missed 2"), EYE_CROSSED)
 end
 
 local function test_restore_click_clears_the_saved_name()

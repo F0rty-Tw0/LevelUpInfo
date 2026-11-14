@@ -1,4 +1,4 @@
--- The Dismiss all / Restore all buttons on the group headings, through the window.
+-- The Hide all / Show all buttons on the group headings, through the window.
 local Assert = require("tests.helpers.assert")
 local WindowHelper = require("tests.helpers.window")
 

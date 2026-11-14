@@ -1,4 +1,4 @@
--- The row's dismiss / restore button.
+-- The row's hide / show button (an eye).
 local Assert = require("tests.helpers.assert")
 local Wow = require("tests.helpers.wow")
 
@@ -10,10 +10,8 @@ local dismissNames
 
 local ENTRY = { spellID = 8092, name = "Mind Blast", icon = 136224, rank = "Rank 1", cost = 300 }
 local HIDDEN_ENTRY = { spellID = 8092, name = "Mind Blast", icon = 1, rank = "", cost = 1, hidden = true }
-local DISMISS = "Interface\\AddOns\\LevelUpInfo\\Media\\Dismiss.tga"
-local RESTORE = "Interface\\AddOns\\LevelUpInfo\\Media\\Restore.tga"
-local RED = { 1, 0.1, 0.1 }
-local GREEN = { 0.1, 1, 0.1 }
+local EYE_CROSSED = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeCrossed.tga"
+local EYE_OPEN = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeOpen.tga"
 local QUEST_ENTRY = {
   spellID = 2652,
   name = "Touch of Weakness",
@@ -40,12 +38,6 @@ local function newRow()
   end, function(name)
     dismissNames[#dismissNames + 1] = name
   end)
-end
-
-local function assertColor(actual, expected)
-  Assert.equal(actual[1], expected[1])
-  Assert.equal(actual[2], expected[2])
-  Assert.equal(actual[3], expected[3])
 end
 
 local function test_dismiss_is_a_plain_16_by_16_button_at_the_top_right()
@@ -113,33 +105,33 @@ local function test_leaving_the_button_back_onto_the_row_dims_it()
   Assert.equal(row.dismiss:GetAlpha(), 0.6)
 end
 
-local function test_shown_row_gets_the_red_dismiss_texture()
+local function test_shown_row_gets_the_crossed_eye_and_no_tint()
   setup()
   local row = newRow()
   SkillRow.SetSkill(row, ENTRY, W.money)
-  Assert.equal(W.state(row.dismiss.texture).texture, DISMISS)
-  assertColor(W.state(row.dismiss.texture).vertexColor, RED)
+  Assert.equal(W.state(row.dismiss.texture).texture, EYE_CROSSED)
+  Assert.equal(W.state(row.dismiss.texture).vertexColor, nil)
   Assert.equal(row.hidden, false)
   Assert.equal(row.dismiss:IsShown(), true)
   Assert.equal(row.skillName, "Mind Blast")
 end
 
-local function test_hidden_row_gets_the_green_restore_texture()
+local function test_hidden_row_gets_the_open_eye_and_no_tint()
   setup()
   local row = newRow()
   SkillRow.SetSkill(row, HIDDEN_ENTRY, W.money)
-  Assert.equal(W.state(row.dismiss.texture).texture, RESTORE)
-  assertColor(W.state(row.dismiss.texture).vertexColor, GREEN)
+  Assert.equal(W.state(row.dismiss.texture).texture, EYE_OPEN)
+  Assert.equal(W.state(row.dismiss.texture).vertexColor, nil)
   Assert.equal(row.hidden, true)
 end
 
-local function test_a_reused_row_swaps_texture_and_colour_with_its_entry()
+local function test_a_reused_row_swaps_its_eye_with_its_entry()
   setup()
   local row = newRow()
   SkillRow.SetSkill(row, HIDDEN_ENTRY, W.money)
   SkillRow.SetSkill(row, ENTRY, W.money)
-  Assert.equal(W.state(row.dismiss.texture).texture, DISMISS)
-  assertColor(W.state(row.dismiss.texture).vertexColor, RED)
+  Assert.equal(W.state(row.dismiss.texture).texture, EYE_CROSSED)
+  Assert.equal(W.state(row.dismiss.texture).vertexColor, nil)
 end
 
 local function test_dismiss_click_passes_the_rows_current_skill_name()
@@ -162,7 +154,7 @@ local function test_dismiss_hover_shows_dismiss_tooltip_and_pauses()
   Assert.equal(W.tooltip[1][2], row.dismiss)
   Assert.equal(W.tooltip[1][3], "ANCHOR_RIGHT")
   Assert.equal(W.tooltip[2][1], "SetText")
-  Assert.equal(W.tooltip[2][2], "Dismiss")
+  Assert.equal(W.tooltip[2][2], "Hide")
   Assert.equal(W.tooltip[3][1], "Show")
   Assert.equal(row.dismiss:GetAlpha(), 1)
   Assert.equal(log[1], "enter")
@@ -174,7 +166,7 @@ local function test_restore_hover_shows_restore_tooltip()
   SkillRow.SetSkill(row, HIDDEN_ENTRY, W.money)
   W.fireScript(row.dismiss, "OnEnter")
   Assert.equal(W.tooltip[2][1], "SetText")
-  Assert.equal(W.tooltip[2][2], "Restore")
+  Assert.equal(W.tooltip[2][2], "Show")
 end
 
 -- Review Focus 1: the row is pooled and refilled; the tooltip reads the new entry.
@@ -184,7 +176,7 @@ local function test_reused_row_tooltip_follows_its_new_entry()
   SkillRow.SetSkill(row, ENTRY, W.money)
   SkillRow.SetSkill(row, HIDDEN_ENTRY, W.money)
   W.fireScript(row.dismiss, "OnEnter")
-  Assert.equal(W.tooltip[2][2], "Restore")
+  Assert.equal(W.tooltip[2][2], "Show")
 end
 
 local function test_dismiss_leave_hides_tooltip_and_resumes()
@@ -228,9 +220,9 @@ end
 
 -- The paths are the game's (relative to the AddOns folder); the files are the
 -- addon's own Media textures.
-local function test_dismiss_texture_paths_name_files_the_addon_ships()
+local function test_eye_texture_paths_name_files_the_addon_ships()
   local prefix = "Interface\\AddOns\\LevelUpInfo\\"
-  for _, path in ipairs({ DISMISS, RESTORE }) do
+  for _, path in ipairs({ EYE_CROSSED, EYE_OPEN }) do
     Assert.equal(string.sub(path, 1, #prefix), prefix)
     local file = string.gsub(string.sub(path, #prefix + 1), "\\", "/")
     local handle = io.open(file, "rb")
@@ -241,9 +233,9 @@ end
 
 return function()
   test_dismiss_is_a_plain_16_by_16_button_at_the_top_right()
-  test_shown_row_gets_the_red_dismiss_texture()
-  test_hidden_row_gets_the_green_restore_texture()
-  test_a_reused_row_swaps_texture_and_colour_with_its_entry()
+  test_shown_row_gets_the_crossed_eye_and_no_tint()
+  test_hidden_row_gets_the_open_eye_and_no_tint()
+  test_a_reused_row_swaps_its_eye_with_its_entry()
   test_dismiss_click_passes_the_rows_current_skill_name()
   test_dismiss_hover_shows_dismiss_tooltip_and_pauses()
   test_restore_hover_shows_restore_tooltip()
@@ -257,5 +249,5 @@ return function()
   test_leaving_the_button_back_onto_the_row_dims_it()
   test_hint_row_hides_the_button_and_clears_the_name()
   test_entry_without_a_name_has_no_button()
-  test_dismiss_texture_paths_name_files_the_addon_ships()
+  test_eye_texture_paths_name_files_the_addon_ships()
 end

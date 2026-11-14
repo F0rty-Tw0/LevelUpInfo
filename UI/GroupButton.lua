@@ -15,13 +15,13 @@ local RIGHT_OFFSET = -20 -- left of the fold icon: its 16 px plus a 4 px gap
 local HIDDEN_ALPHA = 0
 local REST_ALPHA = 0.6
 local HOVER_ALPHA = 1
-local DISMISS = "Interface\\AddOns\\LevelUpInfo\\Media\\Dismiss.tga"
-local RESTORE = "Interface\\AddOns\\LevelUpInfo\\Media\\Restore.tga"
+local EYE_CROSSED = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeCrossed.tga"
+local EYE_OPEN = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeOpen.tga"
 
--- The "Dismiss all" / "Restore all" button on a fold group's heading: a plain
--- Button (no template, no events), a child of the group's fold button, so its
--- click never reaches the fold button. Hovering it brightens it, shows a
--- tooltip and pauses the auto-hide, like a row's dismiss button.
+-- The "Hide all" (crossed eye) / "Show all" (open eye) button on a fold group's
+-- heading: a plain Button (no template, no events), a child of the group's fold
+-- button, so its click never reaches the fold button. Hovering it brightens it,
+-- shows a tooltip and pauses the auto-hide, like a row's hide button.
 local GroupButton = {}
 
 GroupButton.SIZE = SIZE
@@ -34,12 +34,6 @@ function GroupButton.RestAlpha(foldButton)
   return foldButton:IsMouseOver() and REST_ALPHA or HIDDEN_ALPHA
 end
 
-local function paint(texture, isRestore)
-  local color = isRestore and _G.GREEN_FONT_COLOR or _G.RED_FONT_COLOR
-  texture:SetTexture(isRestore and RESTORE or DISMISS)
-  texture:SetVertexColor(color:GetRGB())
-end
-
 function GroupButton.Create(foldButton, group, action, onGroupAction)
   local isRestore = action == "restore"
   local button = _G.CreateFrame("Button", nil, foldButton)
@@ -48,12 +42,12 @@ function GroupButton.Create(foldButton, group, action, onGroupAction)
   button:SetAlpha(HIDDEN_ALPHA)
   local texture = button:CreateTexture()
   texture:SetAllPoints()
-  paint(texture, isRestore)
+  texture:SetTexture(isRestore and EYE_OPEN or EYE_CROSSED)
   button:SetScript("OnClick", function()
     onGroupAction(group)
   end)
   button:SetScript("OnEnter", function()
-    local tooltipText = isRestore and Text("Restore all") or Text("Dismiss all")
+    local tooltipText = isRestore and Text("Show all") or Text("Hide all")
     _G.GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
     _G.GameTooltip:SetText(tooltipText)
     _G.GameTooltip:Show()

@@ -1,11 +1,9 @@
--- The Dismiss all / Restore all button on a fold group's heading.
+-- The Hide all / Show all button (an eye) on a fold group's heading.
 local Assert = require("tests.helpers.assert")
 local Wow = require("tests.helpers.wow")
 
-local DISMISS = "Interface\\AddOns\\LevelUpInfo\\Media\\Dismiss.tga"
-local RESTORE = "Interface\\AddOns\\LevelUpInfo\\Media\\Restore.tga"
-local RED = { 1, 0.1, 0.1 }
-local GREEN = { 0.1, 1, 0.1 }
+local EYE_CROSSED = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeCrossed.tga"
+local EYE_OPEN = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeOpen.tga"
 local SPECS = {
   { group = "missed", cap = 4, fold = true, groupAction = "dismiss" },
   { group = "weapon", cap = 4, fold = true, groupAction = "dismiss" },
@@ -38,12 +36,6 @@ local function setup()
   return t
 end
 
-local function assertColor(actual, expected)
-  Assert.equal(actual[1], expected[1])
-  Assert.equal(actual[2], expected[2])
-  Assert.equal(actual[3], expected[3])
-end
-
 local function textureOf(t, group)
   local button = t.SkillGroup.GroupButton(group)
   for _, widget in ipairs(t.W.frames) do
@@ -53,7 +45,7 @@ local function textureOf(t, group)
   end
 end
 
-local function test_dismiss_groups_get_a_red_minus_button()
+local function test_hide_groups_get_a_crossed_eye_button()
   local t = setup()
   for _, group in ipairs({ "missed", "weapon" }) do
     local button = t.SkillGroup.GroupButton(group)
@@ -71,15 +63,15 @@ local function test_dismiss_groups_get_a_red_minus_button()
     Assert.equal(y, 0)
     Assert.equal(button:GetAlpha(), 0) -- hover only: invisible until the heading is hovered
     Assert.equal(textureOf(t, group).allPoints, true)
-    Assert.equal(textureOf(t, group).texture, DISMISS)
-    assertColor(textureOf(t, group).vertexColor, RED)
+    Assert.equal(textureOf(t, group).texture, EYE_CROSSED)
+    Assert.equal(textureOf(t, group).vertexColor, nil)
   end
 end
 
-local function test_hidden_group_gets_a_green_plus_button()
+local function test_hidden_group_gets_an_open_eye_button()
   local t = setup()
-  Assert.equal(textureOf(t, "hidden").texture, RESTORE)
-  assertColor(textureOf(t, "hidden").vertexColor, GREEN)
+  Assert.equal(textureOf(t, "hidden").texture, EYE_OPEN)
+  Assert.equal(textureOf(t, "hidden").vertexColor, nil)
 end
 
 local function test_groups_without_group_action_have_no_button()
@@ -97,7 +89,7 @@ local function test_group_button_click_calls_on_group_action_with_its_group()
 end
 
 local function test_group_button_hover_shows_its_tooltip()
-  for group, text in pairs({ missed = "Dismiss all", weapon = "Dismiss all", hidden = "Restore all" }) do
+  for group, text in pairs({ missed = "Hide all", weapon = "Hide all", hidden = "Show all" }) do
     local t = setup()
     local button = t.SkillGroup.GroupButton(group)
     t.W.fireScript(button, "OnEnter")
@@ -169,8 +161,8 @@ local function test_leaving_the_group_button_back_onto_the_heading_dims_it()
 end
 
 return function()
-  test_dismiss_groups_get_a_red_minus_button()
-  test_hidden_group_gets_a_green_plus_button()
+  test_hide_groups_get_a_crossed_eye_button()
+  test_hidden_group_gets_an_open_eye_button()
   test_groups_without_group_action_have_no_button()
   test_group_button_click_calls_on_group_action_with_its_group()
   test_group_button_hover_shows_its_tooltip()
