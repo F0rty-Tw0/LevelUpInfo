@@ -64,8 +64,53 @@ local function test_dismiss_is_a_plain_16_by_16_button_at_the_top_right()
   Assert.equal(relativePoint, "TOPRIGHT")
   Assert.equal(x, -6)
   Assert.equal(y, -6)
-  Assert.equal(dismiss:GetAlpha(), 0.6)
   Assert.equal(W.state(dismiss.texture).allPoints, true)
+end
+
+-- Hover only (user decision, 2026-11-15): invisible until the row is hovered.
+local function test_button_is_invisible_until_the_row_is_hovered()
+  setup()
+  local row = newRow()
+  SkillRow.SetSkill(row, ENTRY, W.money)
+  Assert.equal(row.dismiss:GetAlpha(), 0)
+end
+
+local function test_row_hover_shows_the_button_dim()
+  setup()
+  local row = newRow()
+  SkillRow.SetSkill(row, ENTRY, W.money)
+  W.fireScript(row, "OnEnter")
+  Assert.equal(row.dismiss:GetAlpha(), 0.6)
+end
+
+local function test_leaving_the_row_hides_the_button()
+  setup()
+  local row = newRow()
+  SkillRow.SetSkill(row, ENTRY, W.money)
+  W.fireScript(row, "OnEnter")
+  W.fireScript(row, "OnLeave")
+  Assert.equal(row.dismiss:GetAlpha(), 0)
+end
+
+-- Moving onto the button leaves the row, but the mouse is still inside it.
+local function test_moving_onto_the_button_keeps_it_shown()
+  setup()
+  local row = newRow()
+  SkillRow.SetSkill(row, ENTRY, W.money)
+  W.fireScript(row, "OnEnter")
+  W.mouseOver[row] = true
+  W.fireScript(row, "OnLeave")
+  Assert.equal(row.dismiss:GetAlpha(), 0.6)
+end
+
+local function test_leaving_the_button_back_onto_the_row_dims_it()
+  setup()
+  local row = newRow()
+  SkillRow.SetSkill(row, ENTRY, W.money)
+  W.fireScript(row.dismiss, "OnEnter")
+  W.mouseOver[row] = true
+  W.fireScript(row.dismiss, "OnLeave")
+  Assert.equal(row.dismiss:GetAlpha(), 0.6)
 end
 
 local function test_shown_row_gets_the_red_dismiss_texture()
@@ -149,18 +194,18 @@ local function test_dismiss_leave_hides_tooltip_and_resumes()
   W.fireScript(row.dismiss, "OnEnter")
   W.fireScript(row.dismiss, "OnLeave")
   Assert.equal(W.tooltip[#W.tooltip][1], "Hide")
-  Assert.equal(row.dismiss:GetAlpha(), 0.6)
+  Assert.equal(row.dismiss:GetAlpha(), 0)
   Assert.equal(log[2], "leave")
 end
 
 -- A row pooled while its button was hovered gets no OnLeave before its reuse.
-local function test_set_skill_puts_a_hovered_button_back_to_its_resting_alpha()
+local function test_set_skill_hides_a_hovered_button_again()
   setup()
   local row = newRow()
   SkillRow.SetSkill(row, ENTRY, W.money)
   W.fireScript(row.dismiss, "OnEnter")
   SkillRow.SetSkill(row, QUEST_ENTRY, W.money)
-  Assert.equal(row.dismiss:GetAlpha(), 0.6)
+  Assert.equal(row.dismiss:GetAlpha(), 0)
 end
 
 local function test_hint_row_hides_the_button_and_clears_the_name()
@@ -204,7 +249,12 @@ return function()
   test_restore_hover_shows_restore_tooltip()
   test_reused_row_tooltip_follows_its_new_entry()
   test_dismiss_leave_hides_tooltip_and_resumes()
-  test_set_skill_puts_a_hovered_button_back_to_its_resting_alpha()
+  test_set_skill_hides_a_hovered_button_again()
+  test_button_is_invisible_until_the_row_is_hovered()
+  test_row_hover_shows_the_button_dim()
+  test_leaving_the_row_hides_the_button()
+  test_moving_onto_the_button_keeps_it_shown()
+  test_leaving_the_button_back_onto_the_row_dims_it()
   test_hint_row_hides_the_button_and_clears_the_name()
   test_entry_without_a_name_has_no_button()
   test_dismiss_texture_paths_name_files_the_addon_ships()

@@ -24,6 +24,9 @@ local CHANGE_LINE_HEIGHT = 12
 local DISMISS_SIZE = 16
 local DISMISS = "Interface\\AddOns\\LevelUpInfo\\Media\\Dismiss.tga"
 local RESTORE = "Interface\\AddOns\\LevelUpInfo\\Media\\Restore.tga"
+-- Hover only (user decision, 2026-11-15): the button is invisible until its
+-- row is hovered, dim over the row, bright over the button itself.
+local DISMISS_HIDDEN_ALPHA = 0
 local DISMISS_REST_ALPHA = 0.6
 local DISMISS_HOVER_ALPHA = 1
 local NO_LINES = {}
@@ -33,12 +36,18 @@ local sourceLines = {}
 -- own frame; Blizzard frames are never touched.
 local SkillRow = {}
 
+-- Moving onto the button leaves the row while the mouse is still inside it.
+local function restAlpha(row)
+  return row:IsMouseOver() and DISMISS_REST_ALPHA or DISMISS_HIDDEN_ALPHA
+end
+
 local function onEnter(row)
   if row.spellID then
     _G.GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
     _G.GameTooltip:SetSpellByID(row.spellID)
     _G.GameTooltip:Show()
   end
+  row.dismiss:SetAlpha(DISMISS_REST_ALPHA)
   row.onEnter()
 end
 
@@ -46,6 +55,7 @@ local function onLeave(row)
   if row.spellID then
     _G.GameTooltip:Hide()
   end
+  row.dismiss:SetAlpha(restAlpha(row))
   row.onLeave()
 end
 
@@ -93,7 +103,7 @@ local function newDismiss(row, dismissFn)
   local dismiss = _G.CreateFrame("Button", nil, row)
   dismiss:SetSize(DISMISS_SIZE, DISMISS_SIZE)
   dismiss:SetPoint("TOPRIGHT", row, "TOPRIGHT", -PAD, -PAD)
-  dismiss:SetAlpha(DISMISS_REST_ALPHA)
+  dismiss:SetAlpha(DISMISS_HIDDEN_ALPHA)
   dismiss.texture = dismiss:CreateTexture()
   dismiss.texture:SetAllPoints()
   dismiss:SetScript("OnClick", function()
@@ -109,7 +119,7 @@ local function newDismiss(row, dismissFn)
   end)
   dismiss:SetScript("OnLeave", function()
     _G.GameTooltip:Hide()
-    dismiss:SetAlpha(DISMISS_REST_ALPHA)
+    dismiss:SetAlpha(restAlpha(row))
     row.onLeave()
   end)
   return dismiss
@@ -165,7 +175,7 @@ function SkillRow.SetSkill(row, entry, money)
   row.dismiss.texture:SetTexture(row.hidden and RESTORE or DISMISS)
   row.dismiss.texture:SetVertexColor(buttonColor:GetRGB())
   row.dismiss:SetShown(entry.name ~= "")
-  row.dismiss:SetAlpha(DISMISS_REST_ALPHA) -- a row pooled while hovered got no OnLeave
+  row.dismiss:SetAlpha(DISMISS_HIDDEN_ALPHA) -- a row pooled while hovered got no OnLeave
   row.icon:SetTexture(entry.icon)
   row.name:SetWidth(0)
   row.name:SetText(entry.name)
