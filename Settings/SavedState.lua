@@ -93,6 +93,20 @@ local function cleanFlags(flags)
   return next(clean) and clean or nil
 end
 
+-- Fold flags: string keys with a boolean value (true folded, false open); always a table.
+local function cleanFolded(flags)
+  local clean = {}
+  if type(flags) ~= "table" then
+    return clean
+  end
+  for key, value in pairs(flags) do
+    if type(key) == "string" and type(value) == "boolean" then
+      clean[key] = value
+    end
+  end
+  return clean
+end
+
 -- Hidden skill names: string keys with value true, never empty; always a fresh table.
 local function cleanHidden(hidden)
   local clean = cleanFlags(hidden) or {}
@@ -217,7 +231,7 @@ function SavedState.Initialize(saved)
     position = normalizePosition(saved.position),
     minimapAngle = normalizeAngle(saved.minimapAngle),
     trainers = cleanTrainers(saved.trainers),
-    foldedGroups = cleanFlags(saved.foldedGroups) or {},
+    foldedGroups = cleanFolded(saved.foldedGroups),
   }
   for _, setting in ipairs(Defaults.list) do
     db[setting.key] = normalizeSetting(saved[setting.key], setting)

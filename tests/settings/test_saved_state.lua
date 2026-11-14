@@ -125,14 +125,32 @@ local function test_folded_groups_default_to_empty()
   Assert.equal(next(SavedState.Initialize({ foldedGroups = "weapon" }).foldedGroups), nil)
 end
 
-local function test_folded_groups_keep_only_true_string_keys()
+local function test_folded_groups_keep_string_keys_with_boolean_values()
   local folded = SavedState.Initialize({
-    foldedGroups = { weapon = true, missed = 1, skill = false, [3] = true },
+    foldedGroups = { weapon = true, skill = false, missed = 1, rank = "yes", [3] = true, [4] = false },
   }).foldedGroups
   Assert.equal(folded.weapon, true)
+  Assert.equal(folded.skill, false)
   Assert.equal(folded.missed, nil)
-  Assert.equal(folded.skill, nil)
+  Assert.equal(folded.rank, nil)
   Assert.equal(folded[3], nil)
+  Assert.equal(folded[4], nil)
+end
+
+-- A save from before Hidden existed has only `true` flags.
+local function test_old_fold_flags_leave_the_hidden_group_unset()
+  local folded = SavedState.Initialize({ foldedGroups = { missed = true } }).foldedGroups
+  Assert.equal(folded.missed, true)
+  Assert.equal(folded.weapon, nil)
+  Assert.equal(folded.hidden, nil)
+end
+
+local function test_unknown_group_names_stay_and_the_result_is_a_fresh_table()
+  local saved = { foldedGroups = { future = false } }
+  local folded = SavedState.Initialize(saved).foldedGroups
+  Assert.equal(folded.future, false)
+  Assert.equal(folded == saved.foldedGroups, false)
+  Assert.equal(next(SavedState.Initialize({ foldedGroups = 5 }).foldedGroups), nil)
 end
 
 local GAIN_KEYS = { "health", "power", "talents", "strength", "agility", "stamina", "intellect", "spirit" }
@@ -288,7 +306,9 @@ return function()
   test_entry_without_any_valid_race_is_dropped()
   test_unknown_keys_are_dropped_at_every_level()
   test_folded_groups_default_to_empty()
-  test_folded_groups_keep_only_true_string_keys()
+  test_folded_groups_keep_string_keys_with_boolean_values()
+  test_old_fold_flags_leave_the_hidden_group_unset()
+  test_unknown_group_names_stay_and_the_result_is_a_fresh_table()
   test_valid_last_level_up_is_kept()
   test_bad_levels_drop_the_last_level_up()
   test_non_table_input_gives_no_last_level_up_and_no_hidden_names()
