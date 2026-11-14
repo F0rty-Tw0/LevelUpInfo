@@ -87,12 +87,27 @@ local function setupMixed()
   hide({ "Missed 1", "Axe" })
 end
 
-local function test_hidden_group_is_last_folded_and_counts_its_rows()
+local function test_hidden_group_is_the_last_heading_and_counts_its_rows()
   setupMixed()
   Window.Show(record())
   Assert.equal(headings(), "Stats|New skills|Not yet learned|Hidden (2)")
+end
+
+local function test_hidden_group_starts_with_its_rows_folded_away()
+  setupMixed()
+  Window.Show(record())
   Assert.equal(rowNames(), "New Skill|Missed 2")
+end
+
+local function test_hidden_group_has_a_fold_button()
+  setupMixed()
+  Window.Show(record())
   Assert.equal(#foldButtons(), 2)
+end
+
+local function test_hidden_group_starting_folded_saves_no_flag()
+  setupMixed()
+  Window.Show(record())
   Assert.equal(db.foldedGroups.hidden, nil)
 end
 
@@ -147,15 +162,24 @@ local function waitingRank()
   trainerSpell(RANK_2, 6, SHADOW_PAIN, "Rank 2")
 end
 
-local function test_hidden_rows_have_no_change_lines_and_request_no_spell_text()
+-- The hidden rank row, in an opened Hidden group.
+local function showHiddenRank()
   setup()
   waitingRank()
   hide({ SHADOW_PAIN })
   db.foldedGroups.hidden = false
   Window.Show(record())
+end
+
+local function test_hidden_rows_have_no_change_lines()
+  showHiddenRank()
   local row = rowNamed(SHADOW_PAIN)
   Assert.equal(row ~= nil, true)
   Assert.equal(WindowHelper.shownLines(row), 0)
+end
+
+local function test_hidden_rows_request_no_spell_text()
+  showHiddenRank()
   Assert.equal(W.calls.RequestLoadSpellData, nil)
 end
 
@@ -198,11 +222,15 @@ local function test_every_row_gets_the_eye_callback()
 end
 
 return function()
-  test_hidden_group_is_last_folded_and_counts_its_rows()
+  test_hidden_group_is_the_last_heading_and_counts_its_rows()
+  test_hidden_group_starts_with_its_rows_folded_away()
+  test_hidden_group_has_a_fold_button()
+  test_hidden_group_starting_folded_saves_no_flag()
   test_opening_hidden_lists_its_rows_with_the_closed_eye()
   test_hidden_group_shows_no_total_and_shown_groups_skip_hidden_cost()
   test_hidden_group_is_capped_with_a_more_hidden_toggle_and_a_box()
-  test_hidden_rows_have_no_change_lines_and_request_no_spell_text()
+  test_hidden_rows_have_no_change_lines()
+  test_hidden_rows_request_no_spell_text()
   test_a_name_repeated_across_groups_moves_to_hidden_together()
   test_every_row_gets_the_eye_callback()
 end

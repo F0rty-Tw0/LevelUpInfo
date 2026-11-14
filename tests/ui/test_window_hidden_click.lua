@@ -67,24 +67,58 @@ local function clickEye(name)
   W.fireScript(rowNamed(name).eye, "OnClick")
 end
 
-local function test_eye_click_moves_the_row_to_hidden_and_back()
+-- Three Not yet learned rows (total 300c); the eye hides Missed 1.
+local function showAndHideMissed1()
   setup()
   addMissed(3)
   Window.Show(record())
-  Assert.equal(totalOf("Not yet learned"):GetText(), "300c")
   clickEye("Missed 1")
+end
+
+-- Then opens Hidden and clicks Missed 1's closed eye.
+local function hideAndRestoreMissed1()
+  showAndHideMissed1()
+  click(foldButtons()[2])
+  clickEye("Missed 1")
+end
+
+local function test_eye_click_saves_the_name_as_hidden()
+  showAndHideMissed1()
   Assert.equal(charDB.hidden["Missed 1"], true)
+end
+
+local function test_eye_click_moves_the_row_to_the_hidden_group()
+  showAndHideMissed1()
   Assert.equal(rowNames(), "Missed 2|Missed 3")
   Assert.equal(headings(), "Stats|Not yet learned|Hidden (1)")
+end
+
+local function test_eye_click_takes_the_cost_out_of_the_group_total()
+  showAndHideMissed1()
   Assert.equal(totalOf("Not yet learned"):GetText(), "200c")
+end
+
+local function test_an_opened_hidden_group_shows_the_closed_eye()
+  showAndHideMissed1()
   click(foldButtons()[2])
   Assert.equal(headings(), "Stats|Not yet learned|Hidden")
   Assert.equal(eyeOf("Missed 1"), EYE_CLOSED)
   Assert.equal(eyeOf("Missed 2"), EYE_OPEN)
-  clickEye("Missed 1")
+end
+
+local function test_closed_eye_click_clears_the_saved_name()
+  hideAndRestoreMissed1()
   Assert.equal(charDB.hidden["Missed 1"], nil)
+end
+
+local function test_closed_eye_click_moves_the_row_back_to_its_group()
+  hideAndRestoreMissed1()
   Assert.equal(rowNames(), "Missed 1|Missed 2|Missed 3")
   Assert.equal(headings(), "Stats|Not yet learned")
+end
+
+local function test_closed_eye_click_puts_the_cost_back_in_the_total()
+  hideAndRestoreMissed1()
   Assert.equal(totalOf("Not yet learned"):GetText(), "300c")
 end
 
@@ -250,7 +284,13 @@ local function test_install_needs_a_character_table()
 end
 
 return function()
-  test_eye_click_moves_the_row_to_hidden_and_back()
+  test_eye_click_saves_the_name_as_hidden()
+  test_eye_click_moves_the_row_to_the_hidden_group()
+  test_eye_click_takes_the_cost_out_of_the_group_total()
+  test_an_opened_hidden_group_shows_the_closed_eye()
+  test_closed_eye_click_clears_the_saved_name()
+  test_closed_eye_click_moves_the_row_back_to_its_group()
+  test_closed_eye_click_puts_the_cost_back_in_the_total()
   test_eye_click_pins_the_top_edge_like_a_fold_click()
   test_hiding_the_last_entry_of_an_expanded_group_removes_the_group()
   test_a_repeated_name_hides_and_restores_together()
