@@ -174,4 +174,55 @@ function WindowHelper.breakFill()
   end)
 end
 
+local HEADING_FONT = "GameFontNormalLarge"
+
+-- Shown group headings (and the Stats line) in layout order, joined by "|".
+function WindowHelper.headings()
+  local texts = {}
+  for _, widget in ipairs(W.frames) do
+    local stub = W.state(widget)
+    if stub.frameType == "FontString" and stub.template == HEADING_FONT and stub.shown and widget:GetParent() == WindowHelper.content() then
+      texts[#texts + 1] = widget:GetText()
+    end
+  end
+  return table.concat(texts, "|")
+end
+
+-- Shown fold buttons in build order: Not yet learned, Weapon skills, Hidden.
+function WindowHelper.foldButtons()
+  local buttons = {}
+  for _, widget in ipairs(W.frames) do
+    if W.state(widget).frameType == "Button" and widget.foldIcon and widget:IsShown() then
+      buttons[#buttons + 1] = widget
+    end
+  end
+  return buttons
+end
+
+-- The shown price total on the same line as the heading that starts with
+-- `title`; nil when the heading or the total is not shown.
+function WindowHelper.totalOf(title)
+  local lineTop
+  for _, widget in ipairs(W.frames) do
+    local stub = W.state(widget)
+    if stub.frameType == "FontString" and stub.template == HEADING_FONT and stub.shown then
+      if (widget:GetText() or ""):sub(1, #title) == title then
+        lineTop = WindowHelper.topOf(widget)
+      end
+    end
+  end
+  for _, widget in ipairs(W.frames) do
+    local stub = W.state(widget)
+    local isTotal = stub.frameType == "FontString" and stub.template == "GameFontHighlightSmall"
+    if isTotal and stub.shown and widget:GetParent() == WindowHelper.content() and WindowHelper.topOf(widget) == lineTop then
+      return widget
+    end
+  end
+end
+
+-- The texture path on the eye of the shown row named `name`.
+function WindowHelper.eyeOf(name)
+  return W.state(WindowHelper.rowNamed(name).eye.texture).texture
+end
+
 return WindowHelper
