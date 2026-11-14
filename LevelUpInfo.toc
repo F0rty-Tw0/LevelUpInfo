@@ -27,6 +27,7 @@ Data/ClassSpells/Tbc.lua
 Data/BuiltinSpells.lua
 Data/SkillList.lua
 Data/NextLevel.lua
+Data/HiddenSkills.lua
 Data/RankDiff.lua
 Data/RankChanges.lua
 Data/SpellFacts.lua

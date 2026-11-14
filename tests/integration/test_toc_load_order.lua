@@ -77,10 +77,20 @@ local function test_toc_interface_lists_era_forever_and_tbc()
   assert(string.match(interface or "", "^1%d%d%d%d, 1%d%d%d%d, 2%d%d%d%d$"), tostring(interface))
 end
 
+local function test_hidden_skills_load_before_the_window()
+  local tocIndex = {}
+  for index, file in ipairs(tocFiles()) do
+    tocIndex[file] = index
+  end
+  assert(tocIndex["Data/HiddenSkills.lua"], "Data/HiddenSkills.lua is not in the TOC")
+  assert(tocIndex["Data/HiddenSkills.lua"] < tocIndex["UI/Window.lua"], "Data/HiddenSkills.lua must load before UI/Window.lua")
+end
+
 return function()
   test_every_toc_file_loads_in_order_without_require()
   test_toc_lists_bootstrap_last()
   test_window_test_files_follow_toc_order()
   test_toc_icon_points_at_the_shipped_tga()
   test_toc_interface_lists_era_forever_and_tbc()
+  test_hidden_skills_load_before_the_window()
 end
