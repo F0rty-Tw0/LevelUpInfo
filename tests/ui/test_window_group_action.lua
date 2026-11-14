@@ -18,17 +18,17 @@ local MISSED_LEVEL = 5
 local MISSED_BASE = 1000
 local SKILL_LEVEL = 10
 local SKILL_SPELL = 2000
-local WEAPON_SPELL = 3000
+local WEAPON_BASE = 3000
 local CAP = 4 -- SkillFill GROUP_CAP
 
 -- Fresh fake client, modules, db and character table per test. The priest cache
 -- starts empty and covers level 10 (no hint row).
-local function setup()
+local function setup(otherSources)
   W = WindowHelper.install()
   W.money = 1000
   db = WindowHelper.db({ PRIEST = { covered = { Scourge = 10 }, levels = {} } })
   charDB = WindowHelper.charDB()
-  ns = { OtherSources = { PRIEST = {} } }
+  ns = { OtherSources = { PRIEST = otherSources or {} } }
   Window = WindowHelper.load(ns)
   Window.Install(db, charDB)
   ns.SpellFacts.Install(Window.Refresh)
@@ -38,6 +38,11 @@ local function trainerSpell(spellID, level, name)
   W.spells[spellID] = { name = name, iconID = spellID }
   db.trainers.PRIEST.levels[level] = db.trainers.PRIEST.levels[level] or {}
   db.trainers.PRIEST.levels[level][spellID] = { cost = 100, rank = "Rank 1", races = { Scourge = true } }
+end
+
+local function weaponRow(spellID, name)
+  W.spells[spellID] = { name = name, iconID = spellID }
+  return { spellID = spellID, level = 1, kind = "weapon", faction = "Horde", npc = "N", place = "P", cost = 100 }
 end
 
 local function addMissed(count)
@@ -95,16 +100,29 @@ local function test_dismiss_all_skips_entries_without_a_name()
   Assert.equal(charDB.hidden[""], nil)
 end
 
-local function test_dismiss_all_leaves_other_groups_alone()
-  setup()
+local function test_dismiss_all_on_not_yet_learned_leaves_other_groups_alone()
+  local otherSources = {}
+  setup(otherSources)
   addMissed(2)
   trainerSpell(SKILL_SPELL, SKILL_LEVEL, "Smite")
-  trainerSpell(WEAPON_SPELL, MISSED_LEVEL, "Weapon Skill")
+  otherSources[1] = weaponRow(WEAPON_BASE + 1, "Axe")
   Window.Show(record())
   clickGroupButton("missed")
-  Assert.equal(hiddenNames(), "Missed 1|Missed 2|Weapon Skill")
-  Assert.equal(rowNames(), "Smite")
-  Assert.equal(charDB.hidden["Smite"], nil)
+  Assert.equal(hiddenNames(), "Missed 1|Missed 2")
+  Assert.equal(rowNames(), "Smite|Axe")
+end
+
+local function test_dismiss_all_on_weapon_skills_hides_only_weapon_rows()
+  local otherSources = {}
+  setup(otherSources)
+  addMissed(2)
+  trainerSpell(SKILL_SPELL, SKILL_LEVEL, "Smite")
+  otherSources[1] = weaponRow(WEAPON_BASE + 1, "Axe")
+  otherSources[2] = weaponRow(WEAPON_BASE + 2, "Mace")
+  Window.Show(record())
+  clickGroupButton("weapon")
+  Assert.equal(hiddenNames(), "Axe|Mace")
+  Assert.equal(rowNames(), "Smite|Missed 1|Missed 2")
 end
 
 local function test_restore_all_brings_every_hidden_skill_back()
@@ -149,7 +167,8 @@ return function()
   test_dismiss_all_hides_every_not_yet_learned_skill()
   test_dismiss_all_on_a_folded_group_hides_all_its_entries()
   test_dismiss_all_skips_entries_without_a_name()
-  test_dismiss_all_leaves_other_groups_alone()
+  test_dismiss_all_on_not_yet_learned_leaves_other_groups_alone()
+  test_dismiss_all_on_weapon_skills_hides_only_weapon_rows()
   test_restore_all_brings_every_hidden_skill_back()
   test_group_buttons_do_nothing_without_a_live_record()
   test_group_button_click_does_not_flip_the_fold()
