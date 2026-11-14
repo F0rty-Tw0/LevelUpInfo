@@ -13,6 +13,8 @@ local select = select
 local LevelUp = {}
 
 local db
+-- Per-character saved data; `last` is the last real level-up record.
+local charDB
 -- PLAYER_REGEN_ENABLED is registered only while one of these exists:
 -- a record waiting for combat to end, or a shown record whose stats were secret.
 local pending
@@ -129,16 +131,19 @@ local function onLevelUp(level, ...)
   end
   local shown = Window.Current()
   if shown and not shown.isTest then
+    charDB.last = shown
     addGains(shown, level, ...)
     show(shown)
     return
   end
   if pending then
+    charDB.last = pending
     addGains(pending, level, ...)
     return
   end
   local record = newRecord(level - 1, level)
   addGains(record, level, ...)
+  charDB.last = record
   if db.waitForCombat and _G.InCombatLockdown() then
     pending = record
     Events.On("PLAYER_REGEN_ENABLED", onRegenEnabled)
@@ -147,8 +152,10 @@ local function onLevelUp(level, ...)
   end
 end
 
-function LevelUp.Install(savedDB)
+function LevelUp.Install(savedDB, savedCharDB)
+  assert(type(savedCharDB) == "table", "LevelUp.Install needs a character table")
   db = savedDB
+  charDB = savedCharDB
   Events.On("PLAYER_LEVEL_UP", onLevelUp)
 end
 

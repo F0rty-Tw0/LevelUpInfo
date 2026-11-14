@@ -22,6 +22,7 @@ ignore = {
 globals = {
   -- SavedVariables (declared in .toc)
   "LevelUpInfoDB",
+  "LevelUpInfoCharDB",
   -- Slash command
   "SLASH_LEVELUPINFO1",
   "SlashCmdList",

@@ -16,13 +16,15 @@ local SlashCommand = ns.SlashCommand or require("LevelUpInfo.Core.SlashCommand")
 local Bootstrap = {}
 
 -- Normalizes the saved variables and wires every module to the result.
-function Bootstrap.Initialize(saved)
+function Bootstrap.Initialize(saved, charSaved)
   local db = SavedState.Initialize(saved)
   _G.LevelUpInfoDB = db
+  local charDB = SavedState.InitializeCharacter(charSaved)
+  _G.LevelUpInfoCharDB = charDB
   TrainerScan.Install(db)
   Window.Install(db)
   SpellFacts.Install(Window.Refresh)
-  LevelUp.Install(db)
+  LevelUp.Install(db, charDB)
   Panel.Register(db, {
     onScale = Window.ApplyScale,
     onResetPosition = Window.ResetPosition,
@@ -42,7 +44,7 @@ Events.On("ADDON_LOADED", function(loadedName)
     return
   end
   Events.Off("ADDON_LOADED")
-  Bootstrap.Initialize(_G.LevelUpInfoDB)
+  Bootstrap.Initialize(_G.LevelUpInfoDB, _G.LevelUpInfoCharDB)
 end)
 
 ns.Bootstrap = Bootstrap
