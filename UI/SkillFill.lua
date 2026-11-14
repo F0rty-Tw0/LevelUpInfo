@@ -58,14 +58,14 @@ local rowsUsed
 local rowEntries = {} -- entry shown in rows[i], read only when rowLines[i]
 local rowLines = {} -- whether rows[i] shows change lines
 local boxFirstRow = {} -- group → index in `rows` of its expanded box's first row
-local eyeFn -- the window's eye click: called with the row's skill name
+local dismissFn -- the window's dismiss/restore click: called with the row's skill name
 
 -- A reused row that sat in another container (content or a box) moves over.
 local function nextRow(parent)
   rowsUsed = rowsUsed + 1
   local row = rows[rowsUsed]
   if not row then
-    row = SkillRow.Create(parent, AutoHide.Pause, AutoHide.Resume, eyeFn)
+    row = SkillRow.Create(parent, AutoHide.Pause, AutoHide.Resume, dismissFn)
     rows[rowsUsed] = row
   elseif row:GetParent() ~= parent then
     row:SetParent(parent)
@@ -149,7 +149,7 @@ end
 
 -- `gap` goes above the heading when the group has rows; returns the row count
 -- (a folded group counts its folded-away rows, so the next block's gap stays).
--- An expanded group an eye click shrank to its cap is collapsed for good: no
+-- An expanded group a dismiss click shrank to its cap is collapsed for good: no
 -- box, no toggle, and it does not come back expanded when entries return.
 local function fillGroup(spec, entries, money, gap)
   local group = spec.group
@@ -191,11 +191,11 @@ local function fillGroup(spec, entries, money, gap)
 end
 
 -- Makes the group headings and the group widgets on `parent`, the window's
--- content frame, which every later call fills. `onEye(name)` runs on a row's
--- eye click.
-function SkillFill.Build(parent, onToggle, foldedGroups, onFold, onEye)
+-- content frame, which every later call fills. `onDismiss(name)` runs on a
+-- row's dismiss or restore click.
+function SkillFill.Build(parent, onToggle, foldedGroups, onFold, onDismiss)
   content = parent
-  eyeFn = onEye
+  dismissFn = onDismiss
   for _, spec in ipairs(GROUPS) do
     headings[spec.group] = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
   end

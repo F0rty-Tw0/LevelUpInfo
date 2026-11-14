@@ -221,9 +221,9 @@ function WindowHelper.totalOf(title)
   end
 end
 
--- The texture path on the eye of the shown row named `name`.
-function WindowHelper.eyeOf(name)
-  return W.state(WindowHelper.rowNamed(name).eye.texture).texture
+-- The texture path on the dismiss button of the shown row named `name`.
+function WindowHelper.dismissOf(name)
+  return W.state(WindowHelper.rowNamed(name).dismiss.texture).texture
 end
 
 -- A fresh per-character table as SavedState.InitializeCharacter gives it.

@@ -327,13 +327,13 @@ local function rowOf(name)
   end
 end
 
-local function test_eye_click_writes_to_the_saved_character_table()
+local function test_dismiss_click_writes_to_the_saved_character_table()
   local missed = { cost = 50, rank = "Rank 1", races = { Scourge = true } }
   setup({
     trainers = { PRIEST = { covered = { Scourge = 10 }, levels = { [5] = { [139] = missed } } } },
   })
   slashTest()
-  W.fireScript(rowOf("Renew").eye, "OnClick")
+  W.fireScript(rowOf("Renew").dismiss, "OnClick")
   Assert.equal(_G.LevelUpInfoCharDB.hidden.Renew, true)
 end
 
@@ -456,7 +456,7 @@ return function()
   test_ding_saves_the_record_in_the_global_char_db()
   test_saved_fold_flags_reach_the_db_and_garbage_gives_an_empty_table()
   test_window_clicks_flip_the_saved_fold_table_in_place()
-  test_eye_click_writes_to_the_saved_character_table()
+  test_dismiss_click_writes_to_the_saved_character_table()
   test_only_the_event_frame_exists_before_addon_loaded()
   test_other_addons_loading_are_ignored()
   test_addon_loaded_normalizes_db_and_unregisters_itself()

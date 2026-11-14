@@ -116,8 +116,8 @@ function Window.RefreshHidden()
   end
 end
 
--- An eye click hides a skill (every rank) or brings it back.
-local function onEye(name)
+-- A dismiss or restore click hides a skill (every rank) or brings it back.
+local function onDismiss(name)
   if current and not filling then
     charDB.hidden[name] = charDB.hidden[name] ~= true and true or nil
     Window.RefreshHidden()
@@ -198,7 +198,7 @@ local function build()
   buildHeader()
   buildView()
   GainLines.Build(content)
-  SkillFill.Build(content, onToggle, db.foldedGroups, onFold, onEye)
+  SkillFill.Build(content, onToggle, db.foldedGroups, onFold, onDismiss)
 end
 
 local function isRankWaiting(spellID)

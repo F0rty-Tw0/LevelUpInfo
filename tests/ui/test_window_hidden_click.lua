@@ -1,4 +1,4 @@
--- Hiding and restoring skills through the window: the eye click and Show hidden skills.
+-- Hiding and restoring skills through the window: the dismiss click and Show hidden skills.
 local Assert = require("tests.helpers.assert")
 local WindowHelper = require("tests.helpers.window")
 
@@ -17,7 +17,7 @@ local click = WindowHelper.click
 local headings = WindowHelper.headings
 local foldButtons = WindowHelper.foldButtons
 local totalOf = WindowHelper.totalOf
-local eyeOf = WindowHelper.eyeOf
+local dismissOf = WindowHelper.dismissOf
 local shownBoxes = WindowHelper.shownBoxes
 
 local CAP = 4 -- SkillFill GROUP_CAP
@@ -27,8 +27,8 @@ local KNOWN_RANK_OFFSET = 100000
 local QUEST_SPELL, RANK_2_SPELL = 3001, 3002
 local FADE_1, FADE_2, RENEW = 586, 9586, 139
 local SHADOW_PAIN = "Shadow Word: Pain"
-local EYE_OPEN = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeOpen.tga"
-local EYE_CLOSED = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeClosed.tga"
+local DISMISS = "Interface\\AddOns\\LevelUpInfo\\Media\\Dismiss.tga"
+local RESTORE = "Interface\\AddOns\\LevelUpInfo\\Media\\Restore.tga"
 
 -- Fresh fake client, modules, db and character table per test. The priest cache
 -- starts empty and covers level 10 (no hint row).
@@ -63,66 +63,66 @@ local function record()
   return { fromLevel = 9, toLevel = 10, gains = { health = 15 }, before = { health = 100 } }
 end
 
-local function clickEye(name)
-  W.fireScript(rowNamed(name).eye, "OnClick")
+local function clickDismiss(name)
+  W.fireScript(rowNamed(name).dismiss, "OnClick")
 end
 
--- Three Not yet learned rows (total 300c); the eye hides Missed 1.
+-- Three Not yet learned rows (total 300c); the dismiss button hides Missed 1.
 local function showAndHideMissed1()
   setup()
   addMissed(3)
   Window.Show(record())
-  clickEye("Missed 1")
+  clickDismiss("Missed 1")
 end
 
--- Then opens Hidden and clicks Missed 1's closed eye.
+-- Then opens Hidden and clicks Missed 1's restore button.
 local function hideAndRestoreMissed1()
   showAndHideMissed1()
   click(foldButtons()[2])
-  clickEye("Missed 1")
+  clickDismiss("Missed 1")
 end
 
-local function test_eye_click_saves_the_name_as_hidden()
+local function test_dismiss_click_saves_the_name_as_hidden()
   showAndHideMissed1()
   Assert.equal(charDB.hidden["Missed 1"], true)
 end
 
-local function test_eye_click_moves_the_row_to_the_hidden_group()
+local function test_dismiss_click_moves_the_row_to_the_hidden_group()
   showAndHideMissed1()
   Assert.equal(rowNames(), "Missed 2|Missed 3")
   Assert.equal(headings(), "Stats|Not yet learned|Hidden (1)")
 end
 
-local function test_eye_click_takes_the_cost_out_of_the_group_total()
+local function test_dismiss_click_takes_the_cost_out_of_the_group_total()
   showAndHideMissed1()
   Assert.equal(totalOf("Not yet learned"):GetText(), "200c")
 end
 
-local function test_an_opened_hidden_group_shows_the_closed_eye()
+local function test_an_opened_hidden_group_shows_the_restore_button()
   showAndHideMissed1()
   click(foldButtons()[2])
   Assert.equal(headings(), "Stats|Not yet learned|Hidden")
-  Assert.equal(eyeOf("Missed 1"), EYE_CLOSED)
-  Assert.equal(eyeOf("Missed 2"), EYE_OPEN)
+  Assert.equal(dismissOf("Missed 1"), RESTORE)
+  Assert.equal(dismissOf("Missed 2"), DISMISS)
 end
 
-local function test_closed_eye_click_clears_the_saved_name()
+local function test_restore_click_clears_the_saved_name()
   hideAndRestoreMissed1()
   Assert.equal(charDB.hidden["Missed 1"], nil)
 end
 
-local function test_closed_eye_click_moves_the_row_back_to_its_group()
+local function test_restore_click_moves_the_row_back_to_its_group()
   hideAndRestoreMissed1()
   Assert.equal(rowNames(), "Missed 1|Missed 2|Missed 3")
   Assert.equal(headings(), "Stats|Not yet learned")
 end
 
-local function test_closed_eye_click_puts_the_cost_back_in_the_total()
+local function test_restore_click_puts_the_cost_back_in_the_total()
   hideAndRestoreMissed1()
   Assert.equal(totalOf("Not yet learned"):GetText(), "300c")
 end
 
-local function test_eye_click_pins_the_top_edge_like_a_fold_click()
+local function test_dismiss_click_pins_the_top_edge_like_a_fold_click()
   setup()
   addMissed(2)
   db.scale = 1.5
@@ -130,7 +130,7 @@ local function test_eye_click_pins_the_top_edge_like_a_fold_click()
   W.state(frame()).left = 100
   W.state(frame()).top = 600
   W.state(_G.UIParent).top = 768
-  clickEye("Missed 1")
+  clickDismiss("Missed 1")
   local point, relativeTo, relativePoint, x, y = frame():GetPoint(1)
   Assert.equal(point, "TOPLEFT")
   Assert.equal(relativeTo, _G.UIParent)
@@ -149,11 +149,11 @@ local function test_hiding_the_last_entry_of_an_expanded_group_removes_the_group
   click(toggle("more not yet learned"))
   Assert.equal(shownBoxes(), 1)
   for index = 1, CAP do
-    clickEye("Missed " .. index)
+    clickDismiss("Missed " .. index)
   end
   W.state(frame()).left = 100
   W.state(frame()).top = 600
-  clickEye("Missed " .. CAP + 1)
+  clickDismiss("Missed " .. CAP + 1)
   Assert.equal(headings(), "Stats|Hidden (" .. CAP + 1 .. ")")
   Assert.equal(shownBoxes(), 0)
   Assert.equal(toggle("Show less"), nil)
@@ -163,8 +163,8 @@ local function test_hiding_the_last_entry_of_an_expanded_group_removes_the_group
   Assert.equal(x, 100)
 end
 
--- A quest Rank 1 and a trainer Rank 2 share a name; one eye
--- click moves both, one click on the closed eye returns both.
+-- A quest Rank 1 and a trainer Rank 2 share a name; one dismiss
+-- click moves both, one click on the restore button returns both.
 local function test_a_repeated_name_hides_and_restores_together()
   local otherSources = {}
   setup(otherSources)
@@ -173,31 +173,31 @@ local function test_a_repeated_name_hides_and_restores_together()
   trainerSpell(RANK_2_SPELL, 10, SHADOW_PAIN, "Rank 2")
   Window.Show(record())
   Assert.equal(headings(), "Stats|New ranks|Not yet learned")
-  W.fireScript(allRows()[1].eye, "OnClick")
+  W.fireScript(allRows()[1].dismiss, "OnClick")
   Assert.equal(headings(), "Stats|Hidden (2)")
   click(foldButtons()[1])
   Assert.equal(rowNames(), SHADOW_PAIN .. "|" .. SHADOW_PAIN)
-  W.fireScript(allRows()[1].eye, "OnClick")
+  W.fireScript(allRows()[1].dismiss, "OnClick")
   Assert.equal(next(charDB.hidden), nil)
   Assert.equal(headings(), "Stats|New ranks|Not yet learned")
 end
 
 -- A /lui test or Show last record is not a live level-up.
-local function test_eye_works_on_a_test_record()
+local function test_dismiss_works_on_a_test_record()
   setup()
   addMissed(2)
   Window.Show({ fromLevel = 9, toLevel = 10, gains = {}, before = {}, isTest = true })
-  clickEye("Missed 2")
+  clickDismiss("Missed 2")
   Assert.equal(charDB.hidden["Missed 2"], true)
   Assert.equal(headings(), "Not yet learned|Hidden (1)")
 end
 
-local function test_eye_click_without_a_live_record_changes_nothing()
+local function test_dismiss_click_without_a_live_record_changes_nothing()
   setup()
   addMissed(2)
   Window.Show(record())
   W.fireScript(frame(), "OnHide")
-  clickEye("Missed 1")
+  clickDismiss("Missed 1")
   Assert.equal(next(charDB.hidden), nil)
   Assert.equal(#allRows(), 2)
 end
@@ -262,10 +262,10 @@ local function test_hiding_the_only_skill_of_the_next_level_moves_the_line_on()
   setupNextLevel()
   Window.Show(record())
   Assert.equal(nextLineText(), "Next at 14: Fade (Rank 2)")
-  clickEye("Fade")
+  clickDismiss("Fade")
   Assert.equal(nextLineText(), "Next at 18: Renew (Rank 1)")
   click(foldButtons()[1])
-  clickEye("Fade")
+  clickDismiss("Fade")
   Assert.equal(nextLineText(), "Next at 14: Fade (Rank 2)")
 end
 
@@ -273,7 +273,7 @@ local function test_hiding_the_only_skill_of_the_last_level_hides_the_line()
   setupNextLevel()
   db.trainers.PRIEST.levels[18] = nil
   Window.Show(record())
-  clickEye("Fade")
+  clickDismiss("Fade")
   Assert.equal(nextLineText(), nil)
 end
 
@@ -284,18 +284,18 @@ local function test_install_needs_a_character_table()
 end
 
 return function()
-  test_eye_click_saves_the_name_as_hidden()
-  test_eye_click_moves_the_row_to_the_hidden_group()
-  test_eye_click_takes_the_cost_out_of_the_group_total()
-  test_an_opened_hidden_group_shows_the_closed_eye()
-  test_closed_eye_click_clears_the_saved_name()
-  test_closed_eye_click_moves_the_row_back_to_its_group()
-  test_closed_eye_click_puts_the_cost_back_in_the_total()
-  test_eye_click_pins_the_top_edge_like_a_fold_click()
+  test_dismiss_click_saves_the_name_as_hidden()
+  test_dismiss_click_moves_the_row_to_the_hidden_group()
+  test_dismiss_click_takes_the_cost_out_of_the_group_total()
+  test_an_opened_hidden_group_shows_the_restore_button()
+  test_restore_click_clears_the_saved_name()
+  test_restore_click_moves_the_row_back_to_its_group()
+  test_restore_click_puts_the_cost_back_in_the_total()
+  test_dismiss_click_pins_the_top_edge_like_a_fold_click()
   test_hiding_the_last_entry_of_an_expanded_group_removes_the_group()
   test_a_repeated_name_hides_and_restores_together()
-  test_eye_works_on_a_test_record()
-  test_eye_click_without_a_live_record_changes_nothing()
+  test_dismiss_works_on_a_test_record()
+  test_dismiss_click_without_a_live_record_changes_nothing()
   test_a_new_show_marks_the_list_from_the_saved_names()
   test_show_hidden_skills_wipes_the_list_and_refills()
   test_show_hidden_skills_with_the_window_closed_still_wipes()

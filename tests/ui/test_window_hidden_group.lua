@@ -17,7 +17,7 @@ local click = WindowHelper.click
 local headings = WindowHelper.headings
 local foldButtons = WindowHelper.foldButtons
 local totalOf = WindowHelper.totalOf
-local eyeOf = WindowHelper.eyeOf
+local dismissOf = WindowHelper.dismissOf
 
 local MISSED_LEVEL = 5
 local MISSED_BASE = 1000
@@ -26,8 +26,8 @@ local QUEST_SPELL = 3001
 local RANK_2_SPELL = 3002
 local KNOWN_RANK_OFFSET = 100000
 local CAP = 4 -- SkillFill GROUP_CAP
-local EYE_OPEN = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeOpen.tga"
-local EYE_CLOSED = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeClosed.tga"
+local DISMISS = "Interface\\AddOns\\LevelUpInfo\\Media\\Dismiss.tga"
+local RESTORE = "Interface\\AddOns\\LevelUpInfo\\Media\\Restore.tga"
 local SHADOW_PAIN = "Shadow Word: Pain"
 
 -- Fresh fake client, modules and db per test. The priest cache starts empty and
@@ -111,15 +111,15 @@ local function test_hidden_group_starting_folded_saves_no_flag()
   Assert.equal(db.foldedGroups.hidden, nil)
 end
 
-local function test_opening_hidden_lists_its_rows_with_the_closed_eye()
+local function test_opening_hidden_lists_its_rows_with_the_restore_button()
   setupMixed()
   Window.Show(record())
   click(foldButtons()[2])
   Assert.equal(headings(), "Stats|New skills|Not yet learned|Hidden")
   Assert.equal(rowNames(), "New Skill|Missed 2|Missed 1|Axe")
-  Assert.equal(eyeOf("Missed 1"), EYE_CLOSED)
-  Assert.equal(eyeOf("Axe"), EYE_CLOSED)
-  Assert.equal(eyeOf("New Skill"), EYE_OPEN)
+  Assert.equal(dismissOf("Missed 1"), RESTORE)
+  Assert.equal(dismissOf("Axe"), RESTORE)
+  Assert.equal(dismissOf("New Skill"), DISMISS)
   Assert.equal(db.foldedGroups.hidden, false)
 end
 
@@ -209,8 +209,8 @@ local function test_a_name_repeated_across_groups_moves_to_hidden_together()
   Assert.equal(rowNames(), SHADOW_PAIN .. "|" .. SHADOW_PAIN)
 end
 
--- SkillFill hands the window's eye callback to every row it makes.
-local function test_every_row_gets_the_eye_callback()
+-- SkillFill hands the window's dismiss callback to every row it makes.
+local function test_every_row_gets_the_dismiss_callback()
   W = WindowHelper.install()
   W.money = 1000
   ns = { OtherSources = {} }
@@ -224,7 +224,7 @@ local function test_every_row_gets_the_eye_callback()
   ns.SkillFill.Fill({ { spellID = 1, name = "Missed 1", icon = 1, rank = "", cost = 1, group = "missed" } }, false, nil, nil, 0)
   for _, widget in ipairs(W.frames) do
     if W.state(widget).frameType == "Button" and widget.name and widget:GetParent() == parent then
-      W.fireScript(widget.eye, "OnClick")
+      W.fireScript(widget.dismiss, "OnClick")
     end
   end
   Assert.equal(table.concat(clicked, "|"), "Missed 1")
@@ -235,12 +235,12 @@ return function()
   test_hidden_group_starts_with_its_rows_folded_away()
   test_hidden_group_has_a_fold_button()
   test_hidden_group_starting_folded_saves_no_flag()
-  test_opening_hidden_lists_its_rows_with_the_closed_eye()
+  test_opening_hidden_lists_its_rows_with_the_restore_button()
   test_shown_groups_skip_hidden_cost()
   test_hidden_group_shows_the_total_of_its_skills()
   test_hidden_group_is_capped_with_a_more_hidden_toggle_and_a_box()
   test_hidden_rows_have_no_change_lines()
   test_hidden_rows_request_no_spell_text()
   test_a_name_repeated_across_groups_moves_to_hidden_together()
-  test_every_row_gets_the_eye_callback()
+  test_every_row_gets_the_dismiss_callback()
 end
