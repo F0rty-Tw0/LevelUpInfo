@@ -140,16 +140,22 @@ function SkillGroup.Build(content, specs, onToggle, foldedGroups, onFold)
     if spec.fold then
       groups[spec.group].foldButton = newFoldButton(spec.group, onFold)
       groups[spec.group].startFolded = spec.startFolded == true
+      groups[spec.group].perShow = spec.foldPerShow == true
+      groups[spec.group].showFolded = true
     end
   end
 end
 
--- Only a group with a fold button can be folded. A saved flag wins; without
--- one the group follows its spec's startFolded.
+-- Only a group with a fold button can be folded. A per-show group reads its
+-- session flag. Otherwise a saved flag wins; without one the group follows
+-- its spec's startFolded.
 function SkillGroup.IsFolded(group)
   local state = groups[group]
   if state == nil or state.foldButton == nil then
     return false
+  end
+  if state.perShow then
+    return state.showFolded
   end
   local saved = foldedByGroup[group]
   if saved == nil then
@@ -187,11 +193,26 @@ function SkillGroup.CollapseOne(group)
   collapse(groups[group])
 end
 
+-- Per-show folds are a session flag: never saved, folded again on every window show.
+function SkillGroup.ResetShowFolds()
+  for _, state in pairs(groups) do
+    if state.perShow then
+      state.showFolded = true
+    end
+  end
+end
+
 -- Saves the group's flipped fold state as a boolean (never clears the key, so
 -- an open start-folded group stays open) and drops its expansion and scroll.
+-- A per-show group flips its session flag instead.
 function SkillGroup.Flip(group)
-  foldedByGroup[group] = not SkillGroup.IsFolded(group)
-  collapse(groups[group])
+  local state = groups[group]
+  if state.perShow then
+    state.showFolded = not state.showFolded
+  else
+    foldedByGroup[group] = not SkillGroup.IsFolded(group)
+  end
+  collapse(state)
 end
 
 function SkillGroup.Toggle(group, text)

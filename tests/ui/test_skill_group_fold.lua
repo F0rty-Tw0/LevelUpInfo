@@ -28,6 +28,7 @@ local FOLD_SPECS = {
   { group = "missed", cap = 4, fold = true },
   { group = "weapon", cap = 4, fold = true },
   { group = "hidden", cap = 4, fold = true, startFolded = true },
+  { group = "next", cap = 4, fold = true, foldPerShow = true },
   { group = "skill", cap = 4 },
 }
 
@@ -85,7 +86,43 @@ local function test_fold_icon_follows_the_start_state()
   Assert.equal(t.W.state(t.SkillGroup.FoldButton("weapon").foldIcon).texture, MINUS_ICON)
 end
 
+local function test_per_show_group_starts_folded_and_ignores_the_save()
+  local t = builtFolding({ next = false })
+  Assert.equal(t.SkillGroup.IsFolded("next"), true)
+end
+
+local function test_per_show_flip_is_never_saved()
+  local saved = {}
+  local t = builtFolding(saved)
+  t.SkillGroup.Flip("next")
+  Assert.equal(t.SkillGroup.IsFolded("next"), false)
+  Assert.equal(saved.next, nil)
+  t.SkillGroup.Flip("next")
+  Assert.equal(t.SkillGroup.IsFolded("next"), true)
+  Assert.equal(saved.next, nil)
+end
+
+local function test_reset_show_folds_folds_again_and_leaves_saved_groups()
+  local saved = {}
+  local t = builtFolding(saved)
+  t.SkillGroup.Flip("next")
+  t.SkillGroup.Flip("weapon")
+  t.SkillGroup.ResetShowFolds()
+  Assert.equal(t.SkillGroup.IsFolded("next"), true)
+  Assert.equal(t.SkillGroup.IsFolded("weapon"), true)
+  Assert.equal(saved.weapon, true)
+end
+
+local function test_per_show_fold_icon_starts_as_plus()
+  local t = builtFolding({})
+  Assert.equal(t.W.state(t.SkillGroup.FoldButton("next").foldIcon).texture, PLUS_ICON)
+end
+
 return function()
+  test_per_show_group_starts_folded_and_ignores_the_save()
+  test_per_show_flip_is_never_saved()
+  test_reset_show_folds_folds_again_and_leaves_saved_groups()
+  test_per_show_fold_icon_starts_as_plus()
   test_missing_fold_flag_follows_start_folded()
   test_saved_boolean_beats_start_folded()
   test_older_save_keeps_missed_folded_weapon_open_and_hidden_folded()
