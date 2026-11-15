@@ -105,30 +105,49 @@ local function test_leaving_the_button_back_onto_the_row_dims_it()
   Assert.equal(row.dismiss:GetAlpha(), 0.6)
 end
 
--- Hidden rows always show their Show eye (user decision, 2026-11-15).
-local function test_hidden_row_shows_the_eye_dim_without_hover()
+-- Hidden rows always show their Show eye, faint at rest (user decisions,
+-- 2026-11-15).
+local function test_hidden_row_shows_the_eye_faint_without_hover()
   setup()
   local row = newRow()
   SkillRow.SetSkill(row, HIDDEN_ENTRY, W.money)
+  Assert.equal(row.dismiss:GetAlpha(), 0.3)
+end
+
+local function test_hovering_a_hidden_row_dims_its_eye_up()
+  setup()
+  local row = newRow()
+  SkillRow.SetSkill(row, HIDDEN_ENTRY, W.money)
+  W.fireScript(row, "OnEnter")
   Assert.equal(row.dismiss:GetAlpha(), 0.6)
 end
 
-local function test_leaving_a_hidden_row_keeps_the_eye_dim()
+local function test_leaving_a_hidden_row_keeps_the_eye_faint()
   setup()
   local row = newRow()
   SkillRow.SetSkill(row, HIDDEN_ENTRY, W.money)
   W.fireScript(row, "OnEnter")
   W.fireScript(row, "OnLeave")
+  Assert.equal(row.dismiss:GetAlpha(), 0.3)
+end
+
+local function test_leaving_a_hidden_rows_eye_onto_the_row_dims_it()
+  setup()
+  local row = newRow()
+  SkillRow.SetSkill(row, HIDDEN_ENTRY, W.money)
+  W.fireScript(row.dismiss, "OnEnter")
+  W.mouseOver[row] = true
+  W.fireScript(row.dismiss, "OnLeave")
   Assert.equal(row.dismiss:GetAlpha(), 0.6)
 end
 
-local function test_leaving_a_hidden_rows_eye_keeps_it_dim()
+local function test_leaving_a_hidden_rows_eye_keeps_it_faint()
   setup()
   local row = newRow()
   SkillRow.SetSkill(row, HIDDEN_ENTRY, W.money)
   W.fireScript(row.dismiss, "OnEnter")
   W.fireScript(row.dismiss, "OnLeave")
-  Assert.equal(row.dismiss:GetAlpha(), 0.6)
+  Assert.equal(row.dismiss:GetAlpha(), 0.3)
 end
 
 local function test_a_shown_row_reused_as_hidden_shows_its_eye()
@@ -136,7 +155,7 @@ local function test_a_shown_row_reused_as_hidden_shows_its_eye()
   local row = newRow()
   SkillRow.SetSkill(row, ENTRY, W.money)
   SkillRow.SetSkill(row, HIDDEN_ENTRY, W.money)
-  Assert.equal(row.dismiss:GetAlpha(), 0.6)
+  Assert.equal(row.dismiss:GetAlpha(), 0.3)
 end
 
 local function test_a_hidden_row_reused_as_shown_hides_its_eye()
@@ -290,9 +309,11 @@ return function()
   test_moving_onto_the_button_keeps_it_shown()
   test_leaving_the_button_back_onto_the_row_dims_it()
   test_a_hidden_row_reused_as_shown_hides_its_eye()
-  test_hidden_row_shows_the_eye_dim_without_hover()
-  test_leaving_a_hidden_row_keeps_the_eye_dim()
-  test_leaving_a_hidden_rows_eye_keeps_it_dim()
+  test_hovering_a_hidden_row_dims_its_eye_up()
+  test_leaving_a_hidden_rows_eye_onto_the_row_dims_it()
+  test_hidden_row_shows_the_eye_faint_without_hover()
+  test_leaving_a_hidden_row_keeps_the_eye_faint()
+  test_leaving_a_hidden_rows_eye_keeps_it_faint()
   test_a_shown_row_reused_as_hidden_shows_its_eye()
   test_hint_row_hides_the_button_and_clears_the_name()
   test_entry_without_a_name_has_no_button()
