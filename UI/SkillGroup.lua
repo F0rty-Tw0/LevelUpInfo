@@ -140,8 +140,10 @@ function SkillGroup.Build(content, specs, onToggle, foldedGroups, onFold)
     if spec.fold then
       groups[spec.group].foldButton = newFoldButton(spec.group, onFold)
       groups[spec.group].startFolded = spec.startFolded == true
-      groups[spec.group].perShow = spec.foldPerShow == true
-      groups[spec.group].showFolded = true
+      groups[spec.group].foldPerShow = spec.foldPerShow == true
+      if spec.foldPerShow then
+        groups[spec.group].showFolded = true
+      end
     end
   end
 end
@@ -154,7 +156,7 @@ function SkillGroup.IsFolded(group)
   if state == nil or state.foldButton == nil then
     return false
   end
-  if state.perShow then
+  if state.foldPerShow then
     return state.showFolded
   end
   local saved = foldedByGroup[group]
@@ -196,7 +198,7 @@ end
 -- Per-show folds are a session flag: never saved, folded again on every window show.
 function SkillGroup.ResetShowFolds()
   for _, state in pairs(groups) do
-    if state.perShow then
+    if state.foldPerShow then
       state.showFolded = true
     end
   end
@@ -207,7 +209,7 @@ end
 -- A per-show group flips its session flag instead.
 function SkillGroup.Flip(group)
   local state = groups[group]
-  if state.perShow then
+  if state.foldPerShow then
     state.showFolded = not state.showFolded
   else
     foldedByGroup[group] = not SkillGroup.IsFolded(group)
