@@ -125,6 +125,18 @@ local function test_next_level_is_the_lowest_cached_level_above_to_level()
   Assert.equal(ids(entries), "586")
 end
 
+local function test_returned_entries_are_tagged_next()
+  setup()
+  local trainers = priest({ Scourge = 14 }, {
+    [10] = { [8092] = spell({ Scourge = true }) },
+    [12] = { [588] = spell({ Scourge = true }) },
+    [14] = { [FADE] = spell({ Scourge = true }) },
+  })
+  local _, entries = find(trainers, 12)
+  Assert.equal(#entries, 1)
+  Assert.equal(entries[1].group, "next")
+end
+
 local function test_levels_with_no_key_are_skipped_without_a_build()
   setup()
   local builds = countBuilds()
@@ -259,6 +271,7 @@ return function()
   test_nothing_above_the_built_in_top_gives_nil()
   test_another_class_without_built_in_data_gives_nil()
   test_next_level_is_the_lowest_cached_level_above_to_level()
+  test_returned_entries_are_tagged_next()
   test_levels_with_no_key_are_skipped_without_a_build()
   test_level_with_only_hidden_entries_is_skipped()
   test_unbuyable_ranks_do_not_make_a_level()

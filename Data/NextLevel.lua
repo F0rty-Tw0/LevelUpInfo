@@ -14,6 +14,7 @@ local NextLevel = {}
 
 local NO_LEVEL = 0
 local EMPTY = {}
+local NEXT_GROUP = "next"
 
 local function highestLevel(levels)
   local highest = NO_LEVEL
@@ -39,7 +40,7 @@ end
 
 -- The lowest level above toLevel, in the trainer cache or the built-in table,
 -- with a skill the trainer would sell you there, and those skills in the
--- skill list's order; nil when none. Entries whose name is a key of `hidden`
+-- skill list's order, tagged group = "next"; nil when none. Entries whose name is a key of `hidden`
 -- (value true) are dropped first, so a level of only hidden skills is skipped;
 -- hidden nil means no filter.
 function NextLevel.Find(trainers, class, race, faction, toLevel, hidden)
@@ -50,6 +51,10 @@ function NextLevel.Find(trainers, class, race, faction, toLevel, hidden)
     if liveLevels[level] ~= nil or builtinLevels[level] ~= nil then
       local found = ownEntriesAt(SkillList.Build(trainers, class, race, faction, level - 1, level), level, hidden)
       if #found > 0 then
+        for _, entry in ipairs(found) do
+          entry.group = NEXT_GROUP
+        end
+
         return level, found
       end
     end
