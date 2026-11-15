@@ -47,10 +47,11 @@ local GROUPS = {
 }
 local NEXT =
   { group = "next", title = "Next at %d", cap = GROUP_CAP, fold = true, foldPerShow = true, noDismiss = true, more = "+%d more next level" }
-local ALL_SPECS = { NEXT }
+local ALL_SPECS = {}
 for index, spec in ipairs(GROUPS) do
-  table.insert(ALL_SPECS, index, spec)
+  ALL_SPECS[index] = spec
 end
+ALL_SPECS[#GROUPS + 1] = NEXT
 
 -- The window's skill area: group headings, skill rows, the hint row and the
 -- Next at N group, added to the layout list of the window's content frame.
@@ -154,11 +155,12 @@ local function countIn(spec, entries)
   return count
 end
 
--- `title` is the heading text; `gap` goes above it when the group has rows; returns the row count
--- (a folded group counts its folded-away rows, so the next block's gap stays).
+-- `title` is the heading text; `gap` goes above it when the group has rows;
+-- returns the row count (a folded group counts its folded-away rows, so the
+-- next block's gap stays).
 -- An expanded group a dismiss click shrank to its cap is collapsed for good: no
 -- box, no toggle, and it does not come back expanded when entries return.
-local function fillGroup(spec, entries, money, gap, title)
+local function fillGroup(spec, title, entries, money, gap)
   local group = spec.group
   if spec.cap and SkillGroup.IsExpanded(group) and countIn(spec, entries) <= spec.cap then
     SkillGroup.CollapseOne(group)
@@ -209,9 +211,9 @@ function SkillFill.Build(parent, onToggle, foldedGroups, onFold, onDismiss)
   SkillGroup.Build(content, ALL_SPECS, onToggle, foldedGroups, onFold)
 end
 
--- The hint row, then the Next at N group (shown only when `nextLevel` has
+-- The hint row, then the Next at N group (shown only when `nextEntries` has
 -- entries). `gap` is the gap the skill groups left.
-local function fillTail(hint, nextLevel, nextEntries, money, gap)
+local function fillHintAndNext(hint, nextLevel, nextEntries, money, gap)
   if hint then
     Layout.AddGap(content, gap)
     local row = nextRow(content)
@@ -219,8 +221,9 @@ local function fillTail(hint, nextLevel, nextEntries, money, gap)
     rowLines[rowsUsed] = false
     Layout.Add(row, content, 0, ROW_HEIGHT)
   end
+  local nextGap = hint and GROUP_GAP or gap
   local title = nextLevel and format(Text(NEXT.title), nextLevel)
-  fillGroup(NEXT, nextEntries or NO_ENTRIES, money, hint and GROUP_GAP or gap, title)
+  fillGroup(NEXT, title, nextEntries or NO_ENTRIES, money, nextGap)
 end
 
 -- Adds the groups, the hint row and the Next at N group to the layout list;
@@ -231,11 +234,12 @@ function SkillFill.Fill(entries, hint, nextLevel, nextEntries, gainCount)
   _G.wipe(boxFirstRow)
   local gap = gainCount > 0 and GROUP_GAP or 0
   for _, spec in ipairs(GROUPS) do
-    if fillGroup(spec, entries, money, gap, Text(spec.title)) > 0 then
+    local count = fillGroup(spec, Text(spec.title), entries, money, gap)
+    if count > 0 then
       gap = GROUP_GAP
     end
   end
-  fillTail(hint, nextLevel, nextEntries, money, gap)
+  fillHintAndNext(hint, nextLevel, nextEntries, money, gap)
   for index = rowsUsed + 1, #rows do
     rows[index]:Hide()
   end
