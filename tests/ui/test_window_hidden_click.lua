@@ -237,7 +237,7 @@ local function test_show_hidden_skills_with_the_window_closed_still_wipes()
 end
 
 -- Fade Rank 1 is a row; its Rank 2 is the only skill of level 14, so
--- hiding Fade moves the line on, or hides it with nothing after.
+-- hiding Fade moves the Next at N heading on, or hides it with nothing after.
 local function setupNextLevel()
   setup()
   W.spells[FADE_1] = { name = "Fade", iconID = 1 }
@@ -249,7 +249,8 @@ local function setupNextLevel()
   levels[18] = { [RENEW] = { cost = 100, rank = "Rank 1", races = { Scourge = true } } }
 end
 
-local function nextLineText()
+-- The shown heading that starts with `Next at`.
+local function nextHeadingText()
   for _, widget in ipairs(W.frames) do
     local text = widget:GetText() or ""
     if W.state(widget).frameType == "FontString" and widget:IsShown() and text:sub(1, 7) == "Next at" then
@@ -258,23 +259,23 @@ local function nextLineText()
   end
 end
 
-local function test_hiding_the_only_skill_of_the_next_level_moves_the_line_on()
+local function test_hiding_the_only_skill_of_the_next_level_moves_the_heading_on()
   setupNextLevel()
   Window.Show(record())
-  Assert.equal(nextLineText(), "Next at 14: Fade (Rank 2)")
+  Assert.equal(nextHeadingText(), "Next at 14 (1)")
   clickDismiss("Fade")
-  Assert.equal(nextLineText(), "Next at 18: Renew (Rank 1)")
+  Assert.equal(nextHeadingText(), "Next at 18 (1)")
   click(foldButtons()[1])
   clickDismiss("Fade")
-  Assert.equal(nextLineText(), "Next at 14: Fade (Rank 2)")
+  Assert.equal(nextHeadingText(), "Next at 14 (1)")
 end
 
-local function test_hiding_the_only_skill_of_the_last_level_hides_the_line()
+local function test_hiding_the_only_skill_of_the_last_level_hides_the_heading()
   setupNextLevel()
   db.trainers.PRIEST.levels[18] = nil
   Window.Show(record())
   clickDismiss("Fade")
-  Assert.equal(nextLineText(), nil)
+  Assert.equal(nextHeadingText(), nil)
 end
 
 local function test_install_needs_a_character_table()
@@ -299,7 +300,7 @@ return function()
   test_a_new_show_marks_the_list_from_the_saved_names()
   test_show_hidden_skills_wipes_the_list_and_refills()
   test_show_hidden_skills_with_the_window_closed_still_wipes()
-  test_hiding_the_only_skill_of_the_next_level_moves_the_line_on()
-  test_hiding_the_only_skill_of_the_last_level_hides_the_line()
+  test_hiding_the_only_skill_of_the_next_level_moves_the_heading_on()
+  test_hiding_the_only_skill_of_the_last_level_hides_the_heading()
   test_install_needs_a_character_table()
 end

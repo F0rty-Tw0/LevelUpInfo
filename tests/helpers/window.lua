@@ -28,7 +28,6 @@ WindowHelper.FILES = {
   "UI/SkillGroup.lua",
   "UI/Layout.lua",
   "UI/GainLines.lua",
-  "UI/NextLevelLine.lua",
   "UI/SkillFill.lua",
   "UI/Window.lua",
 }
@@ -189,7 +188,7 @@ function WindowHelper.headings()
   return table.concat(texts, "|")
 end
 
--- Shown fold buttons in build order: Not yet learned, Weapon skills, Hidden.
+-- Shown fold buttons in build order: Not yet learned, Weapon skills, Hidden, Next at N.
 function WindowHelper.foldButtons()
   local buttons = {}
   for _, widget in ipairs(W.frames) do

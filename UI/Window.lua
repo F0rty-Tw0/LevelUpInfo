@@ -93,7 +93,7 @@ local function onFold(group)
   end
 end
 
--- class, race and faction of the player, as the skill list and next-level line read them.
+-- class, race and faction of the player, as the skill list and Next at N group read them.
 local function player()
   local class = select(2, _G.UnitClass("player"))
   local race = select(2, _G.UnitRace("player"))
@@ -107,7 +107,7 @@ local function findNextLevel(toLevel)
 end
 
 -- The hidden list changed: keep the top edge and refill; the fill finds the
--- next-level line again and marks the reused skill list from the new names.
+-- Next at N group again and marks the reused skill list from the new names.
 function Window.RefreshHidden()
   if current and not filling then
     nextStale = true
@@ -315,6 +315,7 @@ function Window.Show(record)
   skillEntries = nil
   _G.wipe(waitingRanks)
   SkillGroup.Collapse()
+  SkillGroup.ResetShowFolds()
   -- Scale first: the fill caps the height with it.
   frame:SetScale(db.scale)
   viewScroll = 0
