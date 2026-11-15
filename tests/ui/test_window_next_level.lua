@@ -18,12 +18,16 @@ local breakFill = WindowHelper.breakFill
 local headings = WindowHelper.headings
 local foldButtons = WindowHelper.foldButtons
 local totalOf = WindowHelper.totalOf
+local nextHeading = WindowHelper.nextHeading
 
 local LOAD_EVENT = "SPELL_DATA_LOAD_RESULT"
 local HINT = "Visit your class trainer to see all new skills."
 local PREFIX = "Next at"
 local HEADING_HEIGHT = 24
 local GROUP_GAP = 14
+local ROW_HEIGHT = 47
+local ROW_GAP = 4
+local CAP = 4
 local MISSED_LEVEL = 5
 local MISSED_BASE = 1000
 local NEXT_BASE = 2000
@@ -67,22 +71,14 @@ local function shownHeadings()
   for text in string.gmatch(headings(), "[^|]+") do
     found[#found + 1] = text
   end
+
   return found
 end
 
 local function lastHeading()
   local found = shownHeadings()
-  return found[#found]
-end
 
--- Whether a shown heading starts with `Next at`.
-local function hasNextHeading()
-  for _, text in ipairs(shownHeadings()) do
-    if string.find(text, PREFIX, 1, true) == 1 then
-      return true
-    end
-  end
-  return false
+  return found[#found]
 end
 
 -- The shown font string whose text is `text`, on the content frame.
@@ -109,13 +105,13 @@ local function openNext()
   click(buttons[#buttons])
 end
 
--- `count` rank 1 skills at level 14 in place of Fade and Renew.
-local function sixAtFourteen(count)
-  levels[14] = {}
+-- `count` rank 1 skills named "<prefix> <n>" at `level`, in place of what was there.
+local function skillsAt(level, base, prefix, count)
+  levels[level] = {}
   for index = 1, count do
-    local spellID = NEXT_BASE + index
-    W.spells[spellID] = { name = "Next " .. index, iconID = spellID }
-    levels[14][spellID] = rank1()
+    local spellID = base + index
+    W.spells[spellID] = { name = prefix .. " " .. index, iconID = spellID }
+    levels[level][spellID] = rank1()
   end
 end
 
@@ -125,8 +121,10 @@ local function countBuilds()
   local build = ns.SkillList.Build
   ns.SkillList.Build = function(...)
     counter.count = counter.count + 1
+
     return build(...)
   end
+
   return counter
 end
 
@@ -148,7 +146,7 @@ local function test_no_heading_when_nothing_is_cached_above()
   setup()
   levels[14] = nil
   Window.Show(record())
-  Assert.equal(hasNextHeading(), false)
+  Assert.equal(nextHeading(), nil)
   Assert.equal(#foldButtons(), 0)
 end
 
@@ -192,10 +190,14 @@ local function test_open_group_lists_the_rows_without_an_eye()
   Window.Show(record())
   openNext()
   Assert.equal(lastHeading(), "Next at 14")
-  Assert.equal(rowNamed("Fade") ~= nil, true)
-  Assert.equal(rowNamed("Renew") ~= nil, true)
   Assert.equal(rowNamed("Fade").dismiss:IsShown(), false)
   Assert.equal(rowNamed("Renew").dismiss:IsShown(), false)
+end
+
+local function test_opening_the_group_saves_no_fold()
+  setup()
+  Window.Show(record())
+  openNext()
   Assert.equal(db.foldedGroups.next, nil)
 end
 
@@ -210,7 +212,7 @@ end
 
 local function test_six_next_skills_open_to_four_rows_and_a_more_toggle()
   setup()
-  sixAtFourteen(6)
+  skillsAt(14, NEXT_BASE, "Next", 6)
   Window.Show(record())
   openNext()
   local shown = 0
@@ -223,7 +225,7 @@ end
 
 local function test_expanded_next_group_survives_a_dismiss_elsewhere()
   setup()
-  sixAtFourteen(6)
+  skillsAt(14, NEXT_BASE, "Next", 6)
   Window.Show(record())
   openNext()
   click(toggle("+2 more next level"))
@@ -234,12 +236,7 @@ end
 
 local function test_toggle_refill_keeps_the_group_without_a_new_build()
   setup()
-  levels[MISSED_LEVEL] = {}
-  for index = 1, 6 do
-    local spellID = MISSED_BASE + index
-    W.spells[spellID] = { name = "Missed " .. index, iconID = spellID }
-    levels[MISSED_LEVEL][spellID] = rank1()
-  end
+  skillsAt(MISSED_LEVEL, MISSED_BASE, "Missed", 6)
   local builds = countBuilds()
   Window.Show(record())
   local text = lastHeading()
@@ -249,15 +246,29 @@ local function test_toggle_refill_keeps_the_group_without_a_new_build()
   Assert.equal(lastHeading(), text)
 end
 
+-- The expanded box keeps the group's size (CAP rows and their gaps) and scrolls all six.
+local function test_expanded_next_box_is_cap_rows_tall_and_scrolls_all_six()
+  setup()
+  skillsAt(14, NEXT_BASE, "Next", 6)
+  Window.Show(record())
+  openNext()
+  click(toggle("+2 more next level"))
+  local box, child = ns.SkillGroup.Box("next")
+  Assert.equal(box:GetHeight(), CAP * ROW_HEIGHT + (CAP - 1) * ROW_GAP)
+  Assert.equal(child:GetHeight(), 6 * ROW_HEIGHT + 5 * ROW_GAP)
+end
+
 local function test_fill_error_hides_the_group()
   setup()
   Window.Show(record())
+  local total = totalOf(PREFIX)
   openNext()
+  Assert.equal(total:IsShown(), true)
   breakFill()
   Window.Refresh()
-  Assert.equal(hasNextHeading(), false)
+  Assert.equal(nextHeading(), nil)
   Assert.equal(#foldButtons(), 0)
-  Assert.equal(totalOf(PREFIX), nil)
+  Assert.equal(total:IsShown(), false)
 end
 
 local function test_rank_wait_rebuild_recomputes_the_group()
@@ -266,7 +277,7 @@ local function test_rank_wait_rebuild_recomputes_the_group()
   levels[14] = nil
   W.spells[FADE].description = ""
   Window.Show(record())
-  Assert.equal(hasNextHeading(), false)
+  Assert.equal(nextHeading(), nil)
   levels[14] = { [INNER_FIRE] = rank1() }
   W.spells[FADE].description = "Spell text."
   W.broadcast(LOAD_EVENT, FADE, true)
@@ -274,17 +285,27 @@ local function test_rank_wait_rebuild_recomputes_the_group()
 end
 
 -- Fade Rank 1 is new at 10, Rank 2 comes at 14 and lists a change line against Rank 1.
-local function test_folded_group_requests_no_spell_text_and_open_does()
+local function setupFadeRankChange()
   setup()
   W.spells[FADE_2] = { name = "Fade", iconID = 2 }
   W.spells[FADE].description = ""
   W.spells[FADE_2].description = ""
   levels[10] = { [FADE] = rank1() }
   levels[14] = { [FADE_2] = { cost = 100, rank = "Rank 2", races = { Scourge = true } } }
+end
+
+local function test_folded_group_requests_no_spell_text()
+  setupFadeRankChange()
   local requests = W.calls.RequestLoadSpellData or 0
   Window.Show(record())
   Assert.equal(lastHeading(), "Next at 14 (1)")
   Assert.equal(W.calls.RequestLoadSpellData or 0, requests)
+end
+
+local function test_opening_the_group_requests_spell_text()
+  setupFadeRankChange()
+  Window.Show(record())
+  local requests = W.calls.RequestLoadSpellData or 0
   openNext()
   Assert.equal((W.calls.RequestLoadSpellData or 0) > requests, true)
 end
@@ -298,11 +319,14 @@ return function()
   test_heading_follows_the_hint_row()
   test_heading_after_a_lone_hint_row_keeps_the_block_gap()
   test_open_group_lists_the_rows_without_an_eye()
+  test_opening_the_group_saves_no_fold()
   test_show_again_folds_the_open_group()
   test_six_next_skills_open_to_four_rows_and_a_more_toggle()
   test_expanded_next_group_survives_a_dismiss_elsewhere()
   test_toggle_refill_keeps_the_group_without_a_new_build()
+  test_expanded_next_box_is_cap_rows_tall_and_scrolls_all_six()
   test_fill_error_hides_the_group()
   test_rank_wait_rebuild_recomputes_the_group()
-  test_folded_group_requests_no_spell_text_and_open_does()
+  test_folded_group_requests_no_spell_text()
+  test_opening_the_group_requests_spell_text()
 end

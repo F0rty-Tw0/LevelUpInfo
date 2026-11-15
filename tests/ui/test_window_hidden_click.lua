@@ -17,6 +17,7 @@ local click = WindowHelper.click
 local headings = WindowHelper.headings
 local foldButtons = WindowHelper.foldButtons
 local totalOf = WindowHelper.totalOf
+local nextHeading = WindowHelper.nextHeading
 local dismissOf = WindowHelper.dismissOf
 local shownBoxes = WindowHelper.shownBoxes
 
@@ -249,25 +250,15 @@ local function setupNextLevel()
   levels[18] = { [RENEW] = { cost = 100, rank = "Rank 1", races = { Scourge = true } } }
 end
 
--- The shown heading that starts with `Next at`.
-local function nextHeadingText()
-  for _, widget in ipairs(W.frames) do
-    local text = widget:GetText() or ""
-    if W.state(widget).frameType == "FontString" and widget:IsShown() and text:sub(1, 7) == "Next at" then
-      return text
-    end
-  end
-end
-
 local function test_hiding_the_only_skill_of_the_next_level_moves_the_heading_on()
   setupNextLevel()
   Window.Show(record())
-  Assert.equal(nextHeadingText(), "Next at 14 (1)")
+  Assert.equal(nextHeading(), "Next at 14 (1)")
   clickDismiss("Fade")
-  Assert.equal(nextHeadingText(), "Next at 18 (1)")
+  Assert.equal(nextHeading(), "Next at 18 (1)")
   click(foldButtons()[1])
   clickDismiss("Fade")
-  Assert.equal(nextHeadingText(), "Next at 14 (1)")
+  Assert.equal(nextHeading(), "Next at 14 (1)")
 end
 
 local function test_hiding_the_only_skill_of_the_last_level_hides_the_heading()
@@ -275,7 +266,7 @@ local function test_hiding_the_only_skill_of_the_last_level_hides_the_heading()
   db.trainers.PRIEST.levels[18] = nil
   Window.Show(record())
   clickDismiss("Fade")
-  Assert.equal(nextHeadingText(), nil)
+  Assert.equal(nextHeading(), nil)
 end
 
 local function test_install_needs_a_character_table()
