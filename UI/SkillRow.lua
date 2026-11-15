@@ -24,8 +24,9 @@ local CHANGE_LINE_HEIGHT = 12
 local DISMISS_SIZE = 16
 local EYE_CROSSED = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeCrossed.tga"
 local EYE_OPEN = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeOpen.tga"
--- Hover only (user decision, 2026-11-15): the button is invisible until its
--- row is hovered, dim over the row, bright over the button itself.
+-- Hover only on shown rows (user decision, 2026-11-15): the button is
+-- invisible until its row is hovered, dim over the row, bright over the button
+-- itself. A hidden row's Show button is always dim, bright over the button.
 local DISMISS_HIDDEN_ALPHA = 0
 local DISMISS_REST_ALPHA = 0.6
 local DISMISS_HOVER_ALPHA = 1
@@ -38,7 +39,7 @@ local SkillRow = {}
 
 -- Moving onto the button leaves the row while the mouse is still inside it.
 local function restAlpha(row)
-  return row:IsMouseOver() and DISMISS_REST_ALPHA or DISMISS_HIDDEN_ALPHA
+  return (row.hidden or row:IsMouseOver()) and DISMISS_REST_ALPHA or DISMISS_HIDDEN_ALPHA
 end
 
 local function onEnter(row)
@@ -173,7 +174,8 @@ function SkillRow.SetSkill(row, entry, money)
   row.hidden = entry.hidden == true
   row.dismiss.texture:SetTexture(row.hidden and EYE_OPEN or EYE_CROSSED)
   row.dismiss:SetShown(entry.name ~= "")
-  row.dismiss:SetAlpha(DISMISS_HIDDEN_ALPHA) -- a row pooled while hovered got no OnLeave
+  -- Not restAlpha: a row pooled while hovered got no OnLeave.
+  row.dismiss:SetAlpha(row.hidden and DISMISS_REST_ALPHA or DISMISS_HIDDEN_ALPHA)
   row.icon:SetTexture(entry.icon)
   row.name:SetWidth(0)
   row.name:SetText(entry.name)
