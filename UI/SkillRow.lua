@@ -173,13 +173,14 @@ function SkillRow.SetChanges(row, lines)
   return height
 end
 
-function SkillRow.SetSkill(row, entry, money)
+-- noDismiss true: the row has no hide eye (rows nobody can hide).
+function SkillRow.SetSkill(row, entry, money, noDismiss)
   SkillRow.SetChanges(row, entry.source and sourceText(entry.source) or NO_LINES)
   row.spellID = entry.spellID
   row.skillName = entry.name
   row.hidden = entry.hidden == true
   row.dismiss.texture:SetTexture(row.hidden and EYE_OPEN or EYE_CROSSED)
-  row.dismiss:SetShown(entry.name ~= "")
+  row.dismiss:SetShown(not noDismiss and entry.name ~= "")
   -- Not restAlpha: a row pooled while hovered got no OnLeave.
   row.dismiss:SetAlpha(awayAlpha(row))
   row.icon:SetTexture(entry.icon)

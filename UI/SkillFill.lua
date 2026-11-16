@@ -10,7 +10,6 @@ local AutoHide = ns.AutoHide or require("LevelUpInfo.UI.AutoHide")
 local SkillRow = ns.SkillRow or require("LevelUpInfo.UI.SkillRow")
 local SkillGroup = ns.SkillGroup or require("LevelUpInfo.UI.SkillGroup")
 local Layout = ns.Layout or require("LevelUpInfo.UI.Layout")
-local NextLevelLine = ns.NextLevelLine or require("LevelUpInfo.UI.NextLevelLine")
 
 local format = string.format
 local ipairs = ipairs
@@ -30,13 +29,15 @@ local ROW_GAP = 4
 local TEXT_LEFT = 4
 local GROUP_CAP = 4
 local NO_LINES = {}
+local NO_ENTRIES = {}
 local HIDDEN = "hidden"
 
 -- Skill groups in display order; a capped group shows its first `cap` rows
 -- and a `+N more` toggle, or, expanded, all rows in a scroll box. A `fold`
 -- group has a button that hides its rows behind a count in the heading;
 -- `startFolded` folds it until the player opens it. Hidden holds every hidden
--- entry, whatever its own group.
+-- entry, whatever its own group. NEXT is filled apart, after the hint row:
+-- `foldPerShow` folds it on every window show, `noDismiss` hides the row eye.
 local GROUPS = {
   { group = "skill", title = "New skills", cap = GROUP_CAP, more = "+%d more new skills" },
   { group = "rank", title = "New ranks", cap = GROUP_CAP, more = "+%d more new ranks" },
@@ -44,9 +45,16 @@ local GROUPS = {
   { group = "weapon", title = "Weapon skills", cap = GROUP_CAP, fold = true, more = "+%d more weapon skills" },
   { group = HIDDEN, title = "Hidden", cap = GROUP_CAP, fold = true, startFolded = true, more = "+%d more hidden" },
 }
+local NEXT =
+  { group = "next", title = "Next at %d", cap = GROUP_CAP, fold = true, foldPerShow = true, noDismiss = true, more = "+%d more next level" }
+local ALL_SPECS = {}
+for index, spec in ipairs(GROUPS) do
+  ALL_SPECS[index] = spec
+end
+ALL_SPECS[#GROUPS + 1] = NEXT
 
 -- The window's skill area: group headings, skill rows, the hint row and the
--- next-level line, added to the layout list of the window's content frame.
+-- Next at N group, added to the layout list of the window's content frame.
 -- Headings are made in Build, rows on first use; both are reused after.
 local SkillFill = {}
 
@@ -73,9 +81,9 @@ local function nextRow(parent)
   return row
 end
 
-local function addRow(entry, money, parent)
+local function addRow(entry, money, parent, noDismiss)
   local row = nextRow(parent)
-  SkillRow.SetSkill(row, entry, money)
+  SkillRow.SetSkill(row, entry, money, noDismiss)
   -- A hidden row shows no change lines, so it requests no spell text.
   local lines = entry.previousSpellID ~= nil and entry.hidden ~= true
   rowLines[rowsUsed] = lines
@@ -108,10 +116,10 @@ end
 
 -- Heading (and, for a foldable group, its button on the same line) with `gap`
 -- above; returns the row parent: content, or the box of an expanded group.
-local function addHeading(spec, gap, expanded, total, money)
+local function addHeading(spec, title, gap, expanded, total, money)
   local group = spec.group
   local heading = headings[group]
-  heading:SetText(Text(spec.title))
+  heading:SetText(title)
   Layout.AddGap(content, gap)
   if spec.fold then
     Layout.Add(SkillGroup.FoldButton(group), content, 0, 0)
@@ -147,11 +155,12 @@ local function countIn(spec, entries)
   return count
 end
 
--- `gap` goes above the heading when the group has rows; returns the row count
--- (a folded group counts its folded-away rows, so the next block's gap stays).
+-- `title` is the heading text; `gap` goes above it when the group has rows;
+-- returns the row count (a folded group counts its folded-away rows, so the
+-- next block's gap stays).
 -- An expanded group a dismiss click shrank to its cap is collapsed for good: no
 -- box, no toggle, and it does not come back expanded when entries return.
-local function fillGroup(spec, entries, money, gap)
+local function fillGroup(spec, title, entries, money, gap)
   local group = spec.group
   if spec.cap and SkillGroup.IsExpanded(group) and countIn(spec, entries) <= spec.cap then
     SkillGroup.CollapseOne(group)
@@ -165,13 +174,13 @@ local function fillGroup(spec, entries, money, gap)
     if belongs(spec, entry) then
       count = count + 1
       if count == 1 then
-        parent = addHeading(spec, gap, expanded, total, money)
+        parent = addHeading(spec, title, gap, expanded, total, money)
       end
       if not folded and (expanded or not spec.cap or count <= spec.cap) then
         if count > 1 then
           Layout.AddGap(parent, ROW_GAP)
         end
-        addRow(entry, money, parent)
+        addRow(entry, money, parent, spec.noDismiss)
       end
     end
   end
@@ -182,7 +191,7 @@ local function fillGroup(spec, entries, money, gap)
     headings[group]:Hide()
     SkillGroup.HideFoldButton(group)
   elseif folded then
-    headings[group]:SetText(format(Text("%s (%d)"), Text(spec.title), count))
+    headings[group]:SetText(format(Text("%s (%d)"), title, count))
   end
   if spec.cap then
     fillToggle(spec, folded and 0 or count)
@@ -196,24 +205,15 @@ end
 function SkillFill.Build(parent, onToggle, foldedGroups, onFold, onDismiss)
   content = parent
   dismissFn = onDismiss
-  for _, spec in ipairs(GROUPS) do
+  for _, spec in ipairs(ALL_SPECS) do
     headings[spec.group] = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
   end
-  SkillGroup.Build(content, GROUPS, onToggle, foldedGroups, onFold)
+  SkillGroup.Build(content, ALL_SPECS, onToggle, foldedGroups, onFold)
 end
 
--- Adds the groups, the hint row and the next-level line to the layout list;
--- `gainCount` gain lines above decide the first block's gap.
-function SkillFill.Fill(entries, hint, nextLevel, nextEntries, gainCount)
-  local money = _G.GetMoney()
-  rowsUsed = 0
-  _G.wipe(boxFirstRow)
-  local gap = gainCount > 0 and GROUP_GAP or 0
-  for _, spec in ipairs(GROUPS) do
-    if fillGroup(spec, entries, money, gap) > 0 then
-      gap = GROUP_GAP
-    end
-  end
+-- The hint row, then the Next at N group (shown only when `nextEntries` has
+-- entries). `gap` is the gap the skill groups left.
+local function fillHintAndNext(hint, nextLevel, nextEntries, money, gap)
   if hint then
     Layout.AddGap(content, gap)
     local row = nextRow(content)
@@ -221,11 +221,25 @@ function SkillFill.Fill(entries, hint, nextLevel, nextEntries, gainCount)
     rowLines[rowsUsed] = false
     Layout.Add(row, content, 0, ROW_HEIGHT)
   end
-  local line = NextLevelLine.Set(content, nextLevel, nextEntries)
-  if line then
-    Layout.AddGap(content, hint and GROUP_GAP or gap)
-    Layout.Add(line, content, TEXT_LEFT, LINE_HEIGHT)
+  local nextGap = hint and GROUP_GAP or gap
+  local title = nextLevel and format(Text(NEXT.title), nextLevel)
+  fillGroup(NEXT, title, nextEntries or NO_ENTRIES, money, nextGap)
+end
+
+-- Adds the groups, the hint row and the Next at N group to the layout list;
+-- `gainCount` gain lines above decide the first block's gap.
+function SkillFill.Fill(entries, hint, nextLevel, nextEntries, gainCount)
+  local money = _G.GetMoney()
+  rowsUsed = 0
+  _G.wipe(boxFirstRow)
+  local gap = gainCount > 0 and GROUP_GAP or 0
+  for _, spec in ipairs(GROUPS) do
+    local count = fillGroup(spec, Text(spec.title), entries, money, gap)
+    if count > 0 then
+      gap = GROUP_GAP
+    end
   end
+  fillHintAndNext(hint, nextLevel, nextEntries, money, gap)
   for index = rowsUsed + 1, #rows do
     rows[index]:Hide()
   end
@@ -233,7 +247,7 @@ end
 
 -- Each expanded group's scroll child is as tall as the rows placed in it.
 function SkillFill.SizeBoxes(cursors)
-  for _, spec in ipairs(GROUPS) do
+  for _, spec in ipairs(ALL_SPECS) do
     if spec.cap and SkillGroup.IsExpanded(spec.group) then
       local _, child = SkillGroup.Box(spec.group)
       SkillGroup.SetContentHeight(spec.group, cursors[child] or 0)
@@ -246,7 +260,7 @@ end
 -- scrollbar. Runs before placing: the layout reads the box's height.
 function SkillFill.FitBoxes()
   local tallest = 0
-  for _, spec in ipairs(GROUPS) do
+  for _, spec in ipairs(ALL_SPECS) do
     local first = boxFirstRow[spec.group]
     if spec.cap and first and SkillGroup.IsExpanded(spec.group) then
       local last = min(first + spec.cap - 1, rowsUsed)
@@ -275,11 +289,10 @@ function SkillFill.RefreshRows(spellID)
   return changed
 end
 
--- Hides every group widget, the next-level line, the headings and the rows
--- after a failed fill. Runs only after Build.
+-- Hides every group widget, the headings and the rows after a failed fill.
+-- Runs only after Build.
 function SkillFill.HideAll()
   SkillGroup.HideAll()
-  NextLevelLine.Set(content, nil)
   for _, pool in ipairs(POOLS) do
     for _, region in pairs(pool) do
       region:Hide()

@@ -14,6 +14,7 @@ local NextLevel = {}
 
 local NO_LEVEL = 0
 local EMPTY = {}
+local NEXT_GROUP = "next"
 
 local function highestLevel(levels)
   local highest = NO_LEVEL
@@ -25,12 +26,14 @@ local function highestLevel(levels)
   return highest
 end
 
--- Trainer-cache entries first listed at `level`: quest and weapon rows carry a source.
+-- Trainer-cache entries first listed at `level`, tagged group = "next": quest
+-- and weapon rows carry a source.
 local function ownEntriesAt(entries, level, hidden)
   local found = {}
   for _, entry in ipairs(entries) do
     local isHidden = hidden ~= nil and hidden[entry.name] == true
     if entry.level == level and entry.source == nil and not isHidden then
+      entry.group = NEXT_GROUP
       found[#found + 1] = entry
     end
   end

@@ -234,7 +234,24 @@ local function test_hint_hides_source_lines_after_reuse()
   Assert.equal(row.changeLines[2]:IsShown(), false)
 end
 
+local function test_no_dismiss_skill_row_hides_the_eye()
+  setup()
+  local row = newRow()
+  SkillRow.SetSkill(row, ENTRY, W.money, true)
+  Assert.equal(row.dismiss:IsShown(), false)
+end
+
+local function test_reused_row_gets_its_eye_back_without_no_dismiss()
+  setup()
+  local row = newRow()
+  SkillRow.SetSkill(row, ENTRY, W.money, true)
+  SkillRow.SetSkill(row, ENTRY, W.money)
+  Assert.equal(row.dismiss:IsShown(), true)
+end
+
 return function()
+  test_no_dismiss_skill_row_hides_the_eye()
+  test_reused_row_gets_its_eye_back_without_no_dismiss()
   test_row_uses_trainer_texture_with_exact_tex_coords()
   test_row_is_298_by_47()
   test_icon_is_36_by_36_at_topleft_6_minus_5_5()

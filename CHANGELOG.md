@@ -6,7 +6,7 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
-- The level-up window now ends with a peek at the next level: what the trainer will teach you there.
+- The level-up window now ends with a folded "Next at N" group listing the skills and prices the trainer teaches at your next level that has something new.
 - New "Show last level-up" button in the options, and /lui last: brings back the window from your last level-up, with the same gains, even after a relog.
 - Priests now see their new skills on their very first level-up, even before visiting a class trainer.
 - The level-up window stays smaller: it shows four skills per group and stops growing at about 60% of the screen height, scrolling the rest.

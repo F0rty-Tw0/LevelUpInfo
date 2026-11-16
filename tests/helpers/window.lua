@@ -28,7 +28,6 @@ WindowHelper.FILES = {
   "UI/SkillGroup.lua",
   "UI/Layout.lua",
   "UI/GainLines.lua",
-  "UI/NextLevelLine.lua",
   "UI/SkillFill.lua",
   "UI/Window.lua",
 }
@@ -189,7 +188,18 @@ function WindowHelper.headings()
   return table.concat(texts, "|")
 end
 
--- Shown fold buttons in build order: Not yet learned, Weapon skills, Hidden.
+local NEXT_PREFIX = "Next at"
+
+-- The shown heading that starts with `Next at`; nil when there is none.
+function WindowHelper.nextHeading()
+  for text in string.gmatch(WindowHelper.headings(), "[^|]+") do
+    if text:sub(1, #NEXT_PREFIX) == NEXT_PREFIX then
+      return text
+    end
+  end
+end
+
+-- Shown fold buttons in build order: Not yet learned, Weapon skills, Hidden, Next at N.
 function WindowHelper.foldButtons()
   local buttons = {}
   for _, widget in ipairs(W.frames) do
