@@ -5,7 +5,10 @@ end
 
 local Events = ns.Events or require("LevelUpInfo.Core.Events")
 local TrainerCache = ns.TrainerCache or require("LevelUpInfo.Data.TrainerCache")
+local Localization = ns.Localization or require("LevelUpInfo.Core.Localization")
 
+local Text = Localization.Text
+local format = string.format
 local ipairs = ipairs
 local select = select
 local tostring = tostring
@@ -135,8 +138,9 @@ function TrainerScan.Scan()
   scanning = false
   if not ok then
     _G.geterrorhandler()(err)
-  elseif allOn and not collapsed and seen then
-    TrainerCache.Cover(db.trainers, class, race, seen)
+  -- Cover runs first so a disabled addon still raises coverage, just silently.
+  elseif allOn and not collapsed and seen and TrainerCache.Cover(db.trainers, class, race, seen) and db.enabled then
+    _G.print(format(Text("Level Up Info: saved trainer skills up to level %d."), seen))
   end
 end
 

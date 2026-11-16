@@ -37,6 +37,14 @@ local function test_cover_only_grows()
   Assert.equal(TrainerCache.Covered(t, "PRIEST", "Scourge"), 14)
 end
 
+local function test_cover_returns_true_only_when_it_raises()
+  local t = {}
+  Assert.equal(TrainerCache.Cover(t, "PRIEST", "Scourge", 12), true)
+  Assert.equal(TrainerCache.Cover(t, "PRIEST", "Scourge", 12), false)
+  Assert.equal(TrainerCache.Cover(t, "PRIEST", "Scourge", 8), false)
+  Assert.equal(TrainerCache.Cover(t, "PRIEST", "Scourge", 14), true)
+end
+
 local function test_cover_keeps_races_apart()
   local t = {}
   TrainerCache.Cover(t, "PRIEST", "Scourge", 12)
@@ -57,6 +65,7 @@ return function()
   test_second_race_adds_its_tag_and_latest_price_wins()
   test_latest_rank_text_wins()
   test_cover_only_grows()
+  test_cover_returns_true_only_when_it_raises()
   test_cover_keeps_races_apart()
   test_covered_of_unknown_class_or_race_is_zero()
 end
