@@ -222,7 +222,8 @@ end
 -- Per-character data: the last real level-up record and the hidden skill names.
 function SavedState.InitializeCharacter(saved)
   saved = type(saved) == "table" and saved or {}
-  return { last = cleanLast(saved.last), hidden = cleanHidden(saved.hidden) }
+  local charDB = { last = cleanLast(saved.last), hidden = cleanHidden(saved.hidden) }
+  return charDB
 end
 
 function SavedState.Initialize(saved)

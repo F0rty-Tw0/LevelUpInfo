@@ -36,7 +36,7 @@ local SkillGroup = {}
 
 local parent
 local groups = {}
-local foldedByGroup -- the saved fold flags: group → true
+local foldedByGroup -- the saved fold flags: group → true (folded) / false (open)
 
 local function pause()
   AutoHide.Pause()
@@ -139,14 +139,23 @@ function SkillGroup.Build(content, specs, onToggle, foldedGroups, onFold)
     end
     if spec.fold then
       groups[spec.group].foldButton = newFoldButton(spec.group, onFold)
+      groups[spec.group].startFolded = spec.startFolded == true
     end
   end
 end
 
--- Only a group with a fold button can be folded.
+-- Only a group with a fold button can be folded. A saved flag wins; without
+-- one the group follows its spec's startFolded.
 function SkillGroup.IsFolded(group)
   local state = groups[group]
-  return state ~= nil and state.foldButton ~= nil and foldedByGroup[group] == true
+  if state == nil or state.foldButton == nil then
+    return false
+  end
+  local saved = foldedByGroup[group]
+  if saved == nil then
+    return state.startFolded
+  end
+  return saved == true
 end
 
 -- The group's fold button with the icon for its current state.
@@ -174,9 +183,14 @@ function SkillGroup.Collapse()
   end
 end
 
--- Flips the group's saved fold flag and drops its expansion and scroll.
+function SkillGroup.CollapseOne(group)
+  collapse(groups[group])
+end
+
+-- Saves the group's flipped fold state as a boolean (never clears the key, so
+-- an open start-folded group stays open) and drops its expansion and scroll.
 function SkillGroup.Flip(group)
-  foldedByGroup[group] = not foldedByGroup[group] or nil
+  foldedByGroup[group] = not SkillGroup.IsFolded(group)
   collapse(groups[group])
 end
 

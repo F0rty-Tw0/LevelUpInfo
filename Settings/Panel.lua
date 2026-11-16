@@ -130,6 +130,7 @@ local function build(frame, db, actions)
     closeOptions()
     actions.onShowLast()
   end)
+  addButton(frame, Text("Show hidden skills"), LEFT + BUTTON_WIDTH + BUTTON_GAP, buttonRowY - BUTTON_HEIGHT - BUTTON_GAP, actions.onShowHidden)
 end
 
 local function refresh()
@@ -147,7 +148,8 @@ local function restoreDefaults(db, actions)
   actions.onMinimapButton()
 end
 
--- actions = { onScale = fn, onResetPosition = fn, onTest = fn, onShowLast = fn, onMinimapButton = fn };
+-- actions = { onScale = fn, onResetPosition = fn, onTest = fn, onShowLast = fn,
+-- onShowHidden = fn, onMinimapButton = fn };
 -- returns the settings category.
 function Panel.Register(db, actions)
   controls = {}

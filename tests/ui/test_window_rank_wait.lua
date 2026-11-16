@@ -28,7 +28,7 @@ local function setup()
   levels[60] = {}
   local ns = { OtherSources = {} }
   Window = WindowHelper.load(ns)
-  Window.Install(db)
+  Window.Install(db, WindowHelper.charDB())
   ns.SpellFacts.Install(Window.Refresh)
   return levels
 end

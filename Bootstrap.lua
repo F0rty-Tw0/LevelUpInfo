@@ -22,7 +22,7 @@ function Bootstrap.Initialize(saved, charSaved)
   local charDB = SavedState.InitializeCharacter(charSaved)
   _G.LevelUpInfoCharDB = charDB
   TrainerScan.Install(db)
-  Window.Install(db)
+  Window.Install(db, charDB)
   SpellFacts.Install(Window.Refresh)
   LevelUp.Install(db, charDB)
   Panel.Register(db, {
@@ -30,6 +30,7 @@ function Bootstrap.Initialize(saved, charSaved)
     onResetPosition = Window.ResetPosition,
     onTest = LevelUp.ShowTest,
     onShowLast = LevelUp.ShowLast,
+    onShowHidden = Window.ShowHidden,
     onMinimapButton = MinimapButton.Apply,
   })
   SlashCommand.Register(Panel.Open, LevelUp.ShowTest, LevelUp.ShowLast)

@@ -308,6 +308,9 @@ local function newWidget(W, frameType, name, parent, template)
   function widget:SetTexCoord(...)
     stub.texCoord = { ... }
   end
+  function widget:SetVertexColor(r, g, b, _a)
+    stub.vertexColor = { r, g, b }
+  end
   function widget:SetBlendMode(mode)
     stub.blendMode = mode
   end

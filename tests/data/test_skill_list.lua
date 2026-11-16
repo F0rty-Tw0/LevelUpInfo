@@ -276,6 +276,23 @@ local function test_group_total_of_an_all_hidden_group_is_nil()
   Assert.equal(SkillList.GroupTotal(entries, "weapon"), nil)
 end
 
+-- Hidden holds hidden entries of any own group, so its total sums those.
+local function test_hidden_total_sums_hidden_priced_entries_of_any_group()
+  setup()
+  local entries = {
+    { group = "missed", cost = 100, hidden = true },
+    { group = "weapon", cost = 50, hidden = true },
+    { group = "missed", cost = 999, hidden = false },
+  }
+  Assert.equal(SkillList.GroupTotal(entries, "hidden"), 150)
+end
+
+local function test_hidden_total_needs_two_priced_entries()
+  setup()
+  local entries = { { group = "missed", cost = 100, hidden = true }, { group = "missed", hidden = true } }
+  Assert.equal(SkillList.GroupTotal(entries, "hidden"), nil)
+end
+
 return function()
   test_levels_above_to_level_are_excluded()
   test_skipped_trainer_spell_is_not_yet_learned()
@@ -303,4 +320,6 @@ return function()
   test_group_total_skips_hidden_entries()
   test_group_total_needs_two_shown_priced_entries()
   test_group_total_of_an_all_hidden_group_is_nil()
+  test_hidden_total_sums_hidden_priced_entries_of_any_group()
+  test_hidden_total_needs_two_priced_entries()
 end

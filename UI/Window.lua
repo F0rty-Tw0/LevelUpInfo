@@ -6,6 +6,7 @@ end
 local Localization = ns.Localization or require("LevelUpInfo.Core.Localization")
 local SkillList = ns.SkillList or require("LevelUpInfo.Data.SkillList")
 local NextLevel = ns.NextLevel or require("LevelUpInfo.Data.NextLevel")
+local HiddenSkills = ns.HiddenSkills or require("LevelUpInfo.Data.HiddenSkills")
 local AutoHide = ns.AutoHide or require("LevelUpInfo.UI.AutoHide")
 local ScrollBox = ns.ScrollBox or require("LevelUpInfo.UI.ScrollBox")
 local SkillGroup = ns.SkillGroup or require("LevelUpInfo.UI.SkillGroup")
@@ -46,6 +47,7 @@ local HEADER_WIDTH = 262
 local Window = {}
 
 local db
+local charDB -- per-character saved table: `hidden` holds the names of hidden skills
 local frame
 local view -- ScrollFrame around `content`; scrolls only when content is taller than the screen allows
 local viewBar
@@ -55,6 +57,7 @@ local reachedLine
 local current
 local skillEntries, skillHint -- skill list of `current`: built on Show, reused by Refresh
 local nextLevel, nextEntries -- next level with trainer skills, built with skillEntries
+local nextStale = false -- set when the hidden list changed: the next fill finds nextLevel again
 -- Spells left out of `skillEntries` until their rank text loads; the last
 -- one's load result builds the list again.
 local waitingRanks = {}
@@ -88,6 +91,43 @@ local function onFold(group)
     pinTop()
     fill(current)
   end
+end
+
+-- class, race and faction of the player, as the skill list and next-level line read them.
+local function player()
+  local class = select(2, _G.UnitClass("player"))
+  local race = select(2, _G.UnitRace("player"))
+  local faction = _G.UnitFactionGroup("player")
+  return class, race, faction
+end
+
+local function findNextLevel(toLevel)
+  local class, race, faction = player()
+  return NextLevel.Find(db.trainers, class, race, faction, toLevel, charDB.hidden)
+end
+
+-- The hidden list changed: keep the top edge and refill; the fill finds the
+-- next-level line again and marks the reused skill list from the new names.
+function Window.RefreshHidden()
+  if current and not filling then
+    nextStale = true
+    pinTop()
+    fill(current)
+  end
+end
+
+-- A dismiss or restore click hides a skill (every rank) or brings it back.
+local function onDismiss(name)
+  if current and not filling then
+    charDB.hidden[name] = charDB.hidden[name] ~= true and true or nil
+    Window.RefreshHidden()
+  end
+end
+
+-- Show hidden skills: the list empties even while the window is closed.
+function Window.ShowHidden()
+  _G.wipe(charDB.hidden)
+  Window.RefreshHidden()
 end
 
 local function applyAnchor()
@@ -158,7 +198,7 @@ local function build()
   buildHeader()
   buildView()
   GainLines.Build(content)
-  SkillFill.Build(content, onToggle, db.foldedGroups, onFold)
+  SkillFill.Build(content, onToggle, db.foldedGroups, onFold, onDismiss)
 end
 
 local function isRankWaiting(spellID)
@@ -171,12 +211,15 @@ end
 
 local function fillSkills(record, gainCount)
   if not skillEntries then
-    local class = select(2, _G.UnitClass("player"))
-    local race = select(2, _G.UnitRace("player"))
-    local faction = _G.UnitFactionGroup("player")
+    local class, race, faction = player()
     skillEntries, skillHint = SkillList.Build(db.trainers, class, race, faction, record.fromLevel, record.toLevel, isRankWaiting)
-    nextLevel, nextEntries = NextLevel.Find(db.trainers, class, race, faction, record.toLevel)
+    nextStale = true
   end
+  if nextStale then
+    nextLevel, nextEntries = findNextLevel(record.toLevel)
+    nextStale = false
+  end
+  HiddenSkills.Mark(skillEntries, charDB.hidden)
   SkillFill.Fill(skillEntries, skillHint, nextLevel, nextEntries, gainCount)
 end
 
@@ -228,8 +271,10 @@ function fill(record)
   end)
 end
 
-function Window.Install(savedDB)
+function Window.Install(savedDB, savedCharDB)
+  assert(type(savedCharDB) == "table", "Window.Install: charDB")
   db = savedDB
+  charDB = savedCharDB
 end
 
 function Window.Current()
@@ -268,7 +313,6 @@ function Window.Show(record)
   AutoHide.Pause()
   current = record
   skillEntries = nil
-  nextLevel, nextEntries = nil, nil
   _G.wipe(waitingRanks)
   SkillGroup.Collapse()
   -- Scale first: the fill caps the height with it.
@@ -291,7 +335,6 @@ function Window.Refresh(spellID)
     waitingRanks[spellID] = nil
     if next(waitingRanks) == nil then
       skillEntries = nil
-      nextLevel, nextEntries = nil, nil
       fill(current)
     end
   elseif spellID == nil or stale then

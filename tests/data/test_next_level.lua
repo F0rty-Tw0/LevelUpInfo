@@ -71,10 +71,6 @@ local function find(trainers, toLevel)
   return NextLevel.Find(trainers, "PRIEST", "Scourge", "Horde", toLevel)
 end
 
-local function findHidden(trainers, toLevel, hidden)
-  return NextLevel.Find(trainers, "PRIEST", "Scourge", "Horde", toLevel, hidden)
-end
-
 -- Wraps SkillList.Build with a call counter.
 local function countBuilds()
   local counter = { count = 0 }
@@ -256,63 +252,6 @@ local function test_another_class_without_built_in_data_gives_nil()
   Assert.equal(NextLevel.Find({}, "WARRIOR", "Orc", "Horde", 12), nil)
 end
 
--- Level 11 holds only Mind Blast.
-local function test_a_level_whose_only_skill_is_hidden_is_skipped()
-  setup()
-  local trainers = priest({ Scourge = 14 }, {
-    [11] = { [8092] = spell({ Scourge = true }) },
-    [13] = { [588] = spell({ Scourge = true }) },
-  })
-  Assert.equal((findHidden(trainers, 10, nil)), 11)
-  local level, entries = findHidden(trainers, 10, { ["Mind Blast"] = true })
-  Assert.equal(level, 13)
-  Assert.equal(ids(entries), "588")
-end
-
-local function test_only_the_hidden_entries_of_a_level_are_dropped_in_build_order()
-  setup()
-  local trainers = priest({ Scourge = 14 }, {
-    [14] = { [588] = spell({ Scourge = true }), [FADE] = spell({ Scourge = true }), [2652] = spell({ Scourge = true }) },
-  })
-  local _, all = findHidden(trainers, 10, {})
-  Assert.equal(ids(all), "586,588,2652")
-  local level, entries = findHidden(trainers, 10, { ["Inner Fire"] = true })
-  Assert.equal(level, 14)
-  Assert.equal(ids(entries), "586,2652")
-end
-
--- The key is the name, so a rank 2 of a hidden skill is dropped too.
-local function test_a_hidden_name_drops_every_rank_of_that_skill()
-  setup()
-  local trainers = priest({ Scourge = 14 }, {
-    [12] = { [139] = spell({ Scourge = true }, 100, "Rank 2") },
-    [14] = { [FADE] = spell({ Scourge = true }) },
-  })
-  Assert.equal((findHidden(trainers, 10, nil)), 12)
-  local level, entries = findHidden(trainers, 10, { Renew = true })
-  Assert.equal(level, 14)
-  Assert.equal(ids(entries), "586")
-end
-
-local function test_everything_above_hidden_gives_nil()
-  setup()
-  local trainers = priest({ Scourge = 14 }, {
-    [11] = { [8092] = spell({ Scourge = true }) },
-    [14] = { [FADE] = spell({ Scourge = true }) },
-  })
-  local level, entries = findHidden(trainers, 10, { ["Mind Blast"] = true, Fade = true })
-  Assert.equal(level, nil)
-  Assert.equal(entries, nil)
-end
-
-local function test_a_hidden_name_that_matches_nothing_changes_nothing()
-  setup()
-  local trainers = priest({ Scourge = 14 }, { [11] = { [8092] = spell({ Scourge = true }) } })
-  local level, entries = findHidden(trainers, 10, { Smite = true, ["Mind Blast"] = false })
-  Assert.equal(level, 11)
-  Assert.equal(ids(entries), "8092")
-end
-
 return function()
   test_fresh_priest_gets_the_next_built_in_level()
   test_top_level_is_the_larger_of_live_and_built_in()
@@ -328,9 +267,4 @@ return function()
   test_missed_entries_below_the_level_are_not_returned()
   test_no_class_data_gives_nil()
   test_nothing_cached_above_gives_nil()
-  test_a_level_whose_only_skill_is_hidden_is_skipped()
-  test_only_the_hidden_entries_of_a_level_are_dropped_in_build_order()
-  test_a_hidden_name_drops_every_rank_of_that_skill()
-  test_everything_above_hidden_gives_nil()
-  test_a_hidden_name_that_matches_nothing_changes_nothing()
 end

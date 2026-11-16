@@ -29,7 +29,8 @@ end
 local function ownEntriesAt(entries, level, hidden)
   local found = {}
   for _, entry in ipairs(entries) do
-    if entry.level == level and entry.source == nil and not (hidden and hidden[entry.name] == true) then
+    local isHidden = hidden ~= nil and hidden[entry.name] == true
+    if entry.level == level and entry.source == nil and not isHidden then
       found[#found + 1] = entry
     end
   end

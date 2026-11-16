@@ -67,13 +67,24 @@ local function test_only_the_value_true_counts()
   Assert.equal(flags(list), "false,false,false")
 end
 
-local function test_mark_returns_nothing_and_leaves_the_list_order_and_the_table_alone()
+local function test_mark_returns_nothing()
+  setup()
+  Assert.equal(select("#", HiddenSkills.Mark(entries(), { Renew = true })), 0)
+end
+
+local function test_mark_keeps_the_list_order()
   setup()
   local list = entries()
-  local hidden = { Renew = true }
-  Assert.equal(select("#", HiddenSkills.Mark(list, hidden)), 0)
+  HiddenSkills.Mark(list, { Renew = true })
   Assert.equal(list[1].name .. "," .. list[2].name .. "," .. list[3].name, "Renew,Mind Flay,Smite")
+end
+
+local function test_mark_leaves_the_hidden_table_alone()
+  setup()
+  local hidden = { Renew = true }
+  HiddenSkills.Mark(entries(), hidden)
   Assert.equal(next(hidden), "Renew")
+  Assert.equal(next(hidden, "Renew"), nil)
   Assert.equal(hidden.Renew, true)
 end
 
@@ -84,5 +95,7 @@ return function()
   test_a_name_not_in_the_table_is_false_not_nil()
   test_an_empty_table_and_an_empty_list_are_fine()
   test_only_the_value_true_counts()
-  test_mark_returns_nothing_and_leaves_the_list_order_and_the_table_alone()
+  test_mark_returns_nothing()
+  test_mark_keeps_the_list_order()
+  test_mark_leaves_the_hidden_table_alone()
 end

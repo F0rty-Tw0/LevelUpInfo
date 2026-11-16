@@ -21,6 +21,16 @@ local SOURCE_WIDTH = 190
 local SOURCE_GAP = 2
 local ICON_TOP = (ROW_HEIGHT - ICON_SIZE) / 2
 local CHANGE_LINE_HEIGHT = 12
+local DISMISS_SIZE = 16
+local EYE_CROSSED = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeCrossed.tga"
+local EYE_OPEN = "Interface\\AddOns\\LevelUpInfo\\Media\\EyeOpen.tga"
+-- Hover only on shown rows (user decision, 2026-11-15): the button is
+-- invisible until its row is hovered, dim over the row, bright over the button
+-- itself. A hidden row's Show button is always there, faint until hovered.
+local DISMISS_HIDDEN_ALPHA = 0
+local DISMISS_FAINT_ALPHA = 0.3
+local DISMISS_REST_ALPHA = 0.6
+local DISMISS_HOVER_ALPHA = 1
 local NO_LINES = {}
 local sourceLines = {}
 
@@ -28,12 +38,23 @@ local sourceLines = {}
 -- own frame; Blizzard frames are never touched.
 local SkillRow = {}
 
+-- The button's alpha with the mouse away from its row.
+local function awayAlpha(row)
+  return row.hidden and DISMISS_FAINT_ALPHA or DISMISS_HIDDEN_ALPHA
+end
+
+-- Moving onto the button leaves the row while the mouse is still inside it.
+local function restAlpha(row)
+  return row:IsMouseOver() and DISMISS_REST_ALPHA or awayAlpha(row)
+end
+
 local function onEnter(row)
   if row.spellID then
     _G.GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
     _G.GameTooltip:SetSpellByID(row.spellID)
     _G.GameTooltip:Show()
   end
+  row.dismiss:SetAlpha(DISMISS_REST_ALPHA)
   row.onEnter()
 end
 
@@ -41,6 +62,7 @@ local function onLeave(row)
   if row.spellID then
     _G.GameTooltip:Hide()
   end
+  row.dismiss:SetAlpha(restAlpha(row))
   row.onLeave()
 end
 
@@ -79,7 +101,38 @@ local function newChangeLine(row, i)
   return line
 end
 
-function SkillRow.Create(parent, enterFn, leaveFn)
+-- The hide / show button at the row's top right (a crossed eye on a shown row,
+-- an open eye on a hidden one): a plain Button (no template, no events). Hovering it brightens it, shows a tooltip and pauses
+-- like the row; a click hands the row's current skill name to dismissFn. The
+-- tooltip text reads row.hidden at hover time, so a reused row follows its
+-- new entry.
+local function newDismiss(row, dismissFn)
+  local dismiss = _G.CreateFrame("Button", nil, row)
+  dismiss:SetSize(DISMISS_SIZE, DISMISS_SIZE)
+  dismiss:SetPoint("TOPRIGHT", row, "TOPRIGHT", -PAD, -PAD)
+  dismiss:SetAlpha(DISMISS_HIDDEN_ALPHA)
+  dismiss.texture = dismiss:CreateTexture()
+  dismiss.texture:SetAllPoints()
+  dismiss:SetScript("OnClick", function()
+    dismissFn(row.skillName)
+  end)
+  dismiss:SetScript("OnEnter", function()
+    local tooltipText = row.hidden and Text("Show") or Text("Hide")
+    _G.GameTooltip:SetOwner(dismiss, "ANCHOR_RIGHT")
+    _G.GameTooltip:SetText(tooltipText)
+    _G.GameTooltip:Show()
+    dismiss:SetAlpha(DISMISS_HOVER_ALPHA)
+    row.onEnter()
+  end)
+  dismiss:SetScript("OnLeave", function()
+    _G.GameTooltip:Hide()
+    dismiss:SetAlpha(restAlpha(row))
+    row.onLeave()
+  end)
+  return dismiss
+end
+
+function SkillRow.Create(parent, enterFn, leaveFn, dismissFn)
   local row = _G.CreateFrame("Button", nil, parent)
   row:SetSize(ROW_WIDTH, ROW_HEIGHT)
   row.onEnter, row.onLeave = enterFn, leaveFn
@@ -98,6 +151,7 @@ function SkillRow.Create(parent, enterFn, leaveFn)
   row.price:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -PAD, PAD)
   row.price:SetJustifyH("RIGHT")
   row.changeLines = {}
+  row.dismiss = newDismiss(row, dismissFn)
   row:SetScript("OnEnter", onEnter)
   row:SetScript("OnLeave", onLeave)
   return row
@@ -122,6 +176,12 @@ end
 function SkillRow.SetSkill(row, entry, money)
   SkillRow.SetChanges(row, entry.source and sourceText(entry.source) or NO_LINES)
   row.spellID = entry.spellID
+  row.skillName = entry.name
+  row.hidden = entry.hidden == true
+  row.dismiss.texture:SetTexture(row.hidden and EYE_OPEN or EYE_CROSSED)
+  row.dismiss:SetShown(entry.name ~= "")
+  -- Not restAlpha: a row pooled while hovered got no OnLeave.
+  row.dismiss:SetAlpha(awayAlpha(row))
   row.icon:SetTexture(entry.icon)
   row.name:SetWidth(0)
   row.name:SetText(entry.name)
@@ -138,6 +198,8 @@ end
 function SkillRow.SetHint(row)
   SkillRow.SetChanges(row, NO_LINES)
   row.spellID = nil
+  row.skillName = nil
+  row.dismiss:SetShown(false)
   row.icon:SetTexture(HINT_ICON)
   row.name:SetWidth(HINT_WIDTH)
   row.name:SetText(Text("Visit your class trainer to see all new skills."))

@@ -54,7 +54,7 @@ local function setup()
   end
   ns = { OtherSources = {} }
   Window = WindowHelper.load(ns)
-  Window.Install(db)
+  Window.Install(db, WindowHelper.charDB())
   ns.SpellFacts.Install(Window.Refresh)
 end
 

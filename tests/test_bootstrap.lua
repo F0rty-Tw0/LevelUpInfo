@@ -315,7 +315,26 @@ local function test_window_clicks_flip_the_saved_fold_table_in_place()
   slashTest()
   Assert.equal(_G.LevelUpInfoDB.foldedGroups.missed, true)
   W.fireScript(foldButton(), "OnClick")
-  Assert.equal(_G.LevelUpInfoDB.foldedGroups.missed, nil)
+  Assert.equal(_G.LevelUpInfoDB.foldedGroups.missed, false)
+end
+
+-- The shown skill row named `name`.
+local function rowOf(name)
+  for _, frame in ipairs(W.frames) do
+    if frame.skillName == name and frame:IsShown() then
+      return frame
+    end
+  end
+end
+
+local function test_dismiss_click_writes_to_the_saved_character_table()
+  local missed = { cost = 50, rank = "Rank 1", races = { Scourge = true } }
+  setup({
+    trainers = { PRIEST = { covered = { Scourge = 10 }, levels = { [5] = { [139] = missed } } } },
+  })
+  slashTest()
+  W.fireScript(rowOf("Renew").dismiss, "OnClick")
+  Assert.equal(_G.LevelUpInfoCharDB.hidden.Renew, true)
 end
 
 local function test_toc_declares_the_per_character_saved_variable()
@@ -413,18 +432,31 @@ local function test_slash_test_does_not_change_what_the_button_shows()
   Assert.equal(ns.Window.Current(), last)
 end
 
+local function test_options_show_hidden_button_empties_the_saved_hidden_list_without_building_the_window()
+  setup(nil, { char = { hidden = { Smite = true, Renew = true } } })
+  local hidden = _G.LevelUpInfoCharDB.hidden
+  Assert.equal(hidden.Smite, true)
+  openPanel()
+  clickButton("Show hidden skills")
+  Assert.equal(_G.LevelUpInfoCharDB.hidden, hidden)
+  Assert.equal(next(hidden), nil)
+  Assert.equal(ns.Window.Frame(), nil)
+end
+
 return function()
   test_saved_last_level_up_shows_with_its_gains_after_login()
   test_options_button_shows_the_last_level_up()
   test_saved_last_level_up_of_an_older_level_shows_skills_only()
   test_fresh_character_shows_skills_only()
   test_slash_test_does_not_change_what_the_button_shows()
+  test_options_show_hidden_button_empties_the_saved_hidden_list_without_building_the_window()
   test_toc_declares_the_per_character_saved_variable()
   test_addon_loaded_writes_the_normalized_char_db()
   test_missing_char_db_becomes_an_empty_table()
   test_ding_saves_the_record_in_the_global_char_db()
   test_saved_fold_flags_reach_the_db_and_garbage_gives_an_empty_table()
   test_window_clicks_flip_the_saved_fold_table_in_place()
+  test_dismiss_click_writes_to_the_saved_character_table()
   test_only_the_event_frame_exists_before_addon_loaded()
   test_other_addons_loading_are_ignored()
   test_addon_loaded_normalizes_db_and_unregisters_itself()

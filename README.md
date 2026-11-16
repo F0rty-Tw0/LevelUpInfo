@@ -24,7 +24,8 @@ A small window in Blizzard's own trainer style opens when you level up:
 - **Gains.** One line per stat that changed, each stat name in its own color, shown as old value, a green up arrow, then the new value (for example `Stamina 25 ▲ 26`). Talent points show as `▲ +1 Talent points`.
 - **Skills.** New class skills for your level under **New skills**, new ranks of skills you already have under **New ranks**. Each row shows the icon, name, rank and price. The price turns red when you cannot afford it. Hover a row for the spell tooltip. Each group's heading shows the total price of the group when it lists two or more priced skills.
 - **What changed.** A new rank lists what changed from the rank before it, like patch notes: for example `Healing: 47-58 → 76-91` or `Mana cost: 30 → 45`. Missed ranks under **Not yet learned** show it too.
-- **Long lists.** **Not yet learned** and **Weapon skills** show their first 4 rows; click `+N more` to scroll through the rest right in the window, and `Show less` to shrink it back. Click the **Not yet learned** or **Weapon skills** heading to fold the whole group, and it stays folded on your next level-up.
+- **Long lists.** **Not yet learned** and **Weapon skills** show their first 4 rows; click `+N more` to scroll through the rest right in the window, and `Show less` to shrink it back. Click the **Not yet learned**, **Weapon skills** or **Hidden** heading to fold the whole group, and it stays folded on your next level-up.
+- **Hide skills you don't want.** Hover a skill row and click the crossed eye to hide it, all its ranks, for that character. Hidden skills wait in a folded **Hidden** group at the bottom, with their total price; a faint eye always shows there, click it to bring one back, or press **Show hidden skills** in the options to bring them all back.
 - **Learning from trainers.** The addon learns skills and prices from class trainers you visit. Until your race has visited its trainer for the new level, the window adds a line telling you to visit your class trainer. Priests come with the class trainer's list built in, so the line asking for a trainer visit shows for other classes only.
 - **Next level.** The last line of the window peeks ahead: for example `Next at 14: Fade (Rank 1), Renew (Rank 2)` names what the trainer will teach you at the next level that has something new, from the class trainers you have visited (for priests, also from the built-in list).
 
@@ -46,6 +47,7 @@ Open them with `/lui` or under Options, AddOns, Level Up Info.
 | Clear skill data | Forget the skills learned from trainers | |
 | Test | Close the options and show a preview of the window | |
 | Show last level-up | Bring back the window from your last level-up | |
+| Show hidden skills | Bring back every skill you hid | |
 
 ## Commands
 

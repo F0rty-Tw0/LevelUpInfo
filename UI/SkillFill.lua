@@ -30,15 +30,19 @@ local ROW_GAP = 4
 local TEXT_LEFT = 4
 local GROUP_CAP = 4
 local NO_LINES = {}
+local HIDDEN = "hidden"
 
 -- Skill groups in display order; a capped group shows its first `cap` rows
 -- and a `+N more` toggle, or, expanded, all rows in a scroll box. A `fold`
--- group has a button that hides its rows behind a count in the heading.
+-- group has a button that hides its rows behind a count in the heading;
+-- `startFolded` folds it until the player opens it. Hidden holds every hidden
+-- entry, whatever its own group.
 local GROUPS = {
   { group = "skill", title = "New skills", cap = GROUP_CAP, more = "+%d more new skills" },
   { group = "rank", title = "New ranks", cap = GROUP_CAP, more = "+%d more new ranks" },
   { group = "missed", title = "Not yet learned", cap = GROUP_CAP, fold = true, more = "+%d more not yet learned" },
   { group = "weapon", title = "Weapon skills", cap = GROUP_CAP, fold = true, more = "+%d more weapon skills" },
+  { group = HIDDEN, title = "Hidden", cap = GROUP_CAP, fold = true, startFolded = true, more = "+%d more hidden" },
 }
 
 -- The window's skill area: group headings, skill rows, the hint row and the
@@ -54,13 +58,14 @@ local rowsUsed
 local rowEntries = {} -- entry shown in rows[i], read only when rowLines[i]
 local rowLines = {} -- whether rows[i] shows change lines
 local boxFirstRow = {} -- group → index in `rows` of its expanded box's first row
+local dismissFn -- the window's dismiss/restore click: called with the row's skill name
 
 -- A reused row that sat in another container (content or a box) moves over.
 local function nextRow(parent)
   rowsUsed = rowsUsed + 1
   local row = rows[rowsUsed]
   if not row then
-    row = SkillRow.Create(parent, AutoHide.Pause, AutoHide.Resume)
+    row = SkillRow.Create(parent, AutoHide.Pause, AutoHide.Resume, dismissFn)
     rows[rowsUsed] = row
   elseif row:GetParent() ~= parent then
     row:SetParent(parent)
@@ -71,7 +76,8 @@ end
 local function addRow(entry, money, parent)
   local row = nextRow(parent)
   SkillRow.SetSkill(row, entry, money)
-  local lines = entry.previousSpellID ~= nil
+  -- A hidden row shows no change lines, so it requests no spell text.
+  local lines = entry.previousSpellID ~= nil and entry.hidden ~= true
   rowLines[rowsUsed] = lines
   if lines then
     rowEntries[rowsUsed] = entry
@@ -123,17 +129,40 @@ local function addHeading(spec, gap, expanded, total, money)
   return child
 end
 
+-- A hidden entry sits only in the Hidden group; the others in their own.
+local function belongs(spec, entry)
+  if spec.group == HIDDEN then
+    return entry.hidden == true
+  end
+  return entry.group == spec.group and entry.hidden ~= true
+end
+
+local function countIn(spec, entries)
+  local count = 0
+  for _, entry in ipairs(entries) do
+    if belongs(spec, entry) then
+      count = count + 1
+    end
+  end
+  return count
+end
+
 -- `gap` goes above the heading when the group has rows; returns the row count
--- (a folded group counts its hidden rows, so the next block's gap stays).
+-- (a folded group counts its folded-away rows, so the next block's gap stays).
+-- An expanded group a dismiss click shrank to its cap is collapsed for good: no
+-- box, no toggle, and it does not come back expanded when entries return.
 local function fillGroup(spec, entries, money, gap)
   local group = spec.group
+  if spec.cap and SkillGroup.IsExpanded(group) and countIn(spec, entries) <= spec.cap then
+    SkillGroup.CollapseOne(group)
+  end
   local expanded = SkillGroup.IsExpanded(group)
   local folded = SkillGroup.IsFolded(group)
   local parent = content
   local count = 0
   local total = SkillList.GroupTotal(entries, group)
   for _, entry in ipairs(entries) do
-    if entry.group == group then
+    if belongs(spec, entry) then
       count = count + 1
       if count == 1 then
         parent = addHeading(spec, gap, expanded, total, money)
@@ -162,9 +191,11 @@ local function fillGroup(spec, entries, money, gap)
 end
 
 -- Makes the group headings and the group widgets on `parent`, the window's
--- content frame, which every later call fills.
-function SkillFill.Build(parent, onToggle, foldedGroups, onFold)
+-- content frame, which every later call fills. `onDismiss(name)` runs on a
+-- row's dismiss or restore click.
+function SkillFill.Build(parent, onToggle, foldedGroups, onFold, onDismiss)
   content = parent
+  dismissFn = onDismiss
   for _, spec in ipairs(GROUPS) do
     headings[spec.group] = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
   end

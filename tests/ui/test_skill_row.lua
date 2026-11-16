@@ -37,7 +37,7 @@ local function newRow()
     log[#log + 1] = "enter:" .. #W.tooltip
   end, function()
     log[#log + 1] = "leave:" .. #W.tooltip
-  end)
+  end, function() end)
 end
 
 local function test_row_uses_trainer_texture_with_exact_tex_coords()
