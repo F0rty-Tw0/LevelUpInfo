@@ -26,10 +26,10 @@ local function highestLevel(levels)
 end
 
 -- Trainer-cache entries first listed at `level`: quest and weapon rows carry a source.
-local function ownEntriesAt(entries, level)
+local function ownEntriesAt(entries, level, hidden)
   local found = {}
   for _, entry in ipairs(entries) do
-    if entry.level == level and entry.source == nil then
+    if entry.level == level and entry.source == nil and not (hidden and hidden[entry.name] == true) then
       found[#found + 1] = entry
     end
   end
@@ -38,14 +38,16 @@ end
 
 -- The lowest level above toLevel, in the trainer cache or the built-in table,
 -- with a skill the trainer would sell you there, and those skills in the
--- skill list's order; nil when none.
-function NextLevel.Find(trainers, class, race, faction, toLevel)
+-- skill list's order; nil when none. Entries whose name is a key of `hidden`
+-- (value true) are dropped first, so a level of only hidden skills is skipped;
+-- hidden nil means no filter.
+function NextLevel.Find(trainers, class, race, faction, toLevel, hidden)
   local live = trainers[class]
   local liveLevels = live and live.levels or EMPTY
   local builtinLevels = BuiltinSpells[class] or EMPTY
   for level = toLevel + 1, max(highestLevel(liveLevels), BuiltinSpells.MaxLevel(class)) do
     if liveLevels[level] ~= nil or builtinLevels[level] ~= nil then
-      local found = ownEntriesAt(SkillList.Build(trainers, class, race, faction, level - 1, level), level)
+      local found = ownEntriesAt(SkillList.Build(trainers, class, race, faction, level - 1, level), level, hidden)
       if #found > 0 then
         return level, found
       end

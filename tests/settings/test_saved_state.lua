@@ -125,14 +125,32 @@ local function test_folded_groups_default_to_empty()
   Assert.equal(next(SavedState.Initialize({ foldedGroups = "weapon" }).foldedGroups), nil)
 end
 
-local function test_folded_groups_keep_only_true_string_keys()
+local function test_folded_groups_keep_string_keys_with_boolean_values()
   local folded = SavedState.Initialize({
-    foldedGroups = { weapon = true, missed = 1, skill = false, [3] = true },
+    foldedGroups = { weapon = true, skill = false, missed = 1, rank = "yes", [3] = true, [4] = false },
   }).foldedGroups
   Assert.equal(folded.weapon, true)
+  Assert.equal(folded.skill, false)
   Assert.equal(folded.missed, nil)
-  Assert.equal(folded.skill, nil)
+  Assert.equal(folded.rank, nil)
   Assert.equal(folded[3], nil)
+  Assert.equal(folded[4], nil)
+end
+
+-- A save from before Hidden existed has only `true` flags.
+local function test_old_fold_flags_leave_the_hidden_group_unset()
+  local folded = SavedState.Initialize({ foldedGroups = { missed = true } }).foldedGroups
+  Assert.equal(folded.missed, true)
+  Assert.equal(folded.weapon, nil)
+  Assert.equal(folded.hidden, nil)
+end
+
+local function test_unknown_group_names_stay_and_the_result_is_a_fresh_table()
+  local saved = { foldedGroups = { future = false } }
+  local folded = SavedState.Initialize(saved).foldedGroups
+  Assert.equal(folded.future, false)
+  Assert.equal(folded == saved.foldedGroups, false)
+  Assert.equal(next(SavedState.Initialize({ foldedGroups = 5 }).foldedGroups), nil)
 end
 
 local GAIN_KEYS = { "health", "power", "talents", "strength", "agility", "stamina", "intellect", "spirit" }
@@ -174,18 +192,56 @@ local function test_bad_levels_drop_the_last_level_up()
     { toLevel = math.huge },
     { fromLevel = false },
   }) do
-    Assert.equal(next(SavedState.InitializeCharacter(lastWith(fields))), nil)
+    Assert.equal(SavedState.InitializeCharacter(lastWith(fields)).last, nil)
   end
 end
 
-local function test_non_table_input_gives_an_empty_table()
-  for _, saved in ipairs({ "x", 5, true }) do
-    Assert.equal(next(SavedState.InitializeCharacter(saved)), nil)
+local function test_non_table_input_gives_no_last_level_up_and_no_hidden_names()
+  for _, saved in ipairs({ "x", 5, true, { last = "x" }, { last = 5 }, {} }) do
+    local charDB = SavedState.InitializeCharacter(saved)
+    Assert.equal(charDB.last, nil)
+    Assert.equal(next(charDB.hidden), nil)
   end
-  Assert.equal(next(SavedState.InitializeCharacter(nil)), nil)
-  Assert.equal(next(SavedState.InitializeCharacter({ last = "x" })), nil)
-  Assert.equal(next(SavedState.InitializeCharacter({ last = 5 })), nil)
-  Assert.equal(next(SavedState.InitializeCharacter({})), nil)
+  local fromNil = SavedState.InitializeCharacter(nil)
+  Assert.equal(fromNil.last, nil)
+  Assert.equal(next(fromNil.hidden), nil)
+end
+
+local function test_hidden_keeps_non_empty_string_keys_with_true()
+  local hidden = SavedState.InitializeCharacter({
+    hidden = { ["Mind Flay"] = true, Renew = false, Smite = 1, Fade = "yes", [3] = true, [""] = true },
+  }).hidden
+  Assert.equal(hidden["Mind Flay"], true)
+  Assert.equal(hidden.Renew, nil)
+  Assert.equal(hidden.Smite, nil)
+  Assert.equal(hidden.Fade, nil)
+  Assert.equal(hidden[3], nil)
+  Assert.equal(hidden[""], nil)
+end
+
+local function test_missing_or_bad_hidden_gives_an_empty_table()
+  for _, saved in ipairs({ {}, { hidden = "x" }, { hidden = 5 }, { hidden = true } }) do
+    local hidden = SavedState.InitializeCharacter(saved).hidden
+    Assert.equal(type(hidden), "table")
+    Assert.equal(next(hidden), nil)
+  end
+end
+
+-- A save from before this feature: only `last`.
+local function test_old_save_with_only_last_gets_an_empty_hidden_list_and_keeps_last()
+  local charDB = SavedState.InitializeCharacter(lastWith({}))
+  Assert.equal(charDB.last.toLevel, 10)
+  Assert.equal(charDB.last.gains.health, 15)
+  Assert.equal(next(charDB.hidden), nil)
+end
+
+local function test_hidden_and_last_are_kept_together_and_share_no_table_with_the_input()
+  local saved = lastWith({})
+  saved.hidden = { ["Mind Flay"] = true }
+  local charDB = SavedState.InitializeCharacter(saved)
+  Assert.equal(charDB.hidden["Mind Flay"], true)
+  Assert.equal(charDB.last.toLevel, 10)
+  Assert.equal(charDB.hidden == saved.hidden, false)
 end
 
 local function test_bad_gains_become_zero()
@@ -250,10 +306,16 @@ return function()
   test_entry_without_any_valid_race_is_dropped()
   test_unknown_keys_are_dropped_at_every_level()
   test_folded_groups_default_to_empty()
-  test_folded_groups_keep_only_true_string_keys()
+  test_folded_groups_keep_string_keys_with_boolean_values()
+  test_old_fold_flags_leave_the_hidden_group_unset()
+  test_unknown_group_names_stay_and_the_result_is_a_fresh_table()
   test_valid_last_level_up_is_kept()
   test_bad_levels_drop_the_last_level_up()
-  test_non_table_input_gives_an_empty_table()
+  test_non_table_input_gives_no_last_level_up_and_no_hidden_names()
+  test_hidden_keeps_non_empty_string_keys_with_true()
+  test_missing_or_bad_hidden_gives_an_empty_table()
+  test_old_save_with_only_last_gets_an_empty_hidden_list_and_keeps_last()
+  test_hidden_and_last_are_kept_together_and_share_no_table_with_the_input()
   test_bad_gains_become_zero()
   test_before_keeps_only_number_values_of_known_keys()
   test_unknown_keys_are_dropped_at_every_level_of_the_last_level_up()

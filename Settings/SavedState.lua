@@ -93,6 +93,27 @@ local function cleanFlags(flags)
   return next(clean) and clean or nil
 end
 
+-- Fold flags: string keys with a boolean value (true folded, false open); always a table.
+local function cleanFolded(flags)
+  local clean = {}
+  if type(flags) ~= "table" then
+    return clean
+  end
+  for key, value in pairs(flags) do
+    if type(key) == "string" and type(value) == "boolean" then
+      clean[key] = value
+    end
+  end
+  return clean
+end
+
+-- Hidden skill names: string keys with value true, never empty; always a fresh table.
+local function cleanHidden(hidden)
+  local clean = cleanFlags(hidden) or {}
+  clean[""] = nil
+  return clean
+end
+
 local function cleanEntry(entry)
   if type(entry) ~= "table" or not isNumber(entry.cost) or type(entry.rank) ~= "string" then
     return nil
@@ -198,9 +219,10 @@ local function cleanLast(last)
   }
 end
 
--- Per-character data: only the last real level-up record.
+-- Per-character data: the last real level-up record and the hidden skill names.
 function SavedState.InitializeCharacter(saved)
-  return { last = cleanLast(type(saved) == "table" and saved.last or nil) }
+  saved = type(saved) == "table" and saved or {}
+  return { last = cleanLast(saved.last), hidden = cleanHidden(saved.hidden) }
 end
 
 function SavedState.Initialize(saved)
@@ -209,7 +231,7 @@ function SavedState.Initialize(saved)
     position = normalizePosition(saved.position),
     minimapAngle = normalizeAngle(saved.minimapAngle),
     trainers = cleanTrainers(saved.trainers),
-    foldedGroups = cleanFlags(saved.foldedGroups) or {},
+    foldedGroups = cleanFolded(saved.foldedGroups),
   }
   for _, setting in ipairs(Defaults.list) do
     db[setting.key] = normalizeSetting(saved[setting.key], setting)
