@@ -9,6 +9,7 @@ local Text = Localization.Text
 local format = string.format
 local ipairs = ipairs
 local max = math.max
+local floor = math.floor
 
 local TRAINER_TEXTURES = "Interface\\ClassTrainerFrame\\TrainerTextures"
 local HINT_ICON = "Interface\\Icons\\INV_Misc_Book_09"
@@ -17,7 +18,9 @@ local ROW_HEIGHT = 47
 local ICON_SIZE = 36
 local PAD = 6
 local HINT_WIDTH = 230
-local SOURCE_WIDTH = 190
+-- Change lines run from the name's left edge to the row's right padding.
+local LINE_WIDTH = ROW_WIDTH - (PAD + ICON_SIZE + PAD) - PAD
+local PRICE_GAP = 6
 local SOURCE_GAP = 2
 local ICON_TOP = (ROW_HEIGHT - ICON_SIZE) / 2
 local CHANGE_LINE_HEIGHT = 12
@@ -89,16 +92,25 @@ local function sourceText(source)
   return sourceLines
 end
 
--- Change line i sits under the name; lines are spaced by exactly the row's
--- growth per line, so the price (anchored BOTTOMRIGHT) lines up with the last.
 local function newChangeLine(row, i)
   local line = row:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
-  line:SetPoint("TOPLEFT", row.name, "BOTTOMLEFT", 0, -(SOURCE_GAP + (i - 1) * CHANGE_LINE_HEIGHT))
-  line:SetSize(SOURCE_WIDTH, CHANGE_LINE_HEIGHT)
   line:SetJustifyH("LEFT")
-  line:SetWordWrap(false)
+  line:SetWordWrap(true)
   row.changeLines[i] = line
   return line
+end
+
+-- Sets one change line's text at slot `slot` under the name and returns how
+-- many 12 px slots it fills once wrapped. Slots are spaced by exactly the row's
+-- growth per slot, so the price (anchored BOTTOMRIGHT) lines up with the last.
+local function placeLine(line, text, slot, width)
+  line:ClearAllPoints()
+  line:SetPoint("TOPLEFT", line:GetParent().name, "BOTTOMLEFT", 0, -(SOURCE_GAP + slot * CHANGE_LINE_HEIGHT))
+  line:SetWidth(width)
+  line:SetText(text)
+  line:Show()
+  local _, fontSize = line:GetFont()
+  return max(1, floor(line:GetStringHeight() / fontSize + 0.5))
 end
 
 -- The hide / show button at the row's top right (a crossed eye on a shown row,
@@ -158,24 +170,29 @@ function SkillRow.Create(parent, enterFn, leaveFn, dismissFn)
 end
 
 -- Shows one line per text (font strings created only past the row's highest
--- count so far), hides the rest and grows the row downward. Returns its height.
+-- count so far), hides the rest and grows the row downward. A line too long
+-- for its width wraps instead of cutting off; the last line stops short of
+-- the price, so the price must be set first. Returns the row's height.
 function SkillRow.SetChanges(row, lines)
+  local slots = 0
   for i, text in ipairs(lines) do
     local line = row.changeLines[i] or newChangeLine(row, i)
-    line:SetText(text)
-    line:Show()
+    local width = LINE_WIDTH
+    if i == #lines then
+      width = LINE_WIDTH - row.price:GetStringWidth() - PRICE_GAP
+    end
+    slots = slots + placeLine(line, text, slots, width)
   end
   for i = #lines + 1, #row.changeLines do
     row.changeLines[i]:Hide()
   end
-  local height = ROW_HEIGHT + max(0, #lines - 1) * CHANGE_LINE_HEIGHT
+  local height = ROW_HEIGHT + max(0, slots - 1) * CHANGE_LINE_HEIGHT
   row:SetHeight(height)
   return height
 end
 
 -- noDismiss true: the row has no hide eye (rows nobody can hide).
 function SkillRow.SetSkill(row, entry, money, noDismiss)
-  SkillRow.SetChanges(row, entry.source and sourceText(entry.source) or NO_LINES)
   row.spellID = entry.spellID
   row.skillName = entry.name
   row.hidden = entry.hidden == true
@@ -194,6 +211,7 @@ function SkillRow.SetSkill(row, entry, money, noDismiss)
   else
     row.price:SetText("")
   end
+  SkillRow.SetChanges(row, entry.source and sourceText(entry.source) or NO_LINES)
 end
 
 function SkillRow.SetHint(row)
