@@ -220,6 +220,22 @@ local function newWidget(W, frameType, name, parent, template)
   function widget:SetWordWrap(wrap)
     stub.wordWrap = wrap
   end
+  -- Text measure: every character is W.charWidth px wide (0 by default, so
+  -- text never wraps unless a test sets it), a line is W.fontSize px tall;
+  -- with word wrap on and a width set, lines wrap at it.
+  function widget:GetFont()
+    return "Fonts\\FRIZQT__.TTF", W.fontSize
+  end
+  function widget:GetStringWidth()
+    return #(stub.text or "") * W.charWidth
+  end
+  function widget:GetStringHeight()
+    local width = stub.width or 0
+    if not stub.wordWrap or width <= 0 then
+      return W.fontSize
+    end
+    return math.max(1, math.ceil(widget:GetStringWidth() / width)) * W.fontSize
+  end
   function widget:GetParent()
     return stub.parent
   end
@@ -514,6 +530,8 @@ function Wow.Install()
     known = {},
     spells = {},
     mouseOver = {},
+    charWidth = 0,
+    fontSize = 10,
     timers = {},
     liveTimers = 0,
     healthMax = 100,
