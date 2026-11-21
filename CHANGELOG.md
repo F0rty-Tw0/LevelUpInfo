@@ -6,6 +6,8 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
+## [0.1.11] - 2026-11-22
+
 - Fixed: rank change lines (like "Healing: 572-661 ▸ 685-796 (+113-135)") no longer get cut off with "…". They now use the full row width, and a line that still doesn't fit continues on the next line.
 
 ## [0.1.10] - 2026-11-16
