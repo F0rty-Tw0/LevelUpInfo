@@ -6,10 +6,11 @@ All releases: **0.1.x (current)**
 
 ## [Unreleased]
 
+- Fixed: a skill that trades health for mana (like Dark Sacrifice) now shows "Health" and "Mana" on its two change lines, instead of "Mana" twice.
+
 ## [0.1.12] - 2026-11-21
 
 - After a class trainer visit, a chat line tells you when Level Up Info now knows your class skills up to a higher level, and which level.
-- Fixed: a skill that trades health for mana (like Dark Sacrifice) now shows "Health" and "Mana" on its two change lines, instead of "Mana" twice.
 
 ## [0.1.11] - 2026-11-22
 
