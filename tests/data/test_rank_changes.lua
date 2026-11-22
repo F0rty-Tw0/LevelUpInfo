@@ -69,7 +69,22 @@ end
 local function test_health_is_not_healing()
   setup()
   local lines = RankChanges.Lines(facts("Converts 38 health into 38 mana."), facts("Converts 68 health into 68 mana."))
-  same(lines, { line("Mana", "38", "68", GREEN, "(+30)"), line("Mana", "38", "68", GREEN, "(+30)") })
+  same(lines, { line("Health", "38", "68", GREEN, "(+30)"), line("Mana", "38", "68", GREEN, "(+30)") })
+end
+
+local function test_each_value_labeled_by_its_own_words()
+  setup()
+  local lines = RankChanges.Lines(
+    facts("Cannibalize 1,020 of your own Health over 15 sec to gain 1,196 Mana."),
+    facts("Cannibalize 1,290 of your own Health over 15 sec to gain 1,466 Mana.")
+  )
+  same(lines, { line("Health", "1,020", "1,290", GREEN, "(+270)"), line("Mana", "1,196", "1,466", GREEN, "(+270)") })
+end
+
+local function test_value_without_nearby_keyword_uses_sentence()
+  setup()
+  local lines = RankChanges.Lines(facts("Heals for 40 to 50 and another 10 over 15 sec."), facts("Heals for 60 to 70 and another 20 over 15 sec."))
+  same(lines, { line("Healing", "40-50", "60-70", GREEN, "(+20)"), line("Healing", "10", "20", GREEN, "(+10)") })
 end
 
 local function test_duration_keeps_unit()
@@ -231,6 +246,8 @@ return function()
   test_damage_line()
   test_armor_line()
   test_health_is_not_healing()
+  test_each_value_labeled_by_its_own_words()
+  test_value_without_nearby_keyword_uses_sentence()
   test_duration_keeps_unit()
   test_percent_kept_in_value()
   test_decimal_is_one_value()

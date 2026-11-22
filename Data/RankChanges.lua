@@ -35,6 +35,7 @@ local KEYWORD_GROUPS = {
   { label = "Damage", words = { "damage" } },
   { label = "Armor", words = { "armor" } },
   { label = "Mana", words = { "mana" } },
+  { label = "Health", words = { "health" } },
 }
 
 -- A number at `pos`: digits, then each `,` + exactly three digits (thousands
@@ -82,9 +83,20 @@ local function wordsOf(sentence)
   return words
 end
 
+-- Each value's own words: the text between its neighbour values (or the
+-- sentence edges), so "1,290 of your own Health ... 1,466 Mana" labels apart.
+local function addNearWords(sentence, values, first)
+  for i = first, #values do
+    local from = i > first and values[i - 1].stop + 1 or 1
+    local to = values[i + 1] and values[i + 1].start - 1 or #sentence
+    values[i].nearWords = wordsOf(sub(sentence, from, to))
+  end
+end
+
 -- Adds the sentence's values to `values` and its template pieces to `parts`.
 local function parseSentence(sentence, values, parts)
   local words = wordsOf(sentence)
+  local first = #values + 1
   local pos = 1
   while true do
     local start = find(sentence, "%d", pos)
@@ -92,12 +104,13 @@ local function parseSentence(sentence, values, parts)
       break
     end
     local value, stop = readValue(sentence, start)
-    value.words = words
+    value.words, value.start, value.stop = words, start, stop
     values[#values + 1] = value
     parts[#parts + 1] = sub(sentence, pos, start - 1) .. "#"
     pos = stop + 1
   end
   parts[#parts + 1] = sub(sentence, pos)
+  addNearWords(sentence, values, first)
 end
 
 -- Values in text order and the template (every value replaced by `#`).
@@ -121,7 +134,11 @@ local function keywordLabel(words)
       end
     end
   end
-  return Text("Effect")
+end
+
+-- The value's own words decide first, then its whole sentence.
+local function valueLabel(value)
+  return keywordLabel(value.nearWords) or keywordLabel(value.words) or Text("Effect")
 end
 
 -- Callers check this before computing a diff, so dropped lines cost nothing.
@@ -149,7 +166,7 @@ local function addValueLine(lines, old, new)
   elseif new.unit == Text("min") then
     addLine(lines, Text("Duration"), format(Text("%s min"), old.display), format(Text("%s min"), new.display), diff)
   else
-    addLine(lines, keywordLabel(new.words), old.display, new.display, diff)
+    addLine(lines, valueLabel(new), old.display, new.display, diff)
   end
 end
 
